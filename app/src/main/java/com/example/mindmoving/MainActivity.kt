@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.mindmoving.ui.theme.MindMovingTheme
+import com.neurosky.thinkgear.TGDevice
 
 class MainActivity : ComponentActivity() {
 
@@ -31,7 +32,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Pedir permisos en Android 12+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
                     ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
@@ -58,37 +58,32 @@ class MainActivity : ComponentActivity() {
     private fun conectarDiadema() {
         val deviceName = "MindWave Mobile"
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-
         val device = bluetoothAdapter?.bondedDevices?.find { it.name == deviceName }
 
         if (device != null) {
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return
-            }
             Log.d("MindWave", "✅ Dispositivo emparejado encontrado: ${device.name}")
 
             val handler = object : Handler(mainLooper) {
                 override fun handleMessage(msg: Message) {
                     when (msg.what) {
-                        4 -> {
-                            val level = msg.arg1
-                            if (level in 0..100) {
-                                attentionLevel = level
-                                Log.d("MindWave", "Nivel de atención: $level")
+                        TGDevice.MSG_ATTENTION -> {
+                            val attention = msg.arg1
+                            if (attention in 1..100) {
+                                Log.d("MindWave", "🧠 Atención: $attention")
+                                attentionLevel = attention
                             }
                         }
-                        else -> Log.d("MindWave", "Mensaje recibido: ${msg.what}")
+                        TGDevice.MSG_STATE_CHANGE -> {
+                            val state = msg.arg1
+                            if (state == TGDevice.STATE_CONNECTED) {
+                                Log.d("MindWave", "✅ Diadema conectada. Iniciando lectura de datos...")
+                                neuroSky?.start()
+                            } else {
+                                Log.d("MindWave", "ℹ️ Estado cambiado: $state")
+                            }
+                        }
+
+
                     }
                 }
             }
