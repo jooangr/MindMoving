@@ -2,11 +2,10 @@ package com.example.mindmoving
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Message
+import android.content.pm.PackageManager
+import android.os.*
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,22 +19,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.mindmoving.ui.theme.MindMovingTheme
-import com.github.pwittchen.neurosky.library.NeuroSky
-import com.github.pwittchen.neurosky.library.listener.DeviceMessageListener
 
-class MainActivity : ComponentActivity(), DeviceMessageListener {
+class MainActivity : ComponentActivity() {
 
     private var neuroSky: CustomNeuroSky? = null
-
     private var attentionLevel by mutableStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // PERMISOS ANDROID 12+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // Pedir permisos en Android 12+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
+        ) {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(
@@ -44,34 +44,10 @@ class MainActivity : ComponentActivity(), DeviceMessageListener {
                 ),
                 1
             )
-        }
-
-
-        // MOSTRAR TODOS LOS DISPOSITIVOS EMPAREJADOS
-        val deviceName = "MindWave Mobile"
-        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        val device = bluetoothAdapter?.bondedDevices?.find { it.name == "MindWave Mobile" }
-
-        if (device != null) {
-            val handler = object : Handler(mainLooper) {
-                override fun handleMessage(msg: Message) {
-                    onMessageReceived(msg) // tu función ya definida
-                }
-            }
-
-            val customNeuroSky = CustomNeuroSky(bluetoothAdapter, handler)
-            customNeuroSky.connectTo(device)
-
-            neuroSky = customNeuroSky // para usar luego en disconnect()
         } else {
-            Log.e("MindWave", "No se encontró el dispositivo MindWave Mobile")
+            conectarDiadema()
         }
 
-
-
-
-
-        // UI
         setContent {
             MindMovingTheme {
                 MainScreen(attentionLevel)
@@ -79,20 +55,55 @@ class MainActivity : ComponentActivity(), DeviceMessageListener {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        (neuroSky as? CustomNeuroSky)?.disconnect()
+    private fun conectarDiadema() {
+        val deviceName = "MindWave Mobile"
+        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
+        val device = bluetoothAdapter?.bondedDevices?.find { it.name == deviceName }
+
+        if (device != null) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
+            Log.d("MindWave", "✅ Dispositivo emparejado encontrado: ${device.name}")
+
+            val handler = object : Handler(mainLooper) {
+                override fun handleMessage(msg: Message) {
+                    when (msg.what) {
+                        4 -> {
+                            val level = msg.arg1
+                            if (level in 0..100) {
+                                attentionLevel = level
+                                Log.d("MindWave", "Nivel de atención: $level")
+                            }
+                        }
+                        else -> Log.d("MindWave", "Mensaje recibido: ${msg.what}")
+                    }
+                }
+            }
+
+            neuroSky = CustomNeuroSky(bluetoothAdapter, handler)
+            neuroSky?.connectTo(device)
+
+        } else {
+            Log.e("MindWave", "❌ No se encontró el dispositivo $deviceName")
+        }
     }
 
-    override fun onMessageReceived(message: Message) {
-        if (message.what == 4) {
-            val value = message.arg1
-            Log.d("MindWave", "Nivel de atención recibido: $value")
-            if (value in 0..100) {
-                attentionLevel = value
-            }
-        }
+    override fun onDestroy() {
+        super.onDestroy()
+        neuroSky?.disconnect()
     }
 
     @Deprecated("Deprecated in Java")
@@ -103,11 +114,10 @@ class MainActivity : ComponentActivity(), DeviceMessageListener {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == 1 &&
-            grantResults.isNotEmpty() &&
-            grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED
-        ) {
-            recreate()
+        if (requestCode == 1 && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+            conectarDiadema()
+        } else {
+            Toast.makeText(this, "Se necesitan permisos de Bluetooth para conectar.", Toast.LENGTH_LONG).show()
         }
     }
 }
@@ -139,7 +149,7 @@ fun MainScreen(attentionLevel: Int) {
 fun getColorForAttention(level: Int): Color {
     return when {
         level < 30 -> Color.Red
-        level in 30..70 -> Color.Yellow
+        level <= 70 -> Color.Yellow
         else -> Color.Green
     }
 }
