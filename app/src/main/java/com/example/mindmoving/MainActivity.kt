@@ -50,7 +50,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MindMovingTheme {
-                MainScreen(attentionLevel)
+                //MainScreen(attentionLevel)
+                LoginView()
+
             }
         }
     }
