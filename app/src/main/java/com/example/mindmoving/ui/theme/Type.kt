@@ -8,17 +8,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.mindmoving.R
 
+val interFamily = FontFamily(
+    Font(R.font.inter_24pt_black, FontWeight.Normal),
+    Font(R.font.inter_24pt_bold, FontWeight.Bold),
+    Font(R.font.inter_24pt_extrabold, FontWeight.ExtraBold),
+    Font(R.font.inter_18pt_blackitalic, FontWeight.Light)
+)
+
+val orbitronFamily = FontFamily(
+    Font(R.font.orbitron_black, FontWeight.Normal),
+    Font(R.font.orbitron_bold, FontWeight.Bold),
+    Font(R.font.orbitron_extrabold, FontWeight.ExtraBold),
+    Font(R.font.orbitron_semibold, FontWeight.Bold),
+    Font(R.font.orbitron_regular, FontWeight.Normal),
+
+    )
+
 // Set of Material typography styles to start with
 val Typography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+    bodySmall = TextStyle(
+        fontFamily = interFamily,
+        fontWeight = FontWeight.Thin,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.5.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = orbitronFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.5.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = orbitronFamily,
+        fontWeight = FontWeight.Thin,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.5.sp
     )
-
-
 
 /* Other default text styles to override
 titleLarge = TextStyle(
@@ -36,9 +64,4 @@ labelSmall = TextStyle(
     letterSpacing = 0.5.sp
 )
 */
-)
-val Inter = FontFamily(
-    Font(R.font.inter_regular, FontWeight.Normal),
-    Font(R.font.inter_medium, FontWeight.Medium),
-    Font(R.font.inter_bold, FontWeight.Bold)
 )
