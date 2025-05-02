@@ -1,4 +1,4 @@
-package com.example.mindmoving
+package com.example.mindmoving.views
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.mindmoving.CustomNeuroSky
 import com.example.mindmoving.ui.theme.MindMovingTheme
 import com.neurosky.thinkgear.TGDevice
 
@@ -50,9 +51,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MindMovingTheme {
-                //MainScreen(attentionLevel)
-                LoginView()
-
+                MainScreen(attentionLevel)
+                //Descomentar para ver el login
+                //LoginView()
             }
         }
     }

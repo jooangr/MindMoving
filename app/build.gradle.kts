@@ -60,6 +60,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation("com.github.pwittchen:neurosky-android-sdk:0.0.2")
+    //Dependecia para la navegacion
+    implementation("androidx.navigation:navigation-compose:2.7.6")
+    //Dependencia de BottomNavigation
+    implementation("androidx.compose.material:material:1.3.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
