@@ -1,4 +1,4 @@
-package com.example.mindmoving.views
+package com.example.mindmoving.views.menu
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,15 +17,19 @@ fun MenuPantallaPrincipal(navController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
+        //Esta provisional esto, aqui habra algo mejor y bonito pero es solo prueba
         Text("Menú Principal")
         Button(onClick = { navController.navigate("atencion") }) {
-            Text("Ir a Atención")
+            Text("Comprobar nivel de Atencion")
         }
+        //TODO cambiar el uso de botones ya que esto no sera asi
         Button(onClick = { navController.navigate("parpadeo") }) {
-            Text("Ir a Parpadeo")
+            Text("Controlar el coche")
         }
+        //TODO cambiar el uso de botones ya que esto no sera asi
         Button(onClick = { navController.navigate("meditacion") }) {
-            Text("Ir a Meditación")
+            Text("Ajustar Conecentracion")
         }
     }
 }
