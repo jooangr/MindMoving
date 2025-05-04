@@ -49,7 +49,7 @@ fun Login(navController: NavHostController) {
 fun ContentLoginView(navController: NavHostController) {
     var userdata by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var logoimg by remember { mutableStateOf(R.drawable.logo_mindmoving_sinfondo) }
+
     Box(
         modifier = Modifier.fillMaxSize().padding(),
     ){
@@ -68,7 +68,7 @@ fun ContentLoginView(navController: NavHostController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                   painter = painterResource(id = logoimg),
+                   painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
                     contentDescription = "Imagen Logo",
                     modifier = Modifier
                         .size(200.dp)
