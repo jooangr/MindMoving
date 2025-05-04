@@ -49,12 +49,12 @@ fun Login(navController: NavHostController) {
 fun ContentLoginView(navController: NavHostController) {
     var userdata by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-   // var logoimg by remember { mutableStateOf(R.drawable.logo_mindmoving_preview) }
+
     Box(
         modifier = Modifier.fillMaxSize().padding(),
     ){
         Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            painter = painterResource(id = R.drawable.fondo_5),
             contentDescription = "Fondo de pantalla",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -68,7 +68,7 @@ fun ContentLoginView(navController: NavHostController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                   painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                   painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
                     contentDescription = "Imagen Logo",
                     modifier = Modifier
                         .size(200.dp)
