@@ -1,4 +1,4 @@
-package com.example.mindmoving
+package com.example.mindmoving.neuroSkyService
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
