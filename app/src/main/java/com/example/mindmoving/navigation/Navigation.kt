@@ -6,9 +6,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.mindmoving.views.AtencionPantalla
+import com.example.mindmoving.views.menu.attention.AtencionPantalla
 import com.example.mindmoving.views.login.Login
-import com.example.mindmoving.views.MenuPantallaPrincipal
+import com.example.mindmoving.views.menu.MenuPantallaPrincipal
 
 
 @Composable
