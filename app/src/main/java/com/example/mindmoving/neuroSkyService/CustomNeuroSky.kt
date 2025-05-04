@@ -1,4 +1,4 @@
-package com.example.mindmoving
+package com.example.mindmoving.neuroSkyService
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -16,14 +16,20 @@ class CustomNeuroSky(
         Log.d("MindWave", "🔌 Conectando a ${device.name} (${device.address})")
 
         tgDevice?.close() // Limpieza previa
-
         tgDevice = TGDevice(bluetoothAdapter, handler)
 
         if (tgDevice?.getState() == TGDevice.STATE_IDLE) {
             tgDevice?.connect(device, false)
         } else {
-            Log.w("MindWave", "⚠️ TGDevice no está en estado IDLE")
+            Log.w("MindWave", "⚠️ TGDevice no está en estado IDLE, reiniciando...")
+            tgDevice?.close()
+            tgDevice = TGDevice(bluetoothAdapter, handler)
+            tgDevice?.connect(device, false)
         }
+    }
+
+    fun start() {
+        tgDevice?.start()
     }
 
     fun disconnect() {

@@ -1,7 +1,14 @@
+// Archivo build.gradle.kts (Nivel Módulo: app)
+import com.android.build.gradle.ProguardFiles.getDefaultProguardFile
+
+//Cambiar las que hay por estas
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp") version "2.1.0-1.0.29" //añadido para que funcione
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"//añadido para que funcione
 }
+
 
 android {
     namespace = "com.example.mindmoving"
@@ -30,11 +37,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility  = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -59,6 +66,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    //Implementacion del SDK del NeuroSky
     implementation("com.github.pwittchen:neurosky-android-sdk:0.0.2")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -67,5 +75,21 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //Dependencia para la navegación
+    implementation("androidx.navigation:navigation-compose:2.7.6")
+    //Dependencia de BottomNavigation
+    implementation("androidx.compose.material:material:1.3.1")
+
+    //Room Database
+    implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
+    ksp("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
+    implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")
+
+    //Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+
 
 }
