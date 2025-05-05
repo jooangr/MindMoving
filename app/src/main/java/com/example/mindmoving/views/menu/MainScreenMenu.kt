@@ -18,7 +18,7 @@ import androidx.navigation.NavHostController
 import com.example.mindmoving.navigation.TopNavigationBar
 
 @Composable
-fun MenuPantallaPrincipal(navController: NavHostController) {
+fun MainScreenMenu(navController: NavHostController) {
     val gradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE)) // Ajusta los colores
     )
