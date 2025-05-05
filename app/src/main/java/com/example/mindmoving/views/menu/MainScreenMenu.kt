@@ -18,14 +18,14 @@ import com.example.mindmoving.navigation.TopNavigationBar
 fun MenuPantallaPrincipal(navController: NavHostController) {
     Scaffold(
         topBar = {
-            TopNavigationBar(title = "MindMoving")
+            TopNavigationBar()
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp), // Padding extra si deseas
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
