@@ -12,7 +12,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.mindmoving.R
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopNavigationBar(onMenuClick: () -> Unit = {}) {
@@ -27,12 +26,15 @@ fun TopNavigationBar(onMenuClick: () -> Unit = {}) {
         },
         navigationIcon = {
             IconButton(onClick = onMenuClick) {
-                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.White)
+                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.Black)
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = Color(0xFFF5F5F5), // Blanco oscuro
+            navigationIconContentColor = Color.Black,
+            titleContentColor = Color.Black
         )
     )
 }
+
 
