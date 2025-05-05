@@ -20,7 +20,7 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
     ) {
         composable("login") { Login(navController) }
         composable("menu") { MenuPantallaPrincipal(navController) }
-        composable("atencion") { AtencionPantalla() }
+        composable("atencion") { AtencionPantalla(navController) }
         //composable("parpadeo") { ParpadeoPantalla() }
        // composable("meditacion") { MeditacionPantalla() }
     }

@@ -9,6 +9,7 @@ import android.os.Message
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -22,12 +23,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.navigation.NavHostController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.neurosky.thinkgear.TGDevice
 
 
 @Composable
-fun AtencionPantalla() {
+fun AtencionPantalla(navController: NavHostController){
     // Accedemos al contexto actual de la app (necesario para permisos, logs, etc.)
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -121,6 +123,11 @@ fun AtencionPantalla() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Button(onClick = { navController.navigate("menu") }) {
+            Text("Volver")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
         Canvas(modifier = Modifier.size(100.dp)) {
             drawCircle(color = getColorForAttention(attentionLevel))
         }

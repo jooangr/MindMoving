@@ -1,5 +1,6 @@
 package com.example.mindmoving.views.menu
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,12 +11,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.navigation.TopNavigationBar
 
 @Composable
 fun MenuPantallaPrincipal(navController: NavHostController) {
+    val gradient = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE)) // Ajusta los colores
+    )
     Scaffold(
         topBar = {
             TopNavigationBar()
@@ -25,6 +31,7 @@ fun MenuPantallaPrincipal(navController: NavHostController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(brush = gradient)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
