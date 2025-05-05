@@ -43,7 +43,7 @@ fun MainScreenMenu(navController: NavHostController) {
             }
             //TODO cambiar el uso de botones ya que esto no sera asi
             Button(onClick = { navController.navigate("parpadeo") }) {
-                Text("Controlar el coche")
+                Text("Calibrar segun la persona")
             }
             //TODO cambiar el uso de botones ya que esto no sera asi
             Button(onClick = { navController.navigate("meditacion") }) {
