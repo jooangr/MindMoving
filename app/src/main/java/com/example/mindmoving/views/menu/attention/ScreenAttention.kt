@@ -123,9 +123,13 @@ fun AtencionPantalla(navController: NavHostController){
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = { navController.navigate("menu") }) {
-            Text("Volver")
+        Button(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.align(Alignment.Start)
+        ) {
+            Text("← Volver")
         }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Canvas(modifier = Modifier.size(100.dp)) {

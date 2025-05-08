@@ -3,6 +3,7 @@ package com.example.mindmoving.views.login
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -164,7 +165,10 @@ fun ContentLoginView(navController: NavHostController) {
                 // 3. Crea el Botón
                 Button(
                     onClick = {
-                        navController.navigate("menu")
+                        navController.navigate("calibracion") {
+                            popUpTo("login") { inclusive = true } // Evita volver atrás al login
+                        }
+
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -207,9 +211,12 @@ fun ContentLoginView(navController: NavHostController) {
             Row {
                 Text(
                     text = "¿No tienes cuenta? Regístrate",
-                    color = Color(114, 32, 248)
-                    // Añade modifier = Modifier.clickable { /* Navegar a registro */ }
+                    color = Color(114, 32, 248),
+                    modifier = Modifier.clickable {
+                        navController.navigate("register")
+                    }
                 )
+
             }
         }
     }
