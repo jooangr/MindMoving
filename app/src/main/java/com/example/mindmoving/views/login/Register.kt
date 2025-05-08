@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.compose.material3.Button
+import androidx.compose.ui.graphics.Brush
 
 
 @Composable
@@ -41,7 +42,16 @@ fun RegisterScreen(navController: NavHostController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1F1A33))
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF3F2B96), // morado azulado
+                        Color(0xFF5C258D), // violeta intenso
+                        Color(0xFF6A0572)  // púrpura oscuro
+                    )
+                )
+            )
+
             .padding(24.dp)
     ) {
         Column(
@@ -58,22 +68,30 @@ fun RegisterScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Nombre de usuario") },
+                label = {
+                    Text(
+                        text = "Nombre de usuario",
+                        color = Color(0xFFCCCCCC) // Gris claro
+                    )
+                },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color.White,
                     unfocusedBorderColor = Color.Gray,
                     textColor = Color.White,
-                    cursorColor = Color.White,
-                    focusedLabelColor = Color.White
+                    cursorColor = Color.White
+                    // Puedes quitar focusedLabelColor si ya lo estás poniendo arriba manualmente
                 )
             )
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Correo electrónico") },
+                label = {
+                    Text(
+                        text= "Correo electrónico", color = Color(0xFFCCCCCC))},
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color.White,
                     unfocusedBorderColor = Color.Gray,
@@ -88,7 +106,8 @@ fun RegisterScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Contraseña") },
+                label = { Text(
+                    text = "Contraseña", color = Color(0xFFCCCCCC) ) },
                 visualTransformation = PasswordVisualTransformation(),
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color.White,
