@@ -3,6 +3,7 @@ package com.example.mindmoving.views.menu.calibracion
 import android.bluetooth.BluetoothAdapter
 import android.os.Handler
 import android.os.Message
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +33,8 @@ import androidx.navigation.NavHostController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.neurosky.thinkgear.TGDevice
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.size
 
 @Composable
 fun CalibracionAtencionScreen(navController: NavHostController) {
@@ -68,10 +71,19 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
     }
 
     fun conectarDiadema() {
-        val device = bluetoothAdapter?.bondedDevices?.find { it.name == "MindWave Mobile" }
-        if (device != null) {
-            neuroSky = CustomNeuroSky(bluetoothAdapter, handler)
-            neuroSky?.connectTo(device)
+        try {
+            val deviceName = "MindWave Mobile"
+            val device = bluetoothAdapter?.bondedDevices?.find { it.name == deviceName }
+
+            if (device != null) {
+                Log.d("MindWave", "✅ Dispositivo encontrado: ${device.name}")
+                neuroSky = CustomNeuroSky(bluetoothAdapter, handler)
+                neuroSky?.connectTo(device)
+            } else {
+                Log.e("MindWave", "❌ No se encontró la diadema $deviceName")
+            }
+        } catch (e: Exception) {
+            Log.e("MindWave", "⚠️ Error al conectar: ${e.message}")
         }
     }
 
@@ -86,7 +98,6 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
         }
     }
 
-    // Temporizador
     LaunchedEffect(isRunning) {
         if (isRunning) {
             while (secondsLeft > 0) {
@@ -98,15 +109,20 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (!isConnected) {
             Text("⏳ Esperando conexión con la diadema...", color = Color.Gray)
         } else {
+            // 🔴 Punto que cambia de color según nivel de atención
+            Canvas(modifier = Modifier.size(100.dp)) {
+                drawCircle(color = getColorForAttention(attentionLevel))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text("Nivel de Atención: $attentionLevel", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -122,9 +138,9 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
                 if (attentionData.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = {
-                        navController.navigate("calibracion_relajacion")
+                        navController.navigate("calibracion_relajacion") // segundo juego
                     }) {
-                        Text("Siguiente: Relajación")
+                        Text("Continuar")
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -132,21 +148,38 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
                         Text("Reiniciar")
                     }
                 }
+
+                // 🛑 Botón para saltar calibración
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = {
+                    navController.navigate("")
+                }) {
+                    Text("Boton a definir")
+                }
+
             } else {
                 Text("⏳ Registrando... $secondsLeft segundos restantes")
+
+
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Botón para salir al menú de calibración en cualquier momento
-            Button(onClick = {
-                navController.navigate("pantalla_calibracion") {
-                    popUpTo("calibracion_atencion") { inclusive = true }
-                }
-            }) {
-                Text("← Salir a menú de calibración")
-            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            navController.navigate("calibracion_menu")
+        }) {
+            Text("Volver Al Menu de Calibración")
         }
     }
+
 }
+
+fun getColorForAttention(level: Int): Color {
+    return when {
+        level < 30 -> Color.Red
+        level <= 70 -> Color.Yellow
+        else -> Color.Green
+    }
+}
+
 
