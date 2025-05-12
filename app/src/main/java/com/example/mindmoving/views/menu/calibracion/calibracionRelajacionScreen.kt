@@ -1,9 +1,11 @@
 package com.example.mindmoving.views.menu.calibracion
 
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.os.Handler
 import android.os.Message
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -72,10 +75,19 @@ fun CalibracionRelajacionScreen(navController: NavHostController) {
     }
 
     fun conectarDiadema() {
-        val device = bluetoothAdapter?.bondedDevices?.find { it.name == "MindWave Mobile" }
-        if (device != null) {
-            neuroSky = CustomNeuroSky(bluetoothAdapter, handler)
-            neuroSky?.connectTo(device)
+        try {
+            val deviceName = "MindWave Mobile"
+            val device = bluetoothAdapter?.bondedDevices?.find { it.name == deviceName }
+
+            if (device != null) {
+                Log.d("MindWave", "✅ Dispositivo encontrado: ${device.name}")
+                neuroSky = CustomNeuroSky(bluetoothAdapter, handler)
+                neuroSky?.connectTo(device)
+            } else {
+                Log.e("MindWave", "❌ No se encontró la diadema $deviceName")
+            }
+        } catch (e: Exception) {
+            Log.e("MindWave", "⚠️ Error al conectar: ${e.message}")
         }
     }
 

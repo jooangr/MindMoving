@@ -25,7 +25,7 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("login") { Login(navController) }
         composable("menu") { MainScreenMenu(navController) }
         composable("atencion") { AtencionPantalla(navController) }
-        composable("calibracion") { PantallaCalibracion(navController) }
+        composable("calibracion_menu") { PantallaCalibracion(navController) }
         composable("register") {RegisterScreen(navController) }
         composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
         composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }

@@ -165,7 +165,7 @@ fun ContentLoginView(navController: NavHostController) {
                 // 3. Crea el Botón
                 Button(
                     onClick = {
-                        navController.navigate("calibracion") {
+                        navController.navigate("calibracion_menu") {
                             popUpTo("login") { inclusive = true } // Evita volver atrás al login
                         }
 
