@@ -121,6 +121,9 @@ fun CalibracionRelajacionScreen(navController: NavHostController) {
     ) {
         if (!isConnected) {
             Text("⏳ Esperando conexión con la diadema...", color = Color.Gray)
+
+
+
         } else {
             Text("Relajación: $meditationLevel", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
@@ -144,6 +147,13 @@ fun CalibracionRelajacionScreen(navController: NavHostController) {
                     Text("Empezar relajación")
                 }
 
+                Button(onClick = {
+                    // Guardar o procesar datos
+                    navController.navigate("calibracion_parpadeo")
+                }) {
+                    Text("Siguiente y Ultimo Juego ")
+                }
+
                 if (meditationData.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = {
@@ -162,5 +172,9 @@ fun CalibracionRelajacionScreen(navController: NavHostController) {
                 Text("⏳ Registrando... $secondsLeft segundos restantes")
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+
     }
 }

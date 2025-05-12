@@ -12,6 +12,7 @@ import com.example.mindmoving.views.menu.attention.*
 import com.example.mindmoving.views.calibracion.*
 import com.example.mindmoving.views.login.RegisterScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionAtencionScreen
+import com.example.mindmoving.views.menu.calibracion.CalibracionParpadeoScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionRelajacionScreen
 
 
@@ -29,6 +30,9 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("register") {RegisterScreen(navController) }
         composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
         composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
+        composable("calibracion_parpadeo") {CalibracionParpadeoScreen(navController)
+        }
+
 
     }
 
