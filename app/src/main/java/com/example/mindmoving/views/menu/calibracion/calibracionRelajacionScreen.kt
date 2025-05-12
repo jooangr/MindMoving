@@ -174,6 +174,12 @@ fun CalibracionRelajacionScreen(navController: NavHostController) {
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            navController.navigate("calibracion_parpadeo")
+        }) {
+            Text("Omitir (bton para pasar a siguiente juego sin diadema)")
+        }
 
 
     }

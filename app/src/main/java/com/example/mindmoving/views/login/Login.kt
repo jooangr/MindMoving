@@ -155,8 +155,8 @@ fun ContentLoginView(navController: NavHostController) {
             Row {
                 // --- ***** INICIO DEL CÓDIGO DEL BOTÓN ***** ---
                 // 1. Define los colores y el pincel del gradiente
-                val startColorButton = Color(67, 137, 254) // Ajusta este color
-                val endColorButton = Color(2, 97, 254 )   // Ajusta este color
+                val startColorButton = Color(67, 137, 254)
+                val endColorButton = Color(2, 97, 254 )
                 val gradientBrushButton = Brush.horizontalGradient(
                     colors = listOf(startColorButton, endColorButton)
                 )
@@ -179,7 +179,7 @@ fun ContentLoginView(navController: NavHostController) {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent // Fondo del botón transparente
                     ),
-                    elevation = ButtonDefaults.buttonElevation( // Opcional: sin sombra
+                    elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 0.dp,
                         pressedElevation = 0.dp
                     )
