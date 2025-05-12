@@ -59,7 +59,7 @@ fun PantallaCalibracion(navController: NavHostController) {
             // Botón para niveles personalizados
             Button(
                 onClick = {
-                    navController.navigate("calibracion_personalizada")
+                    navController.navigate("calibracion_atencion")
                 },
                 modifier = Modifier
                     .fillMaxWidth()

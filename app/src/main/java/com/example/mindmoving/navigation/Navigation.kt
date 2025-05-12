@@ -11,6 +11,8 @@ import com.example.mindmoving.views.menu.MainScreenMenu
 import com.example.mindmoving.views.menu.attention.*
 import com.example.mindmoving.views.calibracion.*
 import com.example.mindmoving.views.login.RegisterScreen
+import com.example.mindmoving.views.menu.calibracion.CalibracionAtencionScreen
+import com.example.mindmoving.views.menu.calibracion.CalibracionRelajacionScreen
 
 
 @Composable
@@ -24,8 +26,9 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("menu") { MainScreenMenu(navController) }
         composable("atencion") { AtencionPantalla(navController) }
         composable("calibracion") { PantallaCalibracion(navController) }
-        composable("register") {RegisterScreen(navController)
-        }
+        composable("register") {RegisterScreen(navController) }
+        composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
+        composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
 
     }
 
