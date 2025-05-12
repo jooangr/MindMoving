@@ -164,7 +164,16 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
             }
 
         }
+
         Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            navController.navigate("calibracion_relajacion")
+        }) {
+            Text("Omitir (bton para pasar a siguiente juego sin diadema)")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Button(onClick = {
             navController.navigate("calibracion_menu")
         }) {
