@@ -1,5 +1,6 @@
 package com.example.mindmoving.views.login
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,6 +40,13 @@ import com.example.mindmoving.ui.theme.Typography
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavHostController
 import com.example.mindmoving.R
+import com.example.mindmoving.room.DatabaseProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.ui.platform.LocalContext
+
 
 
 @Composable
@@ -153,61 +161,71 @@ fun ContentLoginView(navController: NavHostController) {
             }
             Spacer(modifier = Modifier.height(20.dp))
             Row {
-                // --- ***** INICIO DEL CÓDIGO DEL BOTÓN ***** ---
-                // 1. Define los colores y el pincel del gradiente
-                val startColorButton = Color(67, 137, 254)
-                val endColorButton = Color(2, 97, 254 )
-                val gradientBrushButton = Brush.horizontalGradient(
-                    colors = listOf(startColorButton, endColorButton)
-                )
-                // 2. Define la forma
-                val buttonShapeButton = RoundedCornerShape(40)
-                // 3. Crea el Botón
-                Button(
-                    onClick = {
-                        navController.navigate("calibracion_menu") {
-                            popUpTo("login") { inclusive = true } // Evita volver atrás al login
-                        }
+                val context = LocalContext.current
 
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 60.dp)
-                        .height(55.dp),
-                    shape = buttonShapeButton,
-                    contentPadding = PaddingValues(), // Quitar padding interno
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent // Fondo del botón transparente
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 0.dp
+                Row {
+                    val startColorButton = Color(67, 137, 254)
+                    val endColorButton = Color(2, 97, 254)
+                    val gradientBrushButton = Brush.horizontalGradient(
+                        colors = listOf(startColorButton, endColorButton)
                     )
-                ) {
-                    // 4. Box interno para aplicar el fondo de gradiente
-                    Box(
+                    val buttonShapeButton = RoundedCornerShape(40)
+
+                    Button(
+                        onClick = {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val db = DatabaseProvider.getInstance(context)
+                                val usuarioDao = db.usuarioDao()
+
+                                val usuario = usuarioDao.buscarPorEmail(userdata.trim())
+
+                                withContext(Dispatchers.Main) {
+                                    if (usuario != null && usuario.passwordHash == password.trim()) {
+                                        navController.navigate("calibracion_menu") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Credenciales incorrectas",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }
+                            }
+                        },
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = gradientBrushButton,
-                                shape = buttonShapeButton
-                            )
-                            .clip(buttonShapeButton),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // 5. Texto del botón
-                        Text(
-                            text = "Iniciar sesión",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            style = Typography.bodyMedium
+                            .fillMaxWidth()
+                            .padding(horizontal = 60.dp)
+                            .height(55.dp),
+                        shape = buttonShapeButton,
+                        contentPadding = PaddingValues(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 0.dp
                         )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(brush = gradientBrushButton, shape = buttonShapeButton)
+                                .clip(buttonShapeButton),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Iniciar sesión",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                style = Typography.bodyMedium
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
-                // --- ***** FIN DEL CÓDIGO DEL BOTÓN ***** ---
-                Spacer(modifier = Modifier.height(20.dp))
             }
-            Spacer(modifier = Modifier.height(9.dp))
+                Spacer(modifier = Modifier.height(9.dp))
             Row {
                 Text(
                     text = "¿No tienes cuenta? Regístrate",
