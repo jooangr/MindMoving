@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -77,9 +78,11 @@ fun ContentLoginView(navController: NavHostController) {
         )
         Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+
         ) {
-            Spacer(modifier = Modifier.height(135.dp))
+            Spacer(modifier = Modifier.height(70.dp))
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -97,7 +100,7 @@ fun ContentLoginView(navController: NavHostController) {
                     style = Typography.titleMedium
                 )
             }
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Row {
                 OutlinedTextField(
                     value = userdata, onValueChange = {userdata = it},
@@ -166,7 +169,7 @@ fun ContentLoginView(navController: NavHostController) {
                     )
                 )
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Row {
                 val context = LocalContext.current
 
