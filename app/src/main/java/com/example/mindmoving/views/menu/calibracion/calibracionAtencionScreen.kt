@@ -1,9 +1,12 @@
 package com.example.mindmoving.views.menu.calibracion
 
 import android.bluetooth.BluetoothAdapter
+import android.os.Build
 import android.os.Handler
 import android.os.Message
 import android.util.Log
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -35,7 +38,15 @@ import com.neurosky.thinkgear.TGDevice
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
+import com.example.mindmoving.retrofit.ApiClient
+import com.example.mindmoving.retrofit.models.SesionEEGRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.LocalDateTime
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalibracionAtencionScreen(navController: NavHostController) {
     val context = LocalContext.current
@@ -105,8 +116,39 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
                 secondsLeft--
             }
             isRunning = false
+
+            // 💾 Enviar datos al backend
+            val usuarioId = "AQUI_TU_ID_USUARIO"
+            val promedioAtencion = if (attentionData.isNotEmpty()) attentionData.average().toFloat() else 0f
+
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val response = ApiClient.getApiService().guardarSesion(
+                        SesionEEGRequest(
+                            usuarioId = usuarioId,
+                            fechaHora = LocalDateTime.now().toString(),
+                            duracion = 30,
+                            valorMedioAtencion = promedioAtencion,
+                            valorMedioRelajacion = 0f,
+                            valorMedioPestaneo = 0f,
+                            comandosEjecutados = "calibracion_atencion"
+                        )
+                    )
+
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful) {
+                            Toast.makeText(context, "Sesión de atención guardada", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Error al guardar", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("CalibracionAtencion", "Error al guardar sesión: ${e.message}")
+                }
+            }
         }
     }
+
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
