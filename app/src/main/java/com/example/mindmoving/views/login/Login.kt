@@ -1,5 +1,6 @@
 package com.example.mindmoving.views.login
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Image
@@ -25,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +48,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
-
+import com.example.mindmoving.retrofit.ApiClient
+import com.example.mindmoving.retrofit.models.LoginRequest
 
 
 @Composable
@@ -58,6 +61,10 @@ fun Login(navController: NavHostController) {
 fun ContentLoginView(navController: NavHostController) {
     var userdata by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val apiService = ApiClient.getApiService()
 
     Box(
         modifier = Modifier.fillMaxSize().padding(),
@@ -173,26 +180,26 @@ fun ContentLoginView(navController: NavHostController) {
 
                     Button(
                         onClick = {
-                            CoroutineScope(Dispatchers.IO).launch {
-                                val db = DatabaseProvider.getInstance(context)
-                                val usuarioDao = db.usuarioDao()
+                            coroutineScope.launch {
+                                try {
+                                    val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
+                                    if (response.isSuccessful && response.body()?.userId != null) {
+                                        // Guardar userId en SharedPreferences
+                                        val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                                        sharedPrefs.edit().putString("userId", response.body()?.userId).apply()
 
-                                val usuario = usuarioDao.buscarPorEmail(userdata.trim())
-
-                                withContext(Dispatchers.Main) {
-                                    if (usuario != null && usuario.passwordHash == password.trim()) {
+                                        Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
                                         navController.navigate("calibracion_menu") {
                                             popUpTo("login") { inclusive = true }
                                         }
                                     } else {
-                                        Toast.makeText(
-                                            context,
-                                            "Credenciales incorrectas",
-                                            Toast.LENGTH_LONG
-                                        ).show()
+                                        Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
                                     }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                                 }
                             }
+
                         },
                         modifier = Modifier
                             .fillMaxWidth()

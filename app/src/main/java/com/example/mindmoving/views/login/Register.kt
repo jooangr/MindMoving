@@ -1,5 +1,6 @@
 package com.example.mindmoving.views.login
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,8 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.*
-import androidx.compose.material3.*
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.ButtonDefaults
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.OutlinedTextField
@@ -30,7 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.compose.material3.Button
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
+import com.example.mindmoving.retrofit.ApiClient
+import com.example.mindmoving.retrofit.models.RegisterRequest
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -38,6 +42,11 @@ fun RegisterScreen(navController: NavHostController) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val apiService = ApiClient.getApiService()
+
 
     Box(
         modifier = Modifier
@@ -122,15 +131,35 @@ fun RegisterScreen(navController: NavHostController) {
 
             Button(
                 onClick = {
-                    // Aquí puedes añadir lógica real de registro
-                    navController.navigate("login") {
-                        popUpTo("register") { inclusive = true }
+                    coroutineScope.launch {
+                        try {
+                            val response = apiService.registerUser(
+                                RegisterRequest(
+                                    username = username,
+                                    email = email,
+                                    password = password
+                                )
+
+                            )
+                            if (response.isSuccessful && response.body()?.success == true) {
+                                Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                                navController.navigate("login") {
+                                    popUpTo("register") { inclusive = true }
+                                }
+                            } else {
+                                val errorMsg = response.body()?.message ?: "Error al registrar"
+                                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50))
             ) {
                 Text("Registrarse", color = Color.White)
             }
+
 
             Spacer(modifier = Modifier.height(16.dp))
 

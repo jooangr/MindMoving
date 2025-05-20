@@ -2,13 +2,13 @@ package com.example.mindmoving.room
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.example.mindmoving.dao.UsuarioDao
+import com.example.mindmoving.deprecatedTemporalmente.dao.UsuarioDao
 //import com.example.mindmoving.dao.PerfilCalibracionDao
 //import com.example.mindmoving.dao.SesionEegDao
-import com.example.mindmoving.models.UsuarioEntity
-import com.example.mindmoving.models.PerfilCalibracionEntity
-import com.example.mindmoving.models.SesionEegEntity
-import com.example.mindmoving.models.DatoEegEntity
+import com.example.mindmoving.deprecatedTemporalmente.dao.models.UsuarioEntity
+import com.example.mindmoving.deprecatedTemporalmente.dao.models.PerfilCalibracionEntity
+import com.example.mindmoving.deprecatedTemporalmente.dao.models.SesionEegEntity
+import com.example.mindmoving.deprecatedTemporalmente.dao.models.DatoEegEntity
 
 @Database(
     entities = [

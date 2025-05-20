@@ -39,7 +39,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.modelsDate.SesionEEGRequest
+import com.example.mindmoving.retrofit.models.SesionEEGRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -123,7 +123,7 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = ApiClient.apiService.guardarSesion(
+                    val response = ApiClient.getApiService().guardarSesion(
                         SesionEEGRequest(
                             usuarioId = usuarioId,
                             fechaHora = LocalDateTime.now().toString(),
