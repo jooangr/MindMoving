@@ -18,8 +18,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.navigation.TopNavigationBar
 import com.example.mindmoving.views.MainLayout
 
@@ -80,4 +82,11 @@ fun MainScreenMenu(navController: NavHostController) {
             }
         }
     }
+}
+@Composable
+@Preview(showBackground = true, showSystemUi = true)
+fun PreviewMenu() {
+    // Importante: este require tener 'androidx.navigation:navigation-compose' en tu proyecto
+    val navController = rememberNavController()
+    MainScreenMenu(navController)
 }

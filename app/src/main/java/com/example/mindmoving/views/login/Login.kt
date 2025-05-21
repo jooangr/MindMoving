@@ -49,6 +49,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.LoginRequest
 
@@ -248,4 +250,10 @@ fun ContentLoginView(navController: NavHostController) {
             }
         }
     }
+}
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreviewLoginScreen() {
+    val navController = rememberNavController()
+    Login(navController = navController)
 }

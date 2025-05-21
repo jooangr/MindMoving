@@ -32,6 +32,8 @@ import androidx.compose.material3.Button
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.RegisterRequest
 import kotlinx.coroutines.launch
@@ -172,4 +174,11 @@ fun RegisterScreen(navController: NavHostController) {
             }
         }
     }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreviewRegisterScreen() {
+    val navController = rememberNavController()
+    RegisterScreen(navController = navController)
 }
