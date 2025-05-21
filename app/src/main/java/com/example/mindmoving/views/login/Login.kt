@@ -193,8 +193,9 @@ fun ContentLoginView(navController: NavHostController) {
 
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
                                         navController.navigate("calibracion_menu") {
-                                            popUpTo("login") { inclusive = true }
+                                            popUpTo(0) { inclusive = true } // ⚠️ elimina TODA la pila de navegación
                                         }
+
                                     } else {
                                         Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
                                     }

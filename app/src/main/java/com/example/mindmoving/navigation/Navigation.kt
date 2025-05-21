@@ -1,6 +1,8 @@
 package com.example.mindmoving.navigation
 
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -14,13 +16,24 @@ import com.example.mindmoving.views.login.RegisterScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionAtencionScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionParpadeoScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionRelajacionScreen
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
+import com.example.mindmoving.views.controlCoche.ControlCocheScreen
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+
+    val context = LocalContext.current
+    val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+    val userId = sharedPrefs.getString("userId", null)
+
+    val startDestination = if (userId != null) "calibracion_menu" else "login"
+
     NavHost(
         navController = navController,
-        startDestination = "login",
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable("login") { Login(navController) }
@@ -30,13 +43,13 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("register") {RegisterScreen(navController) }
         composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
         composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
-        composable("calibracion_parpadeo") {CalibracionParpadeoScreen(navController)
+        composable("control_coche") {ControlCocheScreen(navController)
         }
 
 
     }
 
-        //composable("parpadeo") { ParpadeoPantalla() }
-       // composable("meditacion") { MeditacionPantalla() }
 
-}
+    }
+
+

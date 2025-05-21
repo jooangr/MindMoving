@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.material3)
     //Implementacion del SDK del NeuroSky
     implementation("com.github.pwittchen:neurosky-android-sdk:0.0.2")
+    implementation(libs.protolite.well.known.types)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -89,6 +90,9 @@ dependencies {
     //Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    implementation("androidx.compose.material:material-icons-extended")
+
 
 
 

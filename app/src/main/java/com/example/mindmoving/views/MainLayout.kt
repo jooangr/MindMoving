@@ -16,6 +16,18 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.R
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ExitToApp
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import com.google.rpc.Help
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,9 +40,11 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
         gesturesEnabled = true,
         drawerContent = {
             ModalDrawerSheet {
-                Text("Menú", modifier = Modifier.padding(16.dp))
+                Text("Menú", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
                 Divider()
+
                 NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
                     label = { Text("Inicio") },
                     selected = false,
                     onClick = {
@@ -38,22 +52,55 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                         scope.launch { drawerState.close() }
                     }
                 )
+
                 NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.History, contentDescription = "Historial") },
+                    label = { Text("Historial de sesiones") },
+                    selected = false,
+                    onClick = {
+                        navController.navigate("historial") // asegúrate de tener esta ruta
+                        scope.launch { drawerState.close() }
+                    }
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Ajustes") },
+                    label = { Text("Ajustes") },
+                    selected = false,
+                    onClick = {
+                        navController.navigate("ajustes") // crea esta ruta si lo deseas
+                        scope.launch { drawerState.close() }
+                    }
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Help, contentDescription = "Ayuda") },
+                    label = { Text("Ayuda") },
+                    selected = false,
+                    onClick = {
+                        navController.navigate("ayuda") // puedes hacer una pantalla básica
+                        scope.launch { drawerState.close() }
+                    }
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar sesión") },
                     label = { Text("Cerrar sesión") },
                     selected = false,
                     onClick = {
                         navController.navigate("login") {
-                            popUpTo(0)
+                            popUpTo(0) // limpia navegación
                         }
                         scope.launch { drawerState.close() }
                     }
                 )
             }
+
         }
     ) {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar( // ⬅️ Aquí cambiamos
+                CenterAlignedTopAppBar(
                     title = {
                         Image(
                             painter = painterResource(id = R.drawable.logo_mindmoving),
@@ -66,12 +113,55 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                             Icon(Icons.Default.Menu, contentDescription = "Menú")
                         }
                     },
+                    actions = {
+                        var expanded by remember { mutableStateOf(false) }
+
+                        Box(contentAlignment = Alignment.TopEnd) {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Menú usuario",
+                                    tint = Color.Black
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Ver perfil") },
+                                    onClick = {
+                                        expanded = false
+                                        navController.navigate("perfil_usuario")
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Cambiar calibración") },
+                                    onClick = {
+                                        expanded = false
+                                        navController.navigate("calibracion") // o el nombre de tu ruta
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Cerrar sesión") },
+                                    onClick = {
+                                        expanded = false
+                                        navController.navigate("login") {
+                                            popUpTo(0) // limpia el backstack
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color(0xFFF5F5F5),
                         titleContentColor = Color.Black,
                         navigationIconContentColor = Color.Black
                     )
                 )
+
             }
         ) { padding ->
             content(padding)
