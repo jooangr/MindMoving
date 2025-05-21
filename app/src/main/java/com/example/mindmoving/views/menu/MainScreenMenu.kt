@@ -21,6 +21,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.mindmoving.graficas.SimpleBarChart
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.example.mindmoving.graficas.SimpleLineChartPlano
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.navigation.TopNavigationBar
 import com.example.mindmoving.views.MainLayout
@@ -79,6 +83,41 @@ fun MainScreenMenu(navController: NavHostController) {
                 ) {
                     Text("Opcional: Calibrar tu atención base")
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // 🎯 Las gráficas van aquí dentro del Column
+                SimpleBarChart(
+                    title = "Nivel de Atención",
+                    values = listOf(20f, 35f, 50f, 70f, 60f),
+                    color = Color(0xFF42A5F5)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SimpleBarChart(
+                    title = "Nivel de Relajación",
+                    values = listOf(15f, 40f, 30f, 60f, 45f),
+                    color = Color(0xFF66BB6A)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SimpleBarChart(
+                    title = "Nivel de Parpadeo",
+                    values = listOf(5f, 10f, 7f, 12f, 8f),
+                    color = Color(0xFFEF5350)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+
+                SimpleLineChartPlano(
+                    title = "Nivel de Atención",
+                    values = listOf(20f, 35f, 50f, 70f, 60f),
+                    lineColor = Color(0xFF42A5F5)
+                )
+
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.example.mindmoving.views.calibracion
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,14 +14,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.platform.LocalContext
+
 
 @Composable
 fun PantallaCalibracion(navController: NavHostController) {
+
     val gradient = Brush.verticalGradient(listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE)))
+
+    /**
+     * Intercepta el botón físico de atrás cuando estás en esta pantalla
+     *
+     * En lugar de volver a login, cierra la app, como hacen apps reales tras iniciar sesión
+     */
+    val context = LocalContext.current
+    BackHandler(enabled = true) {
+        (context as? Activity)?.finish()
+    }
 
     Box(
         modifier = Modifier
@@ -75,8 +92,9 @@ fun PantallaCalibracion(navController: NavHostController) {
             TextButton(
                 onClick = {
                     navController.navigate("menu") {
-                        popUpTo("login") { inclusive = false }
+                        popUpTo(0) { inclusive = true } // 💣 Esto borra TODA la pila
                     }
+
                 },
                 modifier = Modifier.padding(top = 12.dp)
             ) {
