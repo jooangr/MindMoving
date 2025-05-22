@@ -49,6 +49,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.LoginRequest
 
@@ -187,9 +189,18 @@ fun ContentLoginView(navController: NavHostController) {
                                 try {
                                     val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
                                     if (response.isSuccessful && response.body()?.userId != null) {
+
                                         // Guardar userId en SharedPreferences
                                         val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                                        sharedPrefs.edit().putString("userId", response.body()?.userId).apply()
+                                        val currentTime = System.currentTimeMillis()
+
+                                        val now = System.currentTimeMillis()
+                                        sharedPrefs.edit()
+                                            .putString("userId", response.body()?.userId)
+                                            .putLong("lastLoginTime", now)
+                                            .putLong("lastPausedTime", now) // 🔥 importante: reinicia el contador de inactividad
+                                            .apply()
+
 
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
                                         navController.navigate("calibracion_menu") {
@@ -249,4 +260,10 @@ fun ContentLoginView(navController: NavHostController) {
             }
         }
     }
+}
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreviewLoginScreen() {
+    val navController = rememberNavController()
+    Login(navController = navController)
 }

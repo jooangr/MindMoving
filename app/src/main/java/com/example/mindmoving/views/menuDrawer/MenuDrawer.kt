@@ -1,4 +1,4 @@
-package com.example.mindmoving.views
+package com.example.mindmoving.views.menuDrawer
 
 
 import androidx.compose.foundation.Image
@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import com.google.rpc.Help
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,17 +57,18 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Historial de sesiones") },
                     selected = false,
                     onClick = {
-                        navController.navigate("historial") // asegúrate de tener esta ruta
+                        navController.navigate("historial_sesiones")
                         scope.launch { drawerState.close() }
                     }
                 )
+
 
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Ajustes") },
                     label = { Text("Ajustes") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ajustes") // crea esta ruta si lo deseas
+                        navController.navigate("ajustes") //ruta por crear
                         scope.launch { drawerState.close() }
                     }
                 )

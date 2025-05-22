@@ -1,5 +1,7 @@
 package com.example.mindmoving.views.menu
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,23 +13,68 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.graficas.SimpleBarChart
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.mindmoving.graficas.SimpleLineChartPlano
-import com.example.mindmoving.views.MainLayout
+import androidx.navigation.compose.rememberNavController
+import com.example.mindmoving.views.menuDrawer.MainLayout
 
 @Composable
 fun MainScreenMenu(navController: NavHostController) {
+
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 🧠 Observer que guarda y valida la sesión al salir y volver
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
+            when (event) {
+                Lifecycle.Event.ON_STOP -> {
+                    // Salida de la app: guardar hora
+                    prefs.edit().putLong("lastPausedTime", System.currentTimeMillis()).apply()
+                }
+                Lifecycle.Event.ON_START -> {
+                    // Entrada a la app: comprobar inactividad
+                    val lastPaused = prefs.getLong("lastPausedTime", 0L)
+                    val now = System.currentTimeMillis()
+                    val inactivityLimit = 1 * 60 * 1000 // 1 minuto
+
+                    if ((now - lastPaused) > inactivityLimit) {
+                        prefs.edit().clear().apply()
+
+                        Toast.makeText(context, "Sesión cerrada por inactividad", Toast.LENGTH_LONG).show()
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+                else -> {}
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     MainLayout(navController = navController) { padding ->
         Box(
             modifier = Modifier
@@ -48,11 +95,8 @@ fun MainScreenMenu(navController: NavHostController) {
                     .verticalScroll(scrollState), // 👈 aquí está el scroll
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
-            ){
-
-                Spacer(modifier = Modifier.height(35.dp))
-
-            Text(
+            ) {
+                Text(
                     text = "Bienvenido a MindMoving",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White
@@ -66,6 +110,7 @@ fun MainScreenMenu(navController: NavHostController) {
                     color = Color.White.copy(alpha = 0.8f)
                 )
 
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
@@ -78,7 +123,7 @@ fun MainScreenMenu(navController: NavHostController) {
                 }
 
                 Button(
-                    onClick = { navController.navigate("control_coche") },
+                    onClick = { navController.navigate("control_coche") }, // ← Vista a view de controlar coche
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .padding(vertical = 8.dp)
@@ -113,17 +158,19 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-
                 SimpleLineChartPlano(
                     title = "Nivel de Atención",
                     values = listOf(20f, 35f, 50f, 70f, 60f),
                     lineColor = Color(0xFF42A5F5)
                 )
-
             }
         }
-
-
-
-        }
+    }
+}
+@Composable
+@Preview(showBackground = true, showSystemUi = true)
+fun PreviewMenu() {
+    // Importante: este require tener 'androidx.navigation:navigation-compose' en tu proyecto
+    val navController = rememberNavController()
+    MainScreenMenu(navController)
 }
