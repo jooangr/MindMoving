@@ -49,6 +49,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.LoginRequest
 
@@ -147,6 +150,7 @@ fun ContentLoginView(navController: NavHostController) {
                             fontWeight = FontWeight.Light
                         )
                     },
+                    visualTransformation = PasswordVisualTransformation(),
                     shape = RoundedCornerShape(40),
                     colors = TextFieldDefaults.textFieldColors(
                         // Color del texto cuando escribes
@@ -193,9 +197,8 @@ fun ContentLoginView(navController: NavHostController) {
 
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
                                         navController.navigate("calibracion_menu") {
-                                            popUpTo(0) { inclusive = true } // ⚠️ elimina TODA la pila de navegación
+                                            popUpTo("login") { inclusive = true }
                                         }
-
                                     } else {
                                         Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
                                     }
@@ -249,4 +252,10 @@ fun ContentLoginView(navController: NavHostController) {
             }
         }
     }
+}
+
+@Preview( showBackground = false, showSystemUi = true)
+@Composable
+fun LoginScreenPreview(){
+    Login(navController = rememberNavController())
 }
