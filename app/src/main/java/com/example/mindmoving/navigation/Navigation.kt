@@ -14,11 +14,11 @@ import com.example.mindmoving.views.menu.attention.*
 import com.example.mindmoving.views.calibracion.*
 import com.example.mindmoving.views.login.RegisterScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionAtencionScreen
-import com.example.mindmoving.views.menu.calibracion.CalibracionParpadeoScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionRelajacionScreen
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
+import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.HistorialSesionesScreen
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -54,8 +54,9 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("register") {RegisterScreen(navController) }
         composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
         composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
-        composable("control_coche") {ControlCocheScreen(navController)
-        }
+        composable("control_coche") {ControlCocheScreen(navController) }
+        composable("historial_sesiones") { HistorialSesionesScreen(navController) }
+
 
 
     }
