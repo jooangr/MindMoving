@@ -5,9 +5,12 @@ import com.example.mindmoving.retrofit.models.LoginRequest
 import com.example.mindmoving.retrofit.models.LoginResponse
 import com.example.mindmoving.retrofit.models.RegisterRequest
 import com.example.mindmoving.retrofit.models.SesionEEGRequest
+import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface ApiService {
     @POST("/api/login")
@@ -18,4 +21,9 @@ interface ApiService {
 
     @POST("/api/sesiones")
     suspend fun guardarSesion(@Body sesion: SesionEEGRequest): Response<GenericResponse>
+
+    //Recibir sesiones del back
+    @GET("/api/sesiones/{userId}")
+    suspend fun getSesiones(@Path("userId") userId: String): Response<List<SesionEEGResponse>>
+
 }
