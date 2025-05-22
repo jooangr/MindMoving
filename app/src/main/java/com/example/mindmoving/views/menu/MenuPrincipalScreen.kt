@@ -123,7 +123,7 @@ fun MainScreenMenu(navController: NavHostController) {
                 }
 
                 Button(
-                    onClick = { navController.navigate("calibracion") }, // ← Vista de calibración
+                    onClick = { navController.navigate("control_coche") }, // ← Vista a view de controlar coche
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .padding(vertical = 8.dp)

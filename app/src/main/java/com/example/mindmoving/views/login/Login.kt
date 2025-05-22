@@ -194,9 +194,11 @@ fun ContentLoginView(navController: NavHostController) {
                                         val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                                         val currentTime = System.currentTimeMillis()
 
+                                        val now = System.currentTimeMillis()
                                         sharedPrefs.edit()
                                             .putString("userId", response.body()?.userId)
-                                            .putLong("lastLoginTime", currentTime) // 👈 Guardamos el tiempo del login
+                                            .putLong("lastLoginTime", now)
+                                            .putLong("lastPausedTime", now) // 🔥 importante: reinicia el contador de inactividad
                                             .apply()
 
 
