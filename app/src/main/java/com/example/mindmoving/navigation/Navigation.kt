@@ -29,7 +29,18 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
     val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     val userId = sharedPrefs.getString("userId", null)
 
-    val startDestination = if (userId != null) "calibracion_menu" else "login"
+    // ⚠️ Solo comprobamos si pasó el tiempo, sin borrar sesión aquí
+    val lastPaused = sharedPrefs.getLong("lastPausedTime", 0L)
+    val now = System.currentTimeMillis()
+    val oneMinuteMillis = 1 * 60 * 1000
+
+    val isSessionExpired = userId != null && (now - lastPaused > oneMinuteMillis)
+
+    // decidimos qué pantalla abrir al inicio
+
+    val startDestination = if (userId != null && !isSessionExpired) "menu" else "login"
+
+
 
     NavHost(
         navController = navController,

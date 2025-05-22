@@ -68,7 +68,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Ajustes") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ajustes") // crea esta ruta si lo deseas
+                        navController.navigate("ajustes") //ruta por crear
                         scope.launch { drawerState.close() }
                     }
                 )

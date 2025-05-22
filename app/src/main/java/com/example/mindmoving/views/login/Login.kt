@@ -187,9 +187,16 @@ fun ContentLoginView(navController: NavHostController) {
                                 try {
                                     val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
                                     if (response.isSuccessful && response.body()?.userId != null) {
+
                                         // Guardar userId en SharedPreferences
                                         val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                                        sharedPrefs.edit().putString("userId", response.body()?.userId).apply()
+                                        val currentTime = System.currentTimeMillis()
+
+                                        sharedPrefs.edit()
+                                            .putString("userId", response.body()?.userId)
+                                            .putLong("lastLoginTime", currentTime) // 👈 Guardamos el tiempo del login
+                                            .apply()
+
 
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
                                         navController.navigate("calibracion_menu") {
