@@ -7,6 +7,8 @@ import com.example.mindmoving.retrofit.models.LoginResponse
 import com.example.mindmoving.retrofit.models.PerfilCalibracionResponse
 import com.example.mindmoving.retrofit.models.RegisterRequest
 import com.example.mindmoving.retrofit.models.SesionEEGRequest
+import com.example.mindmoving.retrofit.models.UsuarioResponse
+import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
 import com.example.mindmoving.retrofit.models.VerificarPasswordResponse
 import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 import retrofit2.Response
@@ -35,17 +37,26 @@ interface ApiService {
     @GET("/api/perfil/{usuarioId}")
     suspend fun getPerfil(@Path("usuarioId") usuarioId: String): Response<PerfilCalibracionResponse>
 
-    @POST("/api/verify-password")
-    suspend fun verificarPassword(
+    @POST("/api/verify-password")//login
+    suspend fun verificarPasswordLogin(
         @Query("userId") userId: String,
         @Body password: String
     ): Response<VerificarPasswordResponse>
+
+    @POST("/api/verificar-password/{id}")//editarpefil
+    suspend fun verificarPasswordEditarPerfil(
+        @Path("id") id: String,
+        @Body request: VerificarPasswordRequest
+    ): Response<GenericResponse>
 
     @PATCH("/api/update-user/{userId}")
     suspend fun actualizarUsuario(
         @Path("userId") userId: String,
         @Body request: ActualizarUsuarioRequest
     ): Response<GenericResponse>
+
+    @GET("/api/users/{id}")
+    suspend fun getUsuario(@Path("id") id: String): Response<UsuarioResponse>
 
 
 
