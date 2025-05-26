@@ -26,6 +26,7 @@ import com.example.mindmoving.graficas.SimpleBarChart
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -96,6 +97,9 @@ fun MainScreenMenu(navController: NavHostController) {
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Text(
                     text = "Bienvenido a MindMoving",
                     style = MaterialTheme.typography.headlineMedium,
@@ -113,6 +117,22 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                val perfilTipo = remember {
+                    val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                    prefs.getString("perfil_tipo", null)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = if (perfilTipo != null) "Perfil actual: $perfilTipo" else "⚠️ No tienes perfil configurado",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+
+
                 Button(
                     onClick = { navController.navigate("atencion") },
                     modifier = Modifier
@@ -123,7 +143,17 @@ fun MainScreenMenu(navController: NavHostController) {
                 }
 
                 Button(
-                    onClick = { navController.navigate("control_coche") }, // ← Vista a view de controlar coche
+                    onClick = {
+                        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                        val tienePerfil = prefs.getString("perfil_tipo", null) != null
+
+                        if (tienePerfil) {
+                            navController.navigate("control_coche")
+                        } else {
+                            Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    , // ← Vista a view de controlar coche
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .padding(vertical = 8.dp)

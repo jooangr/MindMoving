@@ -1,6 +1,7 @@
 package com.example.mindmoving.views.login
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Image
@@ -53,6 +54,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.LoginRequest
+import com.google.gson.Gson
 
 
 @Composable
@@ -200,6 +202,41 @@ fun ContentLoginView(navController: NavHostController) {
                                             .putLong("lastLoginTime", now)
                                             .putLong("lastPausedTime", now) // 🔥 importante: reinicia el contador de inactividad
                                             .apply()
+
+                                        // Obtener el perfil del backend y decidir navegación
+                                        try {
+                                            val perfilResponse = apiService.getPerfil(response.body()?.userId ?: "")
+                                            if (perfilResponse.isSuccessful && perfilResponse.body() != null) {
+                                                val perfil = perfilResponse.body()
+                                                val perfilJson = Gson().toJson(perfil)
+
+                                                // Guardar tipo y perfil completo
+                                                sharedPrefs.edit()
+                                                    .putString("perfil_tipo", perfil?.tipo)
+                                                    .putString("perfil_completo", perfilJson)
+                                                    .apply()
+
+                                                Log.d("LOGIN", "Perfil encontrado. Navegando al menú principal.")
+                                                Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
+
+                                                // 👇 Usuario con perfil → Menú
+                                                navController.navigate("menu") {
+                                                    popUpTo(0) { inclusive = true }
+                                                }
+
+                                            } else {
+                                                // 👇 Usuario sin perfil → Calibración
+                                                Log.d("LOGIN", "No hay perfil. Navegando a calibración.")
+                                                Toast.makeText(context, "Bienvenido, calibremos tu perfil", Toast.LENGTH_SHORT).show()
+
+                                                navController.navigate("calibracion_menu") {
+                                                    popUpTo(0) { inclusive = true }
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.e("Login", "Error al obtener perfil: ${e.message}")
+                                            Toast.makeText(context, "Error cargando perfil", Toast.LENGTH_SHORT).show()
+                                        }
 
 
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
