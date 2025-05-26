@@ -1,4 +1,4 @@
-package com.example.mindmoving.views.ajustesUsuario
+package com.example.mindmoving.views.menuDrawer.viewMenuDerecha
 
 import android.content.Context
 import android.widget.Toast
@@ -26,10 +26,12 @@ import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
 import kotlinx.coroutines.launch
 import com.example.mindmoving.retrofit.models.ActualizarUsuarioRequest
+import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
 
 
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
@@ -65,9 +67,23 @@ fun EditarPerfilScreen(navController: NavHostController) {
             Button(onClick = {
                 coroutineScope.launch {
                     try {
-                        val response = apiService.verificarPassword(userId ?: "", passwordActual)
+                        val response = apiService.verificarPasswordEditarPerfil(
+                            userId ?: "",
+                            VerificarPasswordRequest(password = passwordActual)
+                        )
+
                         if (response.isSuccessful && response.body()?.success == true) {
                             verificado = true
+
+                            val userResponse = apiService.getUsuario(userId ?: "")
+                            if (userResponse.isSuccessful) {
+                                val user = userResponse.body()
+                                usernameNuevo = user?.username ?: ""
+                                emailNuevo = user?.email ?: ""
+                                // passwordNueva = "" // si prefieres dejarlo vacío por seguridad
+                            }
+
+
                         } else {
                             Toast.makeText(context, "Contraseña incorrecta", Toast.LENGTH_SHORT).show()
                         }
@@ -78,6 +94,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
             }) {
                 Text("Verificar")
             }
+
 
         } else {
             OutlinedTextField(

@@ -17,6 +17,7 @@ import com.example.mindmoving.views.menu.calibracion.CalibracionAtencionScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionRelajacionScreen
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.HistorialSesionesScreen
 
@@ -56,6 +57,10 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
         composable("control_coche") { ControlCocheScreen(navController) }
         composable("historial_sesiones") { HistorialSesionesScreen(navController) }
+        composable("editar_perfil") {
+            EditarPerfilScreen(navController)
+        }
+
     }
 }
 

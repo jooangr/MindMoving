@@ -133,7 +133,8 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                     text = { Text("Ver perfil") },
                                     onClick = {
                                         expanded = false
-                                        navController.navigate("perfil_usuario")
+                                        navController.navigate("editar_perfil")
+
                                     }
                                 )
                                 DropdownMenuItem(
