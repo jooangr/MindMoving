@@ -27,23 +27,17 @@ import androidx.navigation.NavHostController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.neurosky.thinkgear.TGDevice
 
-
 @Composable
-fun AtencionPantalla(navController: NavHostController){
-    // Accedemos al contexto actual de la app (necesario para permisos, logs, etc.)
+fun AtencionPantalla(navController: NavHostController) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Estado para guardar el nivel de atención actual recibido
-    var attentionLevel by remember { mutableStateOf(0) }
+    var attentionLevel by remember { mutableStateOf(0) }         // Nivel de atención recibido
+    var poorSignalLevel by remember { mutableStateOf(200) }      // Nivel de calidad de señal (200 = muy mala)
 
-    // Adaptador Bluetooth del sistema
     val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-
-    // Objeto que maneja la conexión con la diadema
     var neuroSky: CustomNeuroSky? by remember { mutableStateOf(null) }
 
-    // Handler para recibir mensajes desde la diadema (como los niveles de atención)
     val handler = remember {
         object : Handler(context.mainLooper) {
             override fun handleMessage(msg: Message) {
@@ -55,10 +49,21 @@ fun AtencionPantalla(navController: NavHostController){
                             attentionLevel = attention
                         }
                     }
+                    TGDevice.MSG_POOR_SIGNAL -> {
+                        poorSignalLevel = msg.arg1
+                        Log.w("MindWave", "📡 Señal de la diadema: $poorSignalLevel")
+                    }
                     TGDevice.MSG_STATE_CHANGE -> {
-                        if (msg.arg1 == TGDevice.STATE_CONNECTED) {
-                            Log.d("MindWave", "✅ Diadema conectada. Iniciando lectura de datos...")
-                            neuroSky?.start() // Solo cuando se conecta, empieza la lectura
+                        when (msg.arg1) {
+                            TGDevice.STATE_CONNECTED -> {
+                                Log.d("MindWave", "✅ Diadema conectada. Iniciando lectura de datos...")
+                                neuroSky?.start()
+                            }
+                            TGDevice.STATE_CONNECTING -> Log.d("MindWave", "⏳ Conectando a la diadema...")
+                            TGDevice.STATE_DISCONNECTED -> Log.d("MindWave", "❌ Diadema desconectada.")
+                            TGDevice.STATE_IDLE -> Log.d("MindWave", "🔄 Diadema en estado IDLE (inactiva).")
+                            TGDevice.STATE_NOT_FOUND -> Log.e("MindWave", "🛑 Diadema no encontrada.")
+                            TGDevice.STATE_NOT_PAIRED -> Log.e("MindWave", "🔒 Diadema no emparejada.")
                         }
                     }
                 }
@@ -66,7 +71,6 @@ fun AtencionPantalla(navController: NavHostController){
         }
     }
 
-    // Función para conectar con el dispositivo emparejado
     fun conectarDiadema() {
         try {
             val deviceName = "MindWave Mobile"
@@ -84,17 +88,16 @@ fun AtencionPantalla(navController: NavHostController){
         }
     }
 
-    // Efecto que se ejecuta cuando la pantalla entra en foco (ON_RESUME)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                // Verifica permisos o los solicita si no están otorgados
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
                     (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
                             ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED)
                 ) {
                     conectarDiadema()
                 } else {
+                    Log.w("MindWave", "❌ Permisos Bluetooth no concedidos. Solicitando permisos al usuario.")
                     ActivityCompat.requestPermissions(
                         context as android.app.Activity,
                         arrayOf(
@@ -107,15 +110,14 @@ fun AtencionPantalla(navController: NavHostController){
             }
         }
 
-        // Se agrega y elimina el observer del ciclo de vida
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
-            neuroSky?.disconnect() // Desconectar para liberar recursos
+            neuroSky?.disconnect()
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
-    // UI: Muestra un círculo que cambia de color según el nivel de atención
+    // UI
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -138,23 +140,33 @@ fun AtencionPantalla(navController: NavHostController){
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Texto que informa si hay atención detectada o no
-        if (attentionLevel == 0) {
-            Text(
-                text = "Esperando señal de la diadema...",
-                color = Color.Gray,
-                style = MaterialTheme.typography.headlineSmall
-            )
-        } else {
-            Text(
-                text = "Atención: $attentionLevel",
-                style = MaterialTheme.typography.headlineSmall
-            )
+        // Mensajes de estado
+        when {
+            poorSignalLevel > 50 -> {
+                Text(
+                    text = "⚠️ Ajusta la diadema, mala señal detectada.",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+            attentionLevel == 0 -> {
+                Text(
+                    text = "Esperando señal de la diadema...",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+            else -> {
+                Text(
+                    text = "Atención: $attentionLevel",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
         }
     }
 }
 
-// Devuelve un color visual según el nivel de atención
+// Función auxiliar que cambia el color según el nivel de atención
 fun getColorForAttention(level: Int): Color {
     return when {
         level < 30 -> Color.Red
