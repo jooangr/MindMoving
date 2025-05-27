@@ -2,32 +2,28 @@ package com.example.mindmoving.views.menuDrawer.viewMenuDerecha
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
-import kotlinx.coroutines.launch
 import com.example.mindmoving.retrofit.models.ActualizarUsuarioRequest
 import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
-
+import kotlinx.coroutines.launch
 
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
@@ -40,20 +36,24 @@ fun EditarPerfilScreen(navController: NavHostController) {
     var usernameNuevo by remember { mutableStateOf("") }
     var emailNuevo by remember { mutableStateOf("") }
     var passwordNueva by remember { mutableStateOf("") }
+    var mostrarPassword by remember { mutableStateOf(false) }
 
     var verificado by remember { mutableStateOf(false) }
 
     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     val userId = prefs.getString("userId", null)
 
+    val fondoGradiente = Brush.verticalGradient(colors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)))
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(fondoGradiente)
             .padding(24.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall)
+        Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = Color.White)
 
         if (!verificado) {
             OutlinedTextField(
@@ -80,10 +80,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
                                 val user = userResponse.body()
                                 usernameNuevo = user?.username ?: ""
                                 emailNuevo = user?.email ?: ""
-                                // passwordNueva = "" // si prefieres dejarlo vacío por seguridad
                             }
-
-
                         } else {
                             Toast.makeText(context, "Contraseña incorrecta", Toast.LENGTH_SHORT).show()
                         }
@@ -94,7 +91,6 @@ fun EditarPerfilScreen(navController: NavHostController) {
             }) {
                 Text("Verificar")
             }
-
 
         } else {
             OutlinedTextField(
@@ -115,7 +111,15 @@ fun EditarPerfilScreen(navController: NavHostController) {
                 value = passwordNueva,
                 onValueChange = { passwordNueva = it },
                 label = { Text("Nueva contraseña") },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (mostrarPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val icono = if (mostrarPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    Icon(
+                        imageVector = icono,
+                        contentDescription = null,
+                        modifier = Modifier.clickable { mostrarPassword = !mostrarPassword }
+                    )
+                },
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
             )
 
