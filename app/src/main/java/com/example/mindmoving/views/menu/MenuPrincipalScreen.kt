@@ -55,7 +55,7 @@ fun MainScreenMenu(navController: NavHostController) {
                     // Entrada a la app: comprobar inactividad
                     val lastPaused = prefs.getLong("lastPausedTime", 0L)
                     val now = System.currentTimeMillis()
-                    val inactivityLimit = 1 * 60 * 1000 // 1 minuto
+                    val inactivityLimit = 1 * 60 * 15000 // cambiado a 15 minutos
 
                     if ((now - lastPaused) > inactivityLimit) {
                         prefs.edit().clear().apply()
@@ -93,7 +93,7 @@ fun MainScreenMenu(navController: NavHostController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState), // 👈 aquí está el scroll
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -145,13 +145,15 @@ fun MainScreenMenu(navController: NavHostController) {
                 Button(
                     onClick = {
                         val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                        val tienePerfil = prefs.getString("perfil_tipo", null) != null
 
-                        if (tienePerfil) {
+                        //Para cuando tengamos lo de omar descomentar lo de teienperfil ya que si tiene perfil podre acceder a lo del coche
+                     //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
+
+                       // if (tienePerfil) {
                             navController.navigate("control_coche")
-                        } else {
-                            Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
-                        }
+                       // } else {
+                       //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
+                       // }
                     }
                     , // ← Vista a view de controlar coche
                     modifier = Modifier

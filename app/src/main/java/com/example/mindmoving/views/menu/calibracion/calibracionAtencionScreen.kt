@@ -118,7 +118,7 @@ fun CalibracionAtencionScreen(navController: NavHostController) {
             isRunning = false
 
             // 💾 Enviar datos al backend
-            val usuarioId = "AQUI_TU_ID_USUARIO"
+            val usuarioId = "AQUI_TU_ID_USUARIO" //cuando tengamos el trabajo de Omar hecho se deberaa de hacer
             val promedioAtencion = if (attentionData.isNotEmpty()) attentionData.average().toFloat() else 0f
 
             CoroutineScope(Dispatchers.IO).launch {

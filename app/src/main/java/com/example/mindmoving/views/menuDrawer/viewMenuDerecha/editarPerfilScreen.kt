@@ -27,39 +27,55 @@ import com.example.mindmoving.retrofit.models.UsuarioResponse
 import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
-
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
-    var passwordActual by remember { mutableStateOf("") }
+    val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+    val userId = prefs.getString("userId", null)
+
     var usernameNuevo by remember { mutableStateOf("") }
     var emailNuevo by remember { mutableStateOf("") }
     var passwordNueva by remember { mutableStateOf("") }
     var mostrarPassword by remember { mutableStateOf(false) }
 
-    var verificado by remember { mutableStateOf(false) }
+    var passwordEditable by remember { mutableStateOf(false) }
 
-    val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-    val userId = prefs.getString("userId", null)
+    var passwordActualDialog by remember { mutableStateOf("") }
+    var showPasswordCheckDialog by remember { mutableStateOf(false) }
 
+    var passwordConfirmarDialog by remember { mutableStateOf("") }
+    var showConfirmPasswordDialog by remember { mutableStateOf(false) }
 
-    //Guardar varibales locales
     var userActual by remember { mutableStateOf<UsuarioResponse?>(null) }
-    var emailActual by remember { mutableStateOf<UsuarioResponse?>(null) }
 
+    LaunchedEffect(Unit) {
+        userId?.let {
+            val response = apiService.getUsuario(it)
+            if (response.isSuccessful) {
+                val user = response.body()
+                userActual = user
+                usernameNuevo = user?.username ?: ""
+                emailNuevo = user?.email ?: ""
+            }
+
+        }
+    }
+
+    val usernameLabel = if (userActual != null) {
+        "Nuevo username (Actual: ${userActual!!.username})"
+    } else {
+        "Nuevo username"
+    }
 
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE))
-                )
-            )
+            .background(Brush.verticalGradient(listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE))))
             .padding(24.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -67,125 +83,177 @@ fun EditarPerfilScreen(navController: NavHostController) {
         Spacer(modifier = Modifier.height(32.dp))
         Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = Color.White)
 
-        if (!verificado) {
-            OutlinedTextField(
-                value = passwordActual,
-                onValueChange = { passwordActual = it },
-                label = { Text("Introduce tu contraseña actual") },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            )
+        Spacer(modifier = Modifier.height(35.dp))
 
-            Button(onClick = {
-                coroutineScope.launch {
-                    try {
-                        val response = apiService.verificarPasswordEditarPerfil(
-                            userId ?: "",
-                            VerificarPasswordRequest(password = passwordActual)
-                        )
+        OutlinedTextField(
+            value = usernameNuevo,
+            onValueChange = { usernameNuevo = it },
+            label = { Text(usernameLabel) },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-                        if (response.isSuccessful && response.body()?.success == true) {
-                            verificado = true
+        Spacer(modifier = Modifier.height(16.dp))
 
-                            val userResponse = apiService.getUsuario(userId ?: "")
-                            if (userResponse.isSuccessful) {
-                                val user = userResponse.body()
-                                userActual = user
-                                emailActual = (user?.email ?: "") as UsuarioResponse?
-                                usernameNuevo = user?.username ?: ""
-                                emailNuevo = user?.email ?: ""
-                            }
-                        } else {
-                            Toast.makeText(context, "Contraseña incorrecta", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        OutlinedTextField(
+            value = emailNuevo,
+            onValueChange = { emailNuevo = it },
+            label = { Text("Nuevo email (Actual: ${userActual?.email ?: "..."})") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = passwordNueva,
+            onValueChange = { passwordNueva = it },
+            label = { Text("Nueva contraseña (opcional)") },
+            enabled = passwordEditable,
+            visualTransformation = if (mostrarPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val icono = if (mostrarPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                Icon(
+                    imageVector = icono,
+                    contentDescription = null,
+                    modifier = Modifier.clickable { mostrarPassword = !mostrarPassword }
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    if (!passwordEditable) {
+                        showPasswordCheckDialog = true
                     }
                 }
-            }) {
-                Text("Verificar")
-            }
+        )
 
-        } else {
-            Spacer(modifier = Modifier.height(35.dp))
-            // Usuario
-            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Text(
-                    text = "Nuevo username (Actual: ${userActual?.username ?: "..."})",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
-                )
+        Spacer(modifier = Modifier.height(24.dp))
 
-                OutlinedTextField(
-                    value = usernameNuevo,
-                    onValueChange = { usernameNuevo = it },
-                    placeholder = { Text("Escribe tu nuevo username") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            Spacer(modifier = Modifier.height(29.dp))
-
-// Email
-            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Text(
-                    text = "Nuevo email (Actual: ${userActual?.email ?: "..."})",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
-                )
-                OutlinedTextField(
-                    value = emailNuevo,
-                    onValueChange = { emailNuevo = it },
-                    placeholder = { Text("Escribe tu nuevo email") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            Spacer(modifier = Modifier.height(29.dp))
-
-            OutlinedTextField(
-                value = passwordNueva,
-                onValueChange = { passwordNueva = it },
-                label = { Text("Nueva contraseña)") },
-                visualTransformation = if (mostrarPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val icono = if (mostrarPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-                    Icon(
-                        imageVector = icono,
-                        contentDescription = null,
-                        modifier = Modifier.clickable { mostrarPassword = !mostrarPassword }
-                    )
-                },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-            )
-
-            Button(onClick = {
+        Button(onClick = {
+            if (passwordNueva.isNotBlank()) {
+                showConfirmPasswordDialog = true
+            } else {
+                // Sin cambiar contraseña
                 coroutineScope.launch {
                     try {
-                        val updateResponse = apiService.actualizarUsuario(
-                            userId = userId ?: "",
-                            request = ActualizarUsuarioRequest(
-                                username = usernameNuevo,
-                                email = emailNuevo,
-                                password = passwordNueva
-                            )
+                        val response = apiService.actualizarUsuario(
+                            userId ?: "",
+                            ActualizarUsuarioRequest(usernameNuevo, emailNuevo, "")
                         )
-
-                        if (updateResponse.isSuccessful) {
+                        if (response.isSuccessful) {
                             Toast.makeText(context, "Datos actualizados", Toast.LENGTH_SHORT).show()
                             navController.navigate("menu")
                         } else {
-                            Toast.makeText(context, "Error al actualizar", Toast.LENGTH_SHORT).show()
+                            if (response.code() == 409) {
+                                Toast.makeText(context, "Email o username ya en uso", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Error al actualizar", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     } catch (e: Exception) {
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }) {
-                Text("Guardar cambios")
             }
+        }) {
+            Text("Guardar cambios")
         }
+    }
+
+    // Dialogo para pedir la contraseña actual
+    if (showPasswordCheckDialog) {
+        AlertDialog(
+            onDismissRequest = { showPasswordCheckDialog = false },
+            title = { Text("Verifica tu contraseña actual") },
+            text = {
+                OutlinedTextField(
+                    value = passwordActualDialog,
+                    onValueChange = { passwordActualDialog = it },
+                    label = { Text("Contraseña actual") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    coroutineScope.launch {
+                        try {
+                            val res = apiService.verificarPasswordEditarPerfil(
+                                userId ?: "",
+                                VerificarPasswordRequest(password = passwordActualDialog)
+                            )
+                            if (res.isSuccessful && res.body()?.success == true) {
+                                passwordEditable = true
+                                Toast.makeText(context, "Contraseña verificada", Toast.LENGTH_SHORT).show()
+                                showPasswordCheckDialog = false
+                            } else {
+                                Toast.makeText(context, "Contraseña incorrecta", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }) {
+                    Text("Verificar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPasswordCheckDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialogo para confirmar la nueva contraseña antes de guardar
+    if (showConfirmPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmPasswordDialog = false },
+            title = { Text("Confirmar nueva contraseña") },
+            text = {
+                OutlinedTextField(
+                    value = passwordConfirmarDialog,
+                    onValueChange = { passwordConfirmarDialog = it },
+                    label = { Text("Repite nueva contraseña") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (passwordConfirmarDialog == passwordNueva) {
+                        coroutineScope.launch {
+                            try {
+                                val response = apiService.actualizarUsuario(
+                                    userId ?: "",
+                                    ActualizarUsuarioRequest(usernameNuevo, emailNuevo, passwordNueva)
+                                )
+                                if (response.isSuccessful) {
+                                    Toast.makeText(context, "Datos actualizados", Toast.LENGTH_SHORT).show()
+                                    navController.navigate("menu")
+                                } else {
+                                    if (response.code() == 409) {
+                                        Toast.makeText(context, "Email o username ya en uso", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Error al actualizar", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        showConfirmPasswordDialog = false
+                    } else {
+                        Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                    }
+                }) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmPasswordDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
