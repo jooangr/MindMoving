@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.8.132</domain> <!-- Usa tu IP real del pc inalambrico  -->
+        <domain includeSubdomains="false">192.168.1.243</domain> <!-- Usa tu IP real del pc inalambrico  -->
     </domain-config>
 </network-security-config>
