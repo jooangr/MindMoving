@@ -10,13 +10,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.mindmoving.views.login.Login
 import com.example.mindmoving.views.menu.MainScreenMenu
-import com.example.mindmoving.views.menu.attention.*
 import com.example.mindmoving.views.calibracion.*
 import com.example.mindmoving.views.login.RegisterScreen
-import com.example.mindmoving.views.menu.calibracion.CalibracionAtencionScreen
-import com.example.mindmoving.views.menu.calibracion.CalibracionRelajacionScreen
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import com.example.mindmoving.views.calibracion.guiada.CalibracionInicioScreen
+import com.example.mindmoving.views.calibracion.guiada.FaseEnfoqueScreen
 import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.HistorialSesionesScreen
@@ -48,19 +47,33 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         startDestination = startDestination,
         modifier = modifier
     ) {
-        composable("login") { Login(navController) }
-        composable("menu") { MainScreenMenu(navController) }
-        composable("atencion") { AtencionPantalla(navController) }
-        composable("calibracion_menu") { PantallaCalibracion(navController) }
-        composable("register") { RegisterScreen(navController) }
-        composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
-        composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
-        composable("control_coche") { ControlCocheScreen(navController) }
-        composable("historial_sesiones") { HistorialSesionesScreen(navController) }
-        composable("editar_perfil") {
-            EditarPerfilScreen(navController)
+        composable("login") {
+            Login(navController = navController)
+        }
+        composable("register") {
+            RegisterScreen(navController = navController)
+        }
+        composable("menu") {
+            MainScreenMenu(navController = navController)
+        }
+        composable("calibracion_menu") {
+            PantallaCalibracion(navController = navController)
         }
 
+        composable("control_coche") {
+            ControlCocheScreen(navController = navController)
+        }
+        composable("historial_sesiones") {
+            HistorialSesionesScreen(navController = navController)
+        }
+
+        //Calibracion guiada
+        composable("calibracion_inicio") {
+            CalibracionInicioScreen(navController = navController)
+        }
+        composable("fase_enfoque") {
+            FaseEnfoqueScreen(navController = navController)
+        }
     }
 }
 

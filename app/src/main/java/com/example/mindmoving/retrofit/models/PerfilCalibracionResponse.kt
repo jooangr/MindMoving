@@ -6,24 +6,9 @@ data class PerfilCalibracionResponse(
     val tipo: String,
     val valoresAtencion: ValoresEEG,
     val valoresMeditacion: ValoresEEG,
-    val alternancia: Alternancia,
-    val blinking: Blinking
+    val alternancia: AlternanciaData,
+    val blinking: BlinkingData
 )
 
-data class ValoresEEG(
-    val media: Float,
-    val minimo: Float,
-    val maximo: Float,
-    val variabilidad: Float
-)
 
-data class Alternancia(
-    val tiempoAtencion: Int,
-    val tiempoMeditacion: Int
-)
-
-data class Blinking(
-    val maxPestaneos: Int,
-    val tiempoVentana: Int
-)
 

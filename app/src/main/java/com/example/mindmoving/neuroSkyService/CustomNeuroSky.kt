@@ -3,6 +3,7 @@ package com.example.mindmoving.neuroSkyService
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.neurosky.thinkgear.TGDevice
 
@@ -15,9 +16,38 @@ import com.neurosky.thinkgear.TGDevice
  */
 class CustomNeuroSky(
     private val bluetoothAdapter: BluetoothAdapter, // Adaptador Bluetooth del dispositivo Android
-    private val handler: Handler                    // Handler para recibir los mensajes de la diadema (atención, meditación, etc.)
+    private val listener: NeuroSkyListener,
 ) {
     private var tgDevice: TGDevice? = null // Objeto de la SDK de NeuroSky para gestionar la conexión
+
+    private val handler = Handler(Looper.getMainLooper()) { msg ->
+        when (msg.what) {
+            TGDevice.MSG_ATTENTION -> {
+                Log.d("MindWave", "🧠 Atención recibida: ${msg.arg1}")
+                listener.onAttentionReceived(msg.arg1)
+            }
+            TGDevice.MSG_MEDITATION -> {
+                Log.d("MindWave", "🧘 Meditación recibida: ${msg.arg1}")
+                listener.onMeditationReceived(msg.arg1)
+            }
+            TGDevice.MSG_BLINK -> {
+                Log.d("MindWave", "👁️ Parpadeo detectado: ${msg.arg1}")
+                listener.onBlinkDetected(msg.arg1)
+            }
+            TGDevice.MSG_POOR_SIGNAL -> {
+                Log.d("MindWave", "📡 Calidad de señal: ${msg.arg1}")
+                listener.onSignalPoor(msg.arg1)
+            }
+            TGDevice.MSG_STATE_CHANGE -> {
+                Log.d("MindWave", "🔄 Estado de conexión cambiado: ${msg.arg1}")
+                listener.onStateChanged(msg.arg1)
+            }
+            else -> {
+                Log.w("MindWave", "❓ Evento no reconocido: ${msg.what}")
+            }
+        }
+        true
+    }
 
     /**
      * Conecta al dispositivo MindWave especificado.
@@ -57,6 +87,7 @@ class CustomNeuroSky(
     fun start() {
         tgDevice?.let {
             if (it.getState() == TGDevice.STATE_CONNECTED) {
+                Log.d("MindWave", "📡 Iniciando transmisión de datos...")
                 it.start()
             } else {
                 Log.w("MindWave", "⚠️ TGDevice no está conectado. No se puede iniciar transmisión.")

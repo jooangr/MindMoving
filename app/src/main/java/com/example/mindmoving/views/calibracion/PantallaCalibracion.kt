@@ -43,7 +43,7 @@ fun PantallaCalibracion(navController: NavHostController) {
             }
 
             CalibracionButton("Calibración guiada") {
-                navController.navigate("calibracion_guiada")
+                navController.navigate("calibracion_inicio")
             }
 
             CalibracionButton("Ajustar atención") {
