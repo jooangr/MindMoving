@@ -18,6 +18,8 @@ import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import com.example.mindmoving.views.calibracion.guiada.CalibracionInicioScreen
 import com.example.mindmoving.views.calibracion.guiada.FaseEnfoqueScreen
+import com.example.mindmoving.views.calibracion.guiada.FaseParpadeoScreen
+import com.example.mindmoving.views.calibracion.guiada.FaseRelajacionScreen
 import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.HistorialSesionesScreen
@@ -54,28 +56,23 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("menu") { MainScreenMenu(navController) }
         composable("calibracion_menu") { PantallaCalibracion(navController) }
         composable("control_coche") { ControlCocheScreen(navController) }
+        composable("editar_perfil") {EditarPerfilScreen(navController)}
         composable("historial_sesiones") { HistorialSesionesScreen(navController) }
 
 
         //CalibracionGuiada
-        composable("calibracion_inicio") {
-            CalibracionInicioScreen(navController = navController)
-        }
-        composable("fase_enfoque") {
-            FaseEnfoqueScreen(navController = navController)
-        }
+        composable("calibracion_inicio") {CalibracionInicioScreen(navController = navController)}
+        composable("fase_enfoque") {FaseEnfoqueScreen(navController = navController)}
+        composable("fase_relajacion") {FaseRelajacionScreen(navController = navController)}
+        composable("parpadeo") { FaseParpadeoScreen(navController = navController) }
 
 
 
+        //quitar luego esta de pruebas
         composable("atencion") { AtencionPantalla(navController) }
-/*
-        composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
-        composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
-*/
 
-        composable("editar_perfil") {
-            EditarPerfilScreen(navController)
-        }
+
+
 
     }
 }
