@@ -22,6 +22,8 @@ import com.example.mindmoving.views.calibracion.guiada.FaseParpadeoScreen
 import com.example.mindmoving.views.calibracion.guiada.FaseRelajacionScreen
 import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
+import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AjustesScreen
+import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AyudaScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.HistorialSesionesScreen
 
 
@@ -58,7 +60,8 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("control_coche") { ControlCocheScreen(navController) }
         composable("editar_perfil") {EditarPerfilScreen(navController)}
         composable("historial_sesiones") { HistorialSesionesScreen(navController) }
-
+        composable("ajustes_screen") { AjustesScreen(navController) }
+        composable("ayuda_screen") { AyudaScreen(navController) }
 
         //CalibracionGuiada
         composable("calibracion_inicio") {CalibracionInicioScreen(navController = navController)}

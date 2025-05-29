@@ -3,6 +3,7 @@ package com.example.mindmoving.views.menuDrawer.viewsMenuDrawer
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -21,6 +24,10 @@ import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistorialSesionesScreen(navController: NavHostController) {
+
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+    )
     val context = LocalContext.current
     val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     val userId = sharedPrefs.getString("userId", null)
@@ -59,6 +66,7 @@ fun HistorialSesionesScreen(navController: NavHostController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .background(gradientBrush)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(Modifier.align(Alignment.Center))

@@ -30,6 +30,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
+
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+    )
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
@@ -75,7 +79,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE))))
+            .background(gradientBrush)
             .padding(24.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally

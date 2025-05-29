@@ -13,14 +13,15 @@ import androidx.navigation.NavHostController
 
 @Composable
 fun ControlCocheScreen(navController: NavHostController) {
+
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE))
-                )
-            ),
+            .background(gradientBrush),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

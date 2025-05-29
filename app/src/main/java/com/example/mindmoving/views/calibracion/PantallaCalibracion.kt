@@ -26,8 +26,9 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 fun PantallaCalibracion(navController: NavHostController) {
 
-    val gradient = Brush.verticalGradient(listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE)))
-
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+    )
     /**
      * Intercepta el botón físico de atrás cuando estás en esta pantalla
      *
@@ -41,7 +42,7 @@ fun PantallaCalibracion(navController: NavHostController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradient)
+            .background(gradientBrush)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
