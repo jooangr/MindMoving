@@ -44,7 +44,6 @@ import com.example.mindmoving.ui.theme.Typography
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavHostController
 import com.example.mindmoving.R
-import com.example.mindmoving.room.DatabaseProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

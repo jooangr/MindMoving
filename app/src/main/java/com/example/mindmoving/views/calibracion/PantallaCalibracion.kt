@@ -79,6 +79,20 @@ fun PantallaCalibracion(navController: NavHostController) {
             CalibracionButton("Simulador de comandos") {
                 navController.navigate("simulador_comandos")
             }
+
+            // Botón "Hacer luego"
+            TextButton(
+                onClick = {
+                    navController.navigate("menu") {
+                        popUpTo(0) { inclusive = true }
+                    }
+
+                },
+                modifier = Modifier.padding(top = 12.dp)
+            ) {
+                Text("Hacer luego", color = Color.White, fontSize = 16.sp)
+            }
+
         }
     }
 }
