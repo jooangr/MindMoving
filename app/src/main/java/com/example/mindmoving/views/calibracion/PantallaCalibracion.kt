@@ -47,79 +47,59 @@ fun PantallaCalibracion(navController: NavHostController) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxHeight()
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Antes de empezar...",
+                text = "Opciones de Calibración",
                 fontSize = 26.sp,
                 color = Color.White
             )
 
-            Text(
-                text = "Puedes seleccionar un perfil de atención por defecto o realizar pruebas personalizadas para calibrarlo.",
-                fontSize = 16.sp,
-                color = Color.White,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-
-            // Botones circulares para perfiles por defecto
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                DefaultProfileButton("Bajo") { /* Guardar perfil BAJO */ }
-                DefaultProfileButton("Medio") { /* Guardar perfil MEDIO */ }
-                DefaultProfileButton("Alto") { /* Guardar perfil ALTO */ }
+            CalibracionButton("Perfil de calibración") {
+                navController.navigate("perfil_calibracion")
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Botón para niveles personalizados
-            Button(
-                onClick = {
-                    navController.navigate("calibracion_atencion")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(55.dp),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-            ) {
-                Text("Niveles personalizados", fontSize = 18.sp, color = Color.White)
+            CalibracionButton("Calibración guiada") {
+                navController.navigate("calibracion_inicio")
             }
-            // Botón "Hacer luego"
-            TextButton(
-                onClick = {
-                    navController.navigate("menu") {
-                        popUpTo(0) { inclusive = true } // 💣 Esto borra TODA la pila
-                    }
 
-                },
-                modifier = Modifier.padding(top = 12.dp)
-            ) {
-                Text("Hacer luego", color = Color.White, fontSize = 16.sp)
+            CalibracionButton("Ajustar atención") {
+                navController.navigate("ajustar_atencion")
+            }
+
+            CalibracionButton("Ajustar meditación") {
+                navController.navigate("ajustar_meditacion")
+            }
+
+            CalibracionButton("Calibrar pestañeo") {
+                navController.navigate("calibracion_pestaneo")
+            }
+
+            CalibracionButton("Simulador de comandos") {
+                navController.navigate("simulador_comandos")
             }
         }
     }
 }
 
 @Composable
-fun DefaultProfileButton(label: String, onClick: () -> Unit) {
-    Box(
+fun CalibracionButton(text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
         modifier = Modifier
-            .size(80.dp)
-            .background(Color.White.copy(alpha = 0.2f), shape = CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth()
+            .height(55.dp),
+        shape = RoundedCornerShape(30),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
     ) {
-        Text(text = label, color = Color.White, fontSize = 14.sp)
+        Text(text = text, fontSize = 18.sp, color = Color.White)
     }
 }
-
 @Composable
 @Preview(showBackground = true, showSystemUi = true)
 fun PreviewPantallaCalibracion() {
+    // Importante: este require tener 'androidx.navigation:navigation-compose' en tu proyecto
     val navController = rememberNavController()
     PantallaCalibracion(navController)
 }

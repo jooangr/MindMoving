@@ -72,13 +72,14 @@ fun AtencionPantalla(navController: NavHostController){
             val deviceName = "MindWave Mobile"
             val device = bluetoothAdapter?.bondedDevices?.find { it.name == deviceName }
 
+            /**
             if (device != null) {
                 Log.d("MindWave", "✅ Dispositivo encontrado: ${device.name}")
-                neuroSky = CustomNeuroSky(bluetoothAdapter, handler)
+                neuroSky = CustomNeuroSky(bluetoothAdapter, listener = )
                 neuroSky?.connectTo(device)
             } else {
                 Log.e("MindWave", "❌ No se encontró la diadema $deviceName")
-            }
+            }*/
         } catch (e: Exception) {
             Log.e("MindWave", "⚠️ Error al conectar: ${e.message}")
         }

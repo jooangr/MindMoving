@@ -1,9 +1,7 @@
 package com.example.mindmoving.retrofit.models
 
-
 // Datos relevantes del usuario para personalizar el control del RC según su perfil cognitivo
-//ESTA CLASE ESTA EN DESARROLLO TODAVIA NO USAR NADA
-/*
+
 data class Usuario(
     val id: Int,
     val username: String,
@@ -11,7 +9,7 @@ data class Usuario(
     val password: String,
 
     // Perfil asignado tras la calibración: "Equilibrado", "Predominantemente Atento", etc.
-    val perfilCalibracion: String,//esto tranfrarlo a enum
+    val perfilCalibracion: String,
 
     // Registros crudos y métricas procesadas de atención
     val valoresAtencion: ValoresEEG,
@@ -45,4 +43,3 @@ data class AlternanciaData(
     val tiempoCambioAMeditacion: Int, // en segundos
     val tiempoCambioAAtencion: Int    // en segundos
 )
-*/
