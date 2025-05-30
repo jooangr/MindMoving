@@ -194,7 +194,6 @@ fun ContentLoginView(navController: NavHostController) {
                                         // Guardar userId en SharedPreferences
                                         val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                                         sharedPrefs.edit().putString("userId", response.body()?.userId).apply()
-
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
                                         navController.navigate("calibracion_menu") {
                                             popUpTo("login") { inclusive = true }

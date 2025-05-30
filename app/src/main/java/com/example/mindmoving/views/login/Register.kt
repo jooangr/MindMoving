@@ -217,7 +217,6 @@ fun RegisterScreen(navController: NavHostController) {
             val buttonShapeButton = RoundedCornerShape(40)
 
             Button(
-
                 onClick = {
                     coroutineScope.launch {
                         try {
@@ -227,7 +226,6 @@ fun RegisterScreen(navController: NavHostController) {
                                     email = email,
                                     password = password
                                 )
-
                             )
                             if (response.isSuccessful && response.body()?.success == true) {
                                 Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
@@ -243,15 +241,14 @@ fun RegisterScreen(navController: NavHostController) {
                         }
                     }
                 },
-                //colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50))
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 60.dp)
                     .height(55.dp),
                 shape = buttonShapeButton,
                 contentPadding = PaddingValues(),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                elevation = androidx.compose.material3.ButtonDefaults.buttonElevation(
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 0.dp,
                     pressedElevation = 0.dp
                 )
@@ -264,7 +261,7 @@ fun RegisterScreen(navController: NavHostController) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Iniciar sesión",
+                        text = "Resgistrarse",
                         color = Color.White,
                         fontSize = 20.sp,
                         style = Typography.bodyMedium
@@ -284,11 +281,4 @@ fun RegisterScreen(navController: NavHostController) {
             }
         }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun RegisterScreenPreview() {
-    // Puedes usar un NavHostController falso si no necesitas navegación
-    RegisterScreen(navController = rememberNavController())
 }

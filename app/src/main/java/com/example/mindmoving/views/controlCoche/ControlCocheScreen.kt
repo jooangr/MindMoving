@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.util.Log
+import android.view.View
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -40,16 +41,32 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.R
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.key
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.net.HttpURLConnection
+import java.net.URL
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import java.io.PrintWriter
+import java.net.Socket
+import java.net.URLEncoder
 
 @Composable
 fun ControlCocheScreen(navController: NavHostController) {
     LockToLandscapeEffect()
+    HideSystemBarsEffect()
 
     var showInstructions by remember { mutableStateOf(true) }
     var showLoading by remember { mutableStateOf(false) }
     var conectado by remember { mutableStateOf(false) }
     var iniciarConexion by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
+    //para darle una "identidad única" al WebView
+    var streamKey by remember { mutableStateOf(0) }
 
 
 
@@ -68,14 +85,37 @@ fun ControlCocheScreen(navController: NavHostController) {
 
 
         Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxSize()
         ) {
+
+            /*
+            LaunchedEffect(iniciarConexion, conectado) {
+                if (iniciarConexion && !conectado) {
+                    delay(30_000L) // Esperar 30 segundos solo si no se conectó
+                    if (!conectado) {
+                        showLoading = false
+                        showError = true
+                    }
+                }
+                
+            }
+
+             */
 
             LaunchedEffect(iniciarConexion) {
                 if (iniciarConexion) {
-                    delay(30_000L) // Esperar 30 segundos
+                    val timeout = 30_000L
+                    val startTime = System.currentTimeMillis()
+
+                    while (System.currentTimeMillis() - startTime < timeout) {
+                        delay(200L) // Pequeña pausa para evitar consumir CPU
+                        if (conectado) {
+                            // Si se conectó, salir antes del timeout
+                            return@LaunchedEffect
+                        }
+                    }
+
+                    // Si después de 30s aún no está conectado, mostrar error
                     if (!conectado) {
                         showLoading = false
                         showError = true
@@ -83,23 +123,78 @@ fun ControlCocheScreen(navController: NavHostController) {
                 }
             }
 
-            if (iniciarConexion && showLoading.not()) {
+            if (iniciarConexion //&& showLoading.not()
+                 ) {
                 CameraStreamView(
+                    visible = conectado,
                     onStreamLoaded = {
                         conectado = true
                         showLoading = false
-                    }
+                    },
+                    keyValue = streamKey
                 )
             }
 
         }
 
-        IconButton( onClick = { navController.popBackStack() } ) {
+        IconButton(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.padding(10.dp)
+            ) {
             Icon(
-                painterResource(
+                painter = painterResource(
                 id = R.drawable.baseline_arrow_back_ios_new_24),
-                contentDescription = "Back"
+                contentDescription = "Back",
+                tint = Color.White,
+                modifier = Modifier.size(30.dp)
             )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 32.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = {
+                    val url = "http://192.168.4.1" // o con ruta si se requiere
+                    val json = """{"N":3,"H":"0001","D1":1,"D2":150}""" // adelante
+
+                    enviarComandoSocket("192.168.4.1", 80, json)
+                }) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Adelante", tint = Color.White, modifier = Modifier.size(48.dp))
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = {
+                        val url = "http://192.168.4.1"
+                        val json = """{"N":3,"H":"0001","D1":3,"D2":150}""" // Izquierda
+
+                        enviarComandoSocket("192.168.4.1", 80, json)
+                    }) {
+                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Izquierda", tint = Color.White, modifier = Modifier.size(48.dp))
+                    }
+                    Spacer(modifier = Modifier.width(48.dp))
+                    IconButton(onClick = {
+                        val url = "http://192.168.4.1"
+                        val json = """{"N":3,"H":"0001","D1":4,"D2":150}""" // Derecha
+
+                        enviarComandoSocket("192.168.4.1", 80, json)
+                    }) {
+                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Derecha", tint = Color.White, modifier = Modifier.size(48.dp))
+                    }
+                }
+
+                IconButton(onClick = {
+                    val url = "http://192.168.4.1"
+                    val json = """{"N":3,"H":"0001","D1":2,"D2":150}""" // Atrás
+
+                    enviarComandoSocket("192.168.4.1", 80, json)
+                }) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Atrás", tint = Color.White, modifier = Modifier.size(48.dp))
+                }
+            }
         }
 
         // Pop-up 1: Instrucciones
@@ -159,8 +254,10 @@ fun ControlCocheScreen(navController: NavHostController) {
                 confirmButton = {
                     Button(onClick = {
                         showError = false
+                        conectado = false
                         iniciarConexion = false
                         showInstructions = true
+                        streamKey++ //Fuerza recrear el WebView en el próximo intento
                     }) {
                         Text("Reintentar")
                     }
@@ -174,50 +271,74 @@ fun ControlCocheScreen(navController: NavHostController) {
 
 }
 
+fun enviarComandoSocket(ip: String, puerto: Int, json: String) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val socket = Socket(ip, puerto)
+            val writer = PrintWriter(socket.getOutputStream(), true)
+            writer.println(json)
+            writer.flush()
+            socket.close()
+            Log.d("SocketCoche", "Comando enviado correctamente")
+        } catch (e: Exception) {
+            Log.e("SocketCoche", "Error al enviar: ${e.message}")
+        }
+    }
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun CameraStreamView(
     streamUrl: String = "http://192.168.4.1:81/stream",
-    onStreamLoaded : () -> Unit
+    onStreamLoaded : () -> Unit,
+    visible: Boolean,
+    keyValue: Int
 ) {
 
-    AndroidView(
-        factory = { context ->
-            WebView(context).apply {
-                settings.javaScriptEnabled = true
-                settings.loadWithOverviewMode = true
-                settings.useWideViewPort = true
-                settings.userAgentString = "Mozilla/5.0"
-                loadUrl(streamUrl)
-                webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        Log.d("WebViewDebug", "onPageFinished for URL: $url")
-                        if (url == streamUrl) {
-                            onStreamLoaded()
+    val visibilityModifier = if (visible) {
+        Modifier.fillMaxSize()
+    } else {
+        Modifier.size(1.dp) // prácticamente invisible
+    }
+
+    key(keyValue) { //Esto fuerza a Compose a crear uno nuevo si el valor cambia
+
+        AndroidView(
+            factory = { context ->
+                WebView(context).apply {
+                    settings.javaScriptEnabled = true
+                    settings.loadWithOverviewMode = true
+                    settings.useWideViewPort = true
+                    settings.userAgentString = "Mozilla/5.0"
+                    loadUrl(streamUrl)
+                    webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            Log.d("WebViewDebug", "onPageFinished for URL: $url")
+                            if (url == streamUrl) {
+                                onStreamLoaded()
+                            }
+                        }
+
+                        override fun onReceivedError(
+                            view: WebView,
+                            request: WebResourceRequest,
+                            error: WebResourceError
+                        ) {
+                            // Solo mostramos el error por el logcat
+                            Log.e(
+                                "WebViewError",
+                                "Error: ${error.description} (code ${error.errorCode})"
+                            )
+
                         }
                     }
-
-                    override fun onReceivedError(
-                        view: WebView,
-                        request: WebResourceRequest,
-                        error: WebResourceError
-                    ) {
-                        // Solo mostramos el error por el logcat
-                        Log.e("WebViewError", "Error: ${error.description} (code ${error.errorCode})")
-
-                    }
-
+                    loadUrl(streamUrl)
                 }
-                loadUrl(streamUrl)
-            }
 
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp)
-            .border(1.dp, Color.White.copy(alpha = 0.2f))
-    )
-
+            },
+            modifier = visibilityModifier,
+        )
+    }
 }
 
 @Composable
@@ -229,6 +350,28 @@ fun LockToLandscapeEffect() {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         onDispose {
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
+    }
+}
+
+@Composable
+fun HideSystemBarsEffect() {
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    DisposableEffect(Unit) {
+        activity?.window?.decorView?.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+
+        onDispose {
+            // Restaurar visibilidad al salir
+            activity?.window?.decorView?.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_VISIBLE
         }
     }
 }
