@@ -44,6 +44,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.*
+import com.example.mindmoving.ui.theme.FadeInColumn
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -158,7 +160,7 @@ fun MainScreenMenu(navController: NavHostController) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Button(
+                /*Button(
                     onClick = { navController.navigate("atencion") },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
                     modifier = Modifier
@@ -168,78 +170,110 @@ fun MainScreenMenu(navController: NavHostController) {
                     Icon(Icons.Default.Visibility, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Comprobar nivel de Atención")
+                }*/
+                // Estados para controlar la visibilidad animada
+                var showContent by remember { mutableStateOf(false) }
+
+                LaunchedEffect(Unit) {
+                    delay(200) // Pequeño retraso para que se note la animación
+                    showContent = true
                 }
 
-
-                Button(
-                    onClick = {
-                        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-
-                        //Para cuando tengamos lo de omar descomentar lo de teienperfil ya que si tiene perfil podre acceder a lo del coche
-                     //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
-
-                       // if (tienePerfil) {
-                            navController.navigate("control_coche")
-                       // } else {
-                       //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
-                       // }
-                    }
-                    , // ← Vista a view de controlar coche
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(vertical = 8.dp)
+                FadeInColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    delayMillis = 300
                 ) {
-                    Text("Controlar Coche (En desarrollo)")
+                    Button(
+                        onClick = { navController.navigate("atencion") },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Visibility, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Comprobar nivel de Atención")
+                    }
+
+                        Button(
+                            onClick = {
+                                val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
+                                //Para cuando tengamos lo de omar descomentar lo de teienperfil ya que si tiene perfil podre acceder a lo del coche
+                                //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
+
+                                // if (tienePerfil) {
+                                navController.navigate("control_coche")
+                                // } else {
+                                //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
+                                // }
+                            }
+                            , // ← Vista a view de controlar coche
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text("Controlar Coche (En desarrollo)")
+                        }
+
                 }
+
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(8.dp),
-                    shape = MaterialTheme.shapes.medium
+                AnimatedVisibility(
+                    visible = showContent,
+                    enter = fadeIn(),
+                    exit = fadeOut()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Gráficas recientes",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFF3F51B5)
-                        )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .padding(8.dp),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                "Gráficas recientes",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color(0xFF3F51B5)
+                            )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        SimpleBarChart(
-                            title = "Nivel de Atención",
-                            values = listOf(20f, 35f, 50f, 70f, 60f),
-                            color = Color(0xFF42A5F5)
-                        )
+                            SimpleBarChart(
+                                title = "Nivel de Atención",
+                                values = listOf(20f, 35f, 50f, 70f, 60f),
+                                color = Color(0xFF42A5F5)
+                            )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        SimpleBarChart(
-                            title = "Nivel de Relajación",
-                            values = listOf(15f, 40f, 30f, 60f, 45f),
-                            color = Color(0xFF66BB6A)
-                        )
+                            SimpleBarChart(
+                                title = "Nivel de Relajación",
+                                values = listOf(15f, 40f, 30f, 60f, 45f),
+                                color = Color(0xFF66BB6A)
+                            )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        SimpleBarChart(
-                            title = "Nivel de Parpadeo",
-                            values = listOf(5f, 10f, 7f, 12f, 8f),
-                            color = Color(0xFFEF5350)
-                        )
+                            SimpleBarChart(
+                                title = "Nivel de Parpadeo",
+                                values = listOf(5f, 10f, 7f, 12f, 8f),
+                                color = Color(0xFFEF5350)
+                            )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        SimpleLineChartPlano(
-                            title = "Nivel de Atención",
-                            values = listOf(20f, 35f, 50f, 70f, 60f),
-                            lineColor = Color(0xFF42A5F5)
-                        )
+                            SimpleLineChartPlano(
+                                title = "Nivel de Atención",
+                                values = listOf(20f, 35f, 50f, 70f, 60f),
+                                lineColor = Color(0xFF42A5F5)
+                            )
+                        }
                     }
                 }
+
             }
         }
     }
