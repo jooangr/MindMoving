@@ -1,4 +1,4 @@
-package com.example.mindmoving.views.menu.attention
+package com.example.mindmoving.views.menuPrincipal.attention
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter

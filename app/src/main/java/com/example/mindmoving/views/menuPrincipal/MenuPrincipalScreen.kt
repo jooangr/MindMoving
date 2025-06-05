@@ -1,4 +1,4 @@
-package com.example.mindmoving.views.menu
+package com.example.mindmoving.views.menuPrincipal
 
 import android.content.Context
 import android.widget.Toast
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,6 +26,11 @@ import androidx.navigation.NavHostController
 import com.example.mindmoving.graficas.SimpleBarChart
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +40,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.example.mindmoving.graficas.SimpleLineChartPlano
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.views.menuDrawer.MainLayout
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.runtime.*
+
 
 @Composable
 fun MainScreenMenu(navController: NavHostController) {
@@ -100,22 +111,38 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Text(
-                    text = "Bienvenido a MindMoving",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color.White
-                )
-
-                Text("Menú Principal")
-
-                Text(
-                    text = "Selecciona una opción para comenzar",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(horizontal = 8.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .background(Color.White)
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "Bienvenido a MindMoving",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Color(0xFF3F51B5)
+                        )
+                        Text(
+                            "Menú Principal",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.DarkGray
+                        )
+                        Text(
+                            "Selecciona una opción para comenzar",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
 
                 val perfilTipo = remember {
                     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
@@ -131,16 +158,18 @@ fun MainScreenMenu(navController: NavHostController) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-
-
                 Button(
                     onClick = { navController.navigate("atencion") },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .padding(vertical = 8.dp)
                 ) {
+                    Icon(Icons.Default.Visibility, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
                     Text("Comprobar nivel de Atención")
                 }
+
 
                 Button(
                     onClick = {
@@ -165,36 +194,52 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // 🎯 Las gráficas van aquí dentro del Column
-                SimpleBarChart(
-                    title = "Nivel de Atención",
-                    values = listOf(20f, 35f, 50f, 70f, 60f),
-                    color = Color(0xFF42A5F5)
-                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(8.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Gráficas recientes",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF3F51B5)
+                        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                SimpleBarChart(
-                    title = "Nivel de Relajación",
-                    values = listOf(15f, 40f, 30f, 60f, 45f),
-                    color = Color(0xFF66BB6A)
-                )
+                        SimpleBarChart(
+                            title = "Nivel de Atención",
+                            values = listOf(20f, 35f, 50f, 70f, 60f),
+                            color = Color(0xFF42A5F5)
+                        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                SimpleBarChart(
-                    title = "Nivel de Parpadeo",
-                    values = listOf(5f, 10f, 7f, 12f, 8f),
-                    color = Color(0xFFEF5350)
-                )
+                        SimpleBarChart(
+                            title = "Nivel de Relajación",
+                            values = listOf(15f, 40f, 30f, 60f, 45f),
+                            color = Color(0xFF66BB6A)
+                        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                SimpleLineChartPlano(
-                    title = "Nivel de Atención",
-                    values = listOf(20f, 35f, 50f, 70f, 60f),
-                    lineColor = Color(0xFF42A5F5)
-                )
+                        SimpleBarChart(
+                            title = "Nivel de Parpadeo",
+                            values = listOf(5f, 10f, 7f, 12f, 8f),
+                            color = Color(0xFFEF5350)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        SimpleLineChartPlano(
+                            title = "Nivel de Atención",
+                            values = listOf(20f, 35f, 50f, 70f, 60f),
+                            lineColor = Color(0xFF42A5F5)
+                        )
+                    }
+                }
             }
         }
     }

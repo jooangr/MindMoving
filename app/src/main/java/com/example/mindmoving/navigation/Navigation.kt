@@ -9,8 +9,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.mindmoving.views.login.Login
-import com.example.mindmoving.views.menu.MainScreenMenu
-import com.example.mindmoving.views.menu.attention.*
+import com.example.mindmoving.views.menuPrincipal.MainScreenMenu
+import com.example.mindmoving.views.menuPrincipal.attention.*
 import com.example.mindmoving.views.calibracion.*
 import com.example.mindmoving.views.login.RegisterScreen
 
