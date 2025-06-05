@@ -1,9 +1,16 @@
 package com.example.mindmoving.views.calibracion.guiada
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +20,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
@@ -39,6 +49,8 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     var signalLevel by remember { mutableStateOf(200) }
     var estadoDiadema by remember { mutableStateOf("Sin conexión") }
 
+    //TODO joan: esta variable puedes usarla como objeto y al final ya mandarla al server o puedes hacer
+    // que apunte directamente al usuario que ha iniciado sesión (creo que es mejor mantener objeto y ya al final subirlo)
     var usuario by remember {
         mutableStateOf(
             Usuario(1, "usuario_calibracion", "test@test.com", "1234", "",
@@ -56,7 +68,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     var datosListos by remember { mutableStateOf(false) }
     var mensajeInstruccion by remember { mutableStateOf("Prepárate para enfocarte") }
     var tiempoInicioSesion by remember { mutableStateOf<Long?>(null) }
-    var sesionEEGGenerada by remember { mutableStateOf<SesionEEGRequest?>(null) }
+    var sesionEEGGenerada by remember { mutableStateOf<SesionEEGRequest?>(null) } //TODO joan: pa que lo veas
 
     var atencionActual by remember { mutableStateOf(0) }
     var meditacionActual by remember { mutableStateOf(0) }
@@ -65,6 +77,31 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     var resultadoMeditacion by remember { mutableStateOf<ValoresEEG?>(null) }
     var resultadoParpadeo by remember { mutableStateOf<BlinkingData?>(null) }
 
+    // Función para obtener descripción de calidad de señal
+    fun getSignalQualityDescription(signal: Int): String {
+        return when {
+            signal == 0 -> "Excelente"
+            signal in 1..50 -> "Buena"
+            signal in 51..100 -> "Aceptable"
+            signal in 101..150 -> "Débil"
+            signal in 151..199 -> "Muy débil"
+            signal >= 200 -> "Sin contacto/No colocada"
+            else -> "Desconocida"
+        }
+    }
+
+    // Función para obtener color de señal
+    fun getSignalColor(signal: Int): Color {
+        return when {
+            signal == 0 -> Color.Green
+            signal in 1..50 -> Color.Yellow
+            signal in 51..100 -> Color(0xFFFFA500) // Naranja
+            signal in 101..150 -> Color.Red
+            signal in 151..199 -> Color.Red
+            signal >= 200 -> Color.Red
+            else -> Color.Gray
+        }
+    }
 
     val neuroSky = remember {
         val adapter = BluetoothAdapter.getDefaultAdapter()
@@ -86,15 +123,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                 }
                 override fun onSignalPoor(signal: Int) {
                     signalLevel = signal
-                    estadoDiadema = when {
-                        signal == 0 -> "📡 Señal excelente"
-                        signal in 1..50 -> "📡 Señal buena"
-                        signal in 51..100 -> "⚠️ Señal aceptable"
-                        signal in 101..150 -> "⚠️ Señal débil"
-                        signal in 151..199 -> "🚫 Señal muy débil"
-                        signal >= 200 -> "❌ Diadema mal colocada o sin contacto"
-                        else -> "❓ Estado desconocido"
-                    }
+                    estadoDiadema = getSignalQualityDescription(signal)
                     Log.d(TAG, "📡 Nivel señal actualizado: $signal ($estadoDiadema)")
                 }
 
@@ -110,6 +139,19 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                 }
             })
         } else null
+    }
+
+    // Función para obtener descripción del estado
+    fun getStateDescription(state: Int): String {
+        return when (state) {
+            TGDevice.STATE_IDLE -> "Inactivo"
+            TGDevice.STATE_CONNECTING -> "Conectando"
+            TGDevice.STATE_CONNECTED -> "Conectado"
+            TGDevice.STATE_NOT_FOUND -> "No encontrado"
+            TGDevice.STATE_NOT_PAIRED -> "No emparejado"
+            TGDevice.STATE_DISCONNECTED -> "Desconectado"
+            else -> "Estado desconocido ($state)"
+        }
     }
 
     fun iniciarConexion() {
@@ -133,7 +175,91 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         }
     }
 
+    // Manejo de permisos
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        Log.d(TAG, "📋 Resultado de permisos: $permissions")
+
+        val bluetoothConnectGranted = permissions[Manifest.permission.BLUETOOTH_CONNECT] == true
+        val bluetoothScanGranted = permissions[Manifest.permission.BLUETOOTH_SCAN] == true
+
+        if (bluetoothConnectGranted && bluetoothScanGranted) {
+            Log.i(TAG, "✅ Permisos de Bluetooth concedidos")
+            iniciarConexion()
+        } else {
+            Log.e(TAG, "❌ Permisos de Bluetooth denegados")
+            scope.launch {
+                snackbarHostState.showSnackbar("❌ Se necesitan permisos de Bluetooth")
+            }
+        }
+    }
+
+    // Efecto del ciclo de vida
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            Log.d(TAG, "🔄 Lifecycle event: $event")
+
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    Log.d(TAG, "🔁 ON_RESUME - Verificando estado de conexión")
+
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                        Log.d(TAG, "📱 Android < S - No se necesitan permisos especiales")
+                        if (!conectado && !intentandoConectar) {
+                            iniciarConexion()
+                        }
+                    } else {
+                        val hasBluetoothConnect = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.BLUETOOTH_CONNECT
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                        val hasBluetoothScan = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.BLUETOOTH_SCAN
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                        Log.d(TAG, "📋 Permisos - CONNECT: $hasBluetoothConnect, SCAN: $hasBluetoothScan")
+
+                        if (hasBluetoothConnect && hasBluetoothScan) {
+                            if (!conectado && !intentandoConectar) {
+                                iniciarConexion()
+                            }
+                        } else {
+                            Log.w(TAG, "⚠️ Solicitando permisos de Bluetooth...")
+                            permissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.BLUETOOTH_CONNECT,
+                                    Manifest.permission.BLUETOOTH_SCAN
+                                )
+                            )
+                        }
+                    }
+                }
+                Lifecycle.Event.ON_PAUSE -> {
+                    Log.d(TAG, "⏸️ ON_PAUSE")
+                }
+                Lifecycle.Event.ON_DESTROY -> {
+                    Log.d(TAG, "💀 ON_DESTROY")
+                }
+                else -> {}
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            Log.d(TAG, "🧹 Limpiando recursos...")
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            neuroSky?.disconnect()
+        }
+    }
+
     fun iniciarFase(nombreFase: String) {
+        if (signalLevel >= 150) {
+            scope.launch { snackbarHostState.showSnackbar("⚠️ Señal débil. Mejora la colocación de la diadema.") }
+            return
+        }
+
         faseActual = nombreFase
         recogiendoDatos = true
         tiempoRestante = 15
@@ -154,6 +280,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         }
     }
 
+    //Hace los calculos necesarios para guardar los datos
     fun calcularEEG(valores: List<Int>): ValoresEEG {
         val media = valores.average().toInt()
         val max = valores.maxOrNull() ?: 0
@@ -162,10 +289,11 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         return ValoresEEG(media, max, min, variabilidad)
     }
 
+    //TODO: joan para que veas como se crea la sesion, ya que tendrás que mandarla al server asegurando que coincida formato
     fun crearSesionEEG(): SesionEEGRequest {
         val duracion = ((System.currentTimeMillis() - (tiempoInicioSesion ?: System.currentTimeMillis())) / 1000).toInt()
         return SesionEEGRequest(
-            usuarioId = usuario.id.toString(),
+            usuarioId = usuario.id.toString(), //TODO: debe ser el del usuario en sesion
             fechaHora = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(Date()),
             duracion = duracion,
             valorMedioAtencion = calcularEEG(atencion).media.toFloat(),
@@ -174,6 +302,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             comandosEjecutados = "Calibración completa"
         )
     }
+    //Calculo para determinar perfil de calibracion del usuario con los datos recogidos
     fun determinarPerfil(at: ValoresEEG, med: ValoresEEG): PerfilCalibracion {
         return PerfilCalibracion.values().minByOrNull { perfil ->
             val distAt = kotlin.math.abs(perfil.valoresAtencion.media - at.media)
@@ -182,6 +311,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         } ?: PerfilCalibracion.EQUILIBRADO
     }
 
+    //TODO: joan esta es la más importante, guarda los datos en los objetos, debes aprovecharlos para mandarlos al server
     fun guardarDatos() {
         val datosAt = calcularEEG(atencion)
         val datosMed = calcularEEG(meditacion)
@@ -189,6 +319,8 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
         val perfilSeleccionado = determinarPerfil(datosAt, datosMed)
 
+        //TODO: joan este es el objeto de usuario que debes introducir sus datos al server (usuario en sesión)
+        // Actualiza el usuario con los nuevos datos
         usuario = usuario.copy(
             perfilCalibracion = perfilSeleccionado.nombre,
             valoresAtencion = datosAt,
@@ -197,7 +329,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             alternancia = perfilSeleccionado.alternancia
         )
 
-        sesionEEGGenerada = crearSesionEEG()
+        sesionEEGGenerada = crearSesionEEG() //TODO joan: lo mismo con la sesion
 
         Log.i(TAG, "✅ Datos guardados en usuario:")
         Log.i(TAG, "   Perfil: ${perfilSeleccionado.nombre}")
@@ -213,21 +345,57 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     // UI
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).background(Color(0xFF101020)),
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(Color(0xFF101020))
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             Text("🧠 Calibración NeuroSky", color = Color.Cyan, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(16.dp))
-            Text("Estado: $estadoConexion", color = if (conectado) Color.Green else Color.Red)
-            Text("Estado diadema: $estadoDiadema", color = Color.Yellow)
-            Text("Señal: $signalLevel", color = Color.LightGray)
+
+            // Estado de conexión con colores
+            Text("Estado: $estadoConexion",
+                color = when {
+                    conectado -> Color.Green
+                    intentandoConectar -> Color.Yellow
+                    else -> Color.Red
+                }
+            )
+
+            // Indicador de señal con colores
+            Text("Señal: ${getSignalQualityDescription(signalLevel)} ($signalLevel)",
+                color = getSignalColor(signalLevel)
+            )
+
             Spacer(Modifier.height(8.dp))
             Text("Atención actual: $atencionActual | Meditación: $meditacionActual", color = Color.White)
             Spacer(Modifier.height(16.dp))
 
-            if (!conectado && !intentandoConectar) Button(onClick = { iniciarConexion() }) { Text("Conectar") }
-            if (conectado && !recogiendoDatos && !datosListos) Button(onClick = { iniciarFase("ENFOQUE") }) { Text("Iniciar calibración") }
+            if (!conectado && !intentandoConectar) {
+                Button(onClick = { iniciarConexion() }) {
+                    Text("Conectar")
+                }
+            }
+
+            if (conectado && !recogiendoDatos && !datosListos) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Button(
+                        onClick = { iniciarFase("ENFOQUE") },
+                        enabled = signalLevel < 150
+                    ) {
+                        Text("Iniciar calibración")
+                    }
+
+                    if (signalLevel >= 150) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("⚠️ Mejora la colocación de la diadema",
+                            color = Color.Yellow)
+                    }
+                }
+            }
 
             if (recogiendoDatos) {
                 Text("Fase: $faseActual", color = Color.White)
@@ -257,6 +425,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                 }) { Text("🔄 Repetir calibración") }
             }
 
+            //Muestra los resultados de la calibracion actual
             resultadoAtencion?.let { at ->
                 resultadoMeditacion?.let { med ->
                     resultadoParpadeo?.let { blink ->
@@ -264,7 +433,9 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                             Column(Modifier.padding(16.dp)) {
                                 Text("📊 Resultados actuales:", color = Color.White)
                                 Text("Atención media: ${at.media}", color = Color.Green)
+                                Text("Variabilidad de atención: ${at.variabilidad}", color = Color.Green)
                                 Text("Meditación media: ${med.media}", color = Color.Blue)
+                                Text("Variabilidad de meditación: ${med.variabilidad}", color = Color.Blue)
                                 Text("Parpadeo promedio: ${blink.fuerzaPromedio}", color = Color.Yellow)
                             }
                         }
@@ -272,13 +443,17 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                 }
             }
 
+            //TODO: joan, el usuario es el del objeto, o sea que empieza con 0 hasta que se guardan datos, molaría que fuese el del usuario en sesión desde el primer momento
+            //Muestra los datos guardado del usuario en sesión
             Spacer(Modifier.height(16.dp))
             Card(Modifier.padding(16.dp), colors = CardDefaults.cardColors(Color(0xFF2A2A3E))) {
                 Column(Modifier.padding(16.dp)) {
                     Text("👤 Usuario: ${usuario.username}", color = Color.Cyan)
                     Text("Perfil: ${usuario.perfilCalibracion}", color = Color.White)
                     Text("Atención media: ${usuario.valoresAtencion.media}", color = Color.Green)
+                    Text("Variabilidad de atención: ${usuario.valoresAtencion.variabilidad}", color = Color.Green)
                     Text("Meditación media: ${usuario.valoresMeditacion.media}", color = Color.Blue)
+                    Text("Variabilidad de meditación: ${usuario.valoresMeditacion.variabilidad}", color = Color.Blue)
                     Text("Parpadeo promedio: ${usuario.blinking.fuerzaPromedio}", color = Color.Yellow)
                 }
             }
@@ -294,6 +469,9 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                     }
                 }
             }
+
+            // Espacio final para mejor visualización
+            Spacer(Modifier.height(32.dp))
         }
     }
 }
