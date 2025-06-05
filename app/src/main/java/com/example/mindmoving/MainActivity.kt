@@ -22,8 +22,6 @@ class MainActivity : ComponentActivity() {
                 AppNavigator()
             }
         }
-
-
     }
 }
 
