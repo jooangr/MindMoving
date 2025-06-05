@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +59,13 @@ import com.google.gson.Gson
 
 @Composable
 fun Login(navController: NavHostController) {
-    ContentLoginView(navController)
+    LaunchedEffect(Unit) {
+        // Cambia "menu" por "calibracion_menu" si quieres ir a calibración
+        navController.navigate("menu") {
+            popUpTo(0) { inclusive = true }
+        }
+    }
+    //ContentLoginView(navController)
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
