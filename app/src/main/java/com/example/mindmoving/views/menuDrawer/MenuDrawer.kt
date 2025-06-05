@@ -68,7 +68,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Ajustes") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ajustes") //ruta por crear
+                        navController.navigate("ajustes_screen") //ruta por crear
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -78,7 +78,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Ayuda") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ayuda") // puedes hacer una pantalla básica
+                        navController.navigate("ayuda_screen") // puedes hacer una pantalla básica
                         scope.launch { drawerState.close() }
                     }
                 )

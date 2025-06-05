@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -30,6 +31,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
+
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+    )
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
@@ -75,13 +80,26 @@ fun EditarPerfilScreen(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE))))
+            .background(gradientBrush)
             .padding(24.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
         Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        IconButton(
+            onClick = { navController.navigate("menu") },
+            modifier = Modifier.align(Alignment.Start)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ArrowBack,
+                contentDescription = "Volver al menú",
+                tint = Color.White
+            )
+        }
 
         Spacer(modifier = Modifier.height(35.dp))
 

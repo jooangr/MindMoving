@@ -20,16 +20,20 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
+
+    // Validar credenciales en el login
     @POST("/api/login")
     suspend fun loginUser(@Body request: LoginRequest): Response<LoginResponse>
 
+    // Registrarse por primera vez
     @POST("api/register")
     suspend fun registerUser(@Body request: RegisterRequest): Response<GenericResponse>
 
+    // Guardar sesion de EEG
     @POST("/api/sesiones")
     suspend fun guardarSesion(@Body sesion: SesionEEGRequest): Response<GenericResponse>
 
-    //Recibir sesiones del back
+    //Recibir sesiones del BACKEND
     @GET("/api/sesiones/{userId}")
     suspend fun getSesiones(@Path("userId") userId: String): Response<List<SesionEEGResponse>>
 
@@ -57,7 +61,5 @@ interface ApiService {
 
     @GET("/api/users/{id}")
     suspend fun getUsuario(@Path("id") id: String): Response<UsuarioResponse>
-
-
 
 }

@@ -38,6 +38,10 @@ import com.example.mindmoving.views.menuDrawer.MainLayout
 @Composable
 fun MainScreenMenu(navController: NavHostController) {
 
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+    )
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -80,11 +84,7 @@ fun MainScreenMenu(navController: NavHostController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF3F51B5), Color(0xFFB0C4DE))
-                    )
-                )
+                .background(gradientBrush)
                 .padding(padding)
         ) {
 

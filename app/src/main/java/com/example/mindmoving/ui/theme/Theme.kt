@@ -35,17 +35,11 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun MindMovingTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = true, // siempre oscuro
+    dynamicColor: Boolean = false, // sin colores dinámicos del sistema
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
@@ -56,3 +50,4 @@ fun MindMovingTheme(
         content = content
     )
 }
+
