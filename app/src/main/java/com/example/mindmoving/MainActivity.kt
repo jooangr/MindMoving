@@ -18,10 +18,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MindMovingTheme {
+            MindMovingTheme{
                 AppNavigator()
             }
         }
+
+
     }
 }
 

@@ -1,8 +1,10 @@
 package com.example.mindmoving.views.menuDrawer.viewsMenuDrawer
 
+import android.app.Activity
 import androidx.compose.ui.Alignment
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -17,11 +19,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 
+
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AjustesScreen(navController: NavHostController) {
     val gradientBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3)) // Siempre modo oscuro
     )
 
     val context = LocalContext.current
@@ -113,6 +118,7 @@ fun AjustesScreen(navController: NavHostController) {
         }
     }
 }
+
 
 @Composable
 fun DropdownMenuPerfil(selectedOption: String, onOptionSelected: (String) -> Unit) {

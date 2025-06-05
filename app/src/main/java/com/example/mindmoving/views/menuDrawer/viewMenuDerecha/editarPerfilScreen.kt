@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -86,6 +87,19 @@ fun EditarPerfilScreen(navController: NavHostController) {
     ) {
         Spacer(modifier = Modifier.height(32.dp))
         Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        IconButton(
+            onClick = { navController.navigate("menu") },
+            modifier = Modifier.align(Alignment.Start)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ArrowBack,
+                contentDescription = "Volver al menú",
+                tint = Color.White
+            )
+        }
 
         Spacer(modifier = Modifier.height(35.dp))
 
