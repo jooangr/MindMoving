@@ -83,9 +83,9 @@ dependencies {
     implementation("androidx.compose.material:material:1.3.1")
 
     //Room Database
-    implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
+    /**implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
     ksp("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
-    implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")
+    implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")*/
 
     //Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

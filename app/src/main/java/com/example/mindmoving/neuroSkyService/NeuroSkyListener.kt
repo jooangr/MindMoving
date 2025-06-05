@@ -1,6 +1,5 @@
 package com.example.mindmoving.neuroSkyService
 
-
 interface NeuroSkyListener {
     fun onAttentionReceived(level: Int)
     fun onBlinkDetected(strength: Int)

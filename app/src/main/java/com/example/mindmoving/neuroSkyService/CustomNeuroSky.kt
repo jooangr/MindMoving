@@ -10,16 +10,17 @@ import com.neurosky.thinkgear.TGDevice
 /**
  * Clase que encapsula la lógica de conexión y control del dispositivo NeuroSky MindWave.
  * Se encarga de:
- * - Conectar al dispositivo por Bluetooth.
- * - Iniciar la transmisión de datos.
- * - Desconectar y liberar recursos correctamente.
+  - Conectar al dispositivo por Bluetooth.
+  - Iniciar la transmisión de datos.
+  - Desconectar y liberar recursos correctamente.
  */
 class CustomNeuroSky(
     private val bluetoothAdapter: BluetoothAdapter, // Adaptador Bluetooth del dispositivo Android
-    private val listener: NeuroSkyListener,
+    private val listener: NeuroSkyListener, // Instancia del listener que actuará sobre los datos que se reciban
 ) {
-    private var tgDevice: TGDevice? = null // Objeto de la SDK de NeuroSky para gestionar la conexión
+    private var tgDevice: TGDevice? = null // Objeto de la SDK de NeuroSky para gestionar la conexión (conectar, transmision, desconectar el hardware)
 
+    // Se permite recibir mensajes del SDK ThinkGear (TGDevice) en el hilo principal.
     private val handler = Handler(Looper.getMainLooper()) { msg ->
         when (msg.what) {
             TGDevice.MSG_ATTENTION -> {

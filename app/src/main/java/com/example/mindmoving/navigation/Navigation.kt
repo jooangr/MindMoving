@@ -26,22 +26,30 @@ import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AjustesScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AyudaScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.HistorialSesionesScreen
 
-
+// Requiere Android 8.0 (API 26) o superior para ejecutar esta función
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
 
+    /**Gestión de sesión y lógica de inicio*/
+
     val context = LocalContext.current
+
+    // Accedemos a las preferencias compartidas (almacenamiento local)
     val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
+    // Obtenemos el ID del usuario guardado tras el login
     val userId = sharedPrefs.getString("userId", null)
 
-    // ⚠️ Comprobamos si pasó el tiempo de inactividad
+    //  Comprobamos si pasó el tiempo de inactividad (1 minuto)
     val lastPaused = sharedPrefs.getLong("lastPausedTime", 0L)
     val now = System.currentTimeMillis()
     val inactivityLimit = 1 * 60 * 1000
 
+    // Evaluamos si la sesión ha caducado comparando tiempos
     val isSessionExpired = now - lastPaused > inactivityLimit
 
+    // Determinamos la pantalla de inicio en función de sesión activa
     val startDestination = if (userId != null && !isSessionExpired) {
         "menu"
     } else {
@@ -53,23 +61,32 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         startDestination = startDestination,
         modifier = modifier
     ) {
+        /**Declaración de rutas*/
+
+        //Login y resgister
         composable("login") { Login(navController) }
         composable("register") { RegisterScreen(navController) }
+
+        //Menu principal
         composable("menu") { MainScreenMenu(navController) }
-        composable("calibracion_menu") { PantallaCalibracion(navController) }
         composable("control_coche") { ControlCocheScreen(navController) }
+
+        //Menu Derecha Arriba
         composable("editar_perfil") {EditarPerfilScreen(navController)}
+
+        //Menu lateral
         composable("historial_sesiones") { HistorialSesionesScreen(navController) }
-        composable("ajustes_screen") { AjustesScreen(navController) }
         composable("ayuda_screen") { AyudaScreen(navController) }
+        composable("ajustes_screen") { AjustesScreen(navController) }
+
+        //Calibracion Menu
+        composable("calibracion_menu") { PantallaCalibracion(navController) }
 
         //CalibracionGuiada
         composable("calibracion_inicio") {CalibracionInicioScreen(navController = navController)}
         composable("fase_enfoque") {FaseEnfoqueScreen(navController = navController)}
         composable("fase_relajacion") {FaseRelajacionScreen(navController = navController)}
         composable("parpadeo") { FaseParpadeoScreen(navController = navController) }
-
-
 
         //quitar luego esta de pruebas
         composable("atencion") { AtencionPantalla(navController) }
