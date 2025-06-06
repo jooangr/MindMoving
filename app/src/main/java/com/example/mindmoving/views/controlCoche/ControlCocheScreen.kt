@@ -161,14 +161,15 @@ fun ControlCocheScreen(navController: NavHostController) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconButton(onClick = {
                     val url = "http://192.168.4.1" // o con ruta si se requiere
-                    val json = """{"N":3,"H":"0001","D1":1,"D2":150}""" // adelante
+                    val json = """{"N":3,"H":"0001","D1":1,"D2":150}""" // Adelante
                     val jsonEncoded = URLEncoder.encode(json, "UTF-8")
-                    val comando = """{"N":3,"H":"0001","D1":1,"D2":150}""" // Adelante
+                    val ip = "192.168.4.1"
+                    val puerto = 100
+                    val comando = """{"N":1,"D1":2,"D2":150}""" // Avanzar
 
                     //enviarComandoSocket("192.168.4.1", 80, json)
                     //sendTcpCommand("""{"command":"forward"}""", port = 100)
-                    sendWithPrintln("forward")
-
+                    enviarComandoTCP(ip, puerto, comando)
                 }) {
                     Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Adelante", tint = Color.White, modifier = Modifier.size(48.dp))
                 }
@@ -178,11 +179,12 @@ fun ControlCocheScreen(navController: NavHostController) {
                         val url = "http://192.168.4.1"
                         val json = """{"N":3,"H":"0001","D1":3,"D2":150}""" // Izquierda
                         val jsonEncoded = URLEncoder.encode(json, "UTF-8")
+                        val ip = "192.168.4.1"
+                        val puerto = 100
 
                         //enviarComandoSocket("192.168.4.1", 80, json)
                         //sendTcpCommand("left", port = 100)
-                        sendWithPrintln("left")
-
+                        enviarComandoTCP(ip, puerto, json)
                     }) {
                         Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Izquierda", tint = Color.White, modifier = Modifier.size(48.dp))
                     }
@@ -191,11 +193,12 @@ fun ControlCocheScreen(navController: NavHostController) {
                         val url = "http://192.168.4.1"
                         val json = """{"N":3,"H":"0001","D1":4,"D2":150}""" // Derecha
                         val jsonEncoded = URLEncoder.encode(json, "UTF-8")
+                        val ip = "192.168.4.1"
+                        val puerto = 100
 
                         //enviarComandoSocket("192.168.4.1", 80, json)
                         //sendTcpCommand("right", port = 100)
-                        sendWithPrintln("right")
-
+                        enviarComandoTCP(ip, puerto, json)
                     }) {
                         Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Derecha", tint = Color.White, modifier = Modifier.size(48.dp))
                     }
@@ -205,10 +208,11 @@ fun ControlCocheScreen(navController: NavHostController) {
                     val url = "http://192.168.4.1"
                     val json = """{"N":3,"H":"0001","D1":2,"D2":150}""" // Atrás
                     val jsonEncoded = URLEncoder.encode(json, "UTF-8")
+                    val ip = "192.168.4.1"
+                    val puerto = 100
 
                     //sendTcpCommand("backward", port = 100)
-                    sendWithPrintln("backward")
-
+                    enviarComandoTCP(ip, puerto, json)
                 }) {
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Atrás", tint = Color.White, modifier = Modifier.size(48.dp))
                 }
@@ -289,17 +293,20 @@ fun ControlCocheScreen(navController: NavHostController) {
 
 }
 
-fun sendWithPrintln(command: String) {
-    CoroutineScope(Dispatchers.IO).launch {
+
+fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
+    Thread {
         try {
-            val socket = Socket("192.168.4.1", 100)
-            PrintWriter(socket.getOutputStream(), true).println(command)
+            val socket = Socket(ip, puerto)
+            val output = socket.getOutputStream()
+            output.write(comando.toByteArray())
+            output.flush()
             socket.close()
-            Log.d("SocketCoche", "PrintWriter.println enviado: $command")
+            Log.d("SocketCoche", "Comando enviado correctamente")
         } catch (e: Exception) {
-            Log.e("SocketCoche", "Error: ${e.message}")
+            Log.e("SocketCoche", "Error al enviar comando: ${e.message}")
         }
-    }
+    }.start()
 }
 
 /*

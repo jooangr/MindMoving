@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.1.129</domain> <!-- Usa tu IP real del pc inalambrico  -->
+        <domain includeSubdomains="false">192.168.1.129
+        </domain> <!-- Usa tu IP real del pc inalambrico  -->
     </domain-config>
 
-    <!-- IP del coche teledirigido (ESP32) -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">192.168.4.1</domain>
     </domain-config>
 
 </network-security-config>
+
