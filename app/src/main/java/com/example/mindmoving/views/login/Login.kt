@@ -54,6 +54,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.LoginRequest
+import com.example.mindmoving.retrofit.models.Usuario
+import com.example.mindmoving.utils.SessionManager
 import com.google.gson.Gson
 
 
@@ -221,6 +223,10 @@ fun ContentLoginView(navController: NavHostController) {
                                                     .putString("perfil_tipo", perfil?.tipo)
                                                     .putString("perfil_completo", perfilJson)
                                                     .apply()
+
+                                                // 🔁 Actualiza en SessionManager para acceso global
+                                                val usuarioCompleto = Gson().fromJson(perfilJson, Usuario::class.java)
+                                                SessionManager.usuarioActual = usuarioCompleto
 
                                                 Log.d("LOGIN", "Perfil encontrado. Navegando al menú principal.")
                                                 Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()

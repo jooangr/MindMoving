@@ -29,6 +29,13 @@ interface ApiService {
     @POST("/api/sesiones")
     suspend fun guardarSesion(@Body sesion: SesionEEGRequest): Response<GenericResponse>
 
+
+    //Pedido por omar
+    @POST("sesiones")
+    suspend fun crearSesionEEG(@Body sesion: SesionEEGRequest): Response<Void>
+
+
+
     //Recibir sesiones del back
     @GET("/api/sesiones/{userId}")
     suspend fun getSesiones(@Path("userId") userId: String): Response<List<SesionEEGResponse>>

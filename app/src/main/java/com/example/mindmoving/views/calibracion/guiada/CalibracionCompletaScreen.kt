@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -27,10 +28,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.example.mindmoving.neuroSkyService.NeuroSkyListener
+import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.*
+import com.example.mindmoving.utils.SessionManager
 import com.neurosky.thinkgear.TGDevice
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -49,14 +55,18 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     var signalLevel by remember { mutableStateOf(200) }
     var estadoDiadema by remember { mutableStateOf("Sin conexión") }
 
-    //TODO joan: esta variable puedes usarla como objeto y al final ya mandarla al server o puedes hacer
-    // que apunte directamente al usuario que ha iniciado sesión (creo que es mejor mantener objeto y ya al final subirlo)
-    var usuario by remember {
-        mutableStateOf(
-            Usuario(1, "usuario_calibracion", "test@test.com", "1234", "",
-                ValoresEEG(0,0,0,0f), ValoresEEG(0,0,0,0f), BlinkingData(0,50), AlternanciaData(0,0))
-        )
-    }
+    var usuario by remember { mutableStateOf(SessionManager.usuarioActual ?: Usuario(
+        id = 0,
+        username = "desconocido",
+        email = "",
+        password = "",
+        perfilCalibracion = "",
+        valoresAtencion = ValoresEEG(0, 0, 0, 0f),
+        valoresMeditacion = ValoresEEG(0, 0, 0, 0f),
+        blinking = BlinkingData(0, 0),
+        alternancia = AlternanciaData(0, 0)
+    ))}
+
 
     val atencion = remember { mutableStateListOf<Int>() }
     val meditacion = remember { mutableStateListOf<Int>() }
@@ -76,6 +86,9 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     var resultadoAtencion by remember { mutableStateOf<ValoresEEG?>(null) }
     var resultadoMeditacion by remember { mutableStateOf<ValoresEEG?>(null) }
     var resultadoParpadeo by remember { mutableStateOf<BlinkingData?>(null) }
+
+    var sesionEnviada by remember { mutableStateOf(false) }
+
 
     // Función para obtener descripción de calidad de señal
     fun getSignalQualityDescription(signal: Int): String {
@@ -321,13 +334,31 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
         //TODO: joan este es el objeto de usuario que debes introducir sus datos al server (usuario en sesión)
         // Actualiza el usuario con los nuevos datos
-        usuario = usuario.copy(
+        //actualizamos globalmente
+        SessionManager.usuarioActual = SessionManager.usuarioActual?.copy(
             perfilCalibracion = perfilSeleccionado.nombre,
             valoresAtencion = datosAt,
             valoresMeditacion = datosMed,
             blinking = datosBlink,
             alternancia = perfilSeleccionado.alternancia
         )
+
+        SessionManager.usuarioActual?.let {
+            usuario = it
+        }
+
+        usuario = SessionManager.usuarioActual!!
+
+
+
+        // Validacion para que no se garden datos sin q falte alguno
+        if (atencion.size < 5 || meditacion.size < 5) {
+            scope.launch {
+                snackbarHostState.showSnackbar("⚠️ No hay suficientes datos para calcular la calibración.")
+            }
+            return
+        }
+
 
         sesionEEGGenerada = crearSesionEEG() //TODO joan: lo mismo con la sesion
 
@@ -444,17 +475,19 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             }
 
             //TODO: joan, el usuario es el del objeto, o sea que empieza con 0 hasta que se guardan datos, molaría que fuese el del usuario en sesión desde el primer momento
-            //Muestra los datos guardado del usuario en sesión
+            //Muestra los datos guardado del usuario en sesión por el sesionManager
             Spacer(Modifier.height(16.dp))
             Card(Modifier.padding(16.dp), colors = CardDefaults.cardColors(Color(0xFF2A2A3E))) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("👤 Usuario: ${usuario.username}", color = Color.Cyan)
-                    Text("Perfil: ${usuario.perfilCalibracion}", color = Color.White)
-                    Text("Atención media: ${usuario.valoresAtencion.media}", color = Color.Green)
-                    Text("Variabilidad de atención: ${usuario.valoresAtencion.variabilidad}", color = Color.Green)
-                    Text("Meditación media: ${usuario.valoresMeditacion.media}", color = Color.Blue)
-                    Text("Variabilidad de meditación: ${usuario.valoresMeditacion.variabilidad}", color = Color.Blue)
-                    Text("Parpadeo promedio: ${usuario.blinking.fuerzaPromedio}", color = Color.Yellow)
+                    SessionManager.usuarioActual?.let { user ->
+                        Text("👤 Usuario: ${user.username}", color = Color.Cyan)
+                        Text("Perfil: ${user.perfilCalibracion}", color = Color.White)
+                        Text("Atención media: ${user.valoresAtencion.media}", color = Color.Green)
+                        Text("Variabilidad de atención: ${user.valoresAtencion.variabilidad}", color = Color.Green)
+                        Text("Meditación media: ${user.valoresMeditacion.media}", color = Color.Blue)
+                        Text("Variabilidad de meditación: ${user.valoresMeditacion.variabilidad}", color = Color.Blue)
+                        Text("Parpadeo promedio: ${user.blinking.fuerzaPromedio}", color = Color.Yellow)
+                    }
                 }
             }
 
@@ -469,6 +502,33 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                     }
                 }
             }
+
+            if (sesionEEGGenerada != null && !sesionEnviada) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val response = ApiClient.getApiService().crearSesionEEG(sesionEEGGenerada!!)
+                                if (response.isSuccessful) {
+                                    sesionEnviada = true
+                                    snackbarHostState.showSnackbar("✅ Sesión enviada correctamente al servidor")
+                                } else {
+                                    snackbarHostState.showSnackbar("❌ Error al guardar sesión: ${response.code()}")
+                                }
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar("⚠️ Error de red: ${e.localizedMessage}")
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(16.dp)
+                ) {
+                    Text("🚀 Enviar sesión al servidor")
+                }
+            }
+
+
 
             // Espacio final para mejor visualización
             Spacer(Modifier.height(32.dp))
