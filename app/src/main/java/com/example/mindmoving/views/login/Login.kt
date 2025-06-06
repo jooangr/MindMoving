@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,12 +54,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.LoginRequest
+import com.example.mindmoving.retrofit.models.Usuario
+import com.example.mindmoving.utils.SessionManager
 import com.google.gson.Gson
 
 
 @Composable
 fun Login(navController: NavHostController) {
-    ContentLoginView(navController)
+    LaunchedEffect(Unit) {
+        // Cambia "menu" por "calibracion_menu" si quieres ir a calibración
+        navController.navigate("menu") {
+            popUpTo(0) { inclusive = true }
+        }
+    }
+    //ContentLoginView(navController)
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -214,6 +223,10 @@ fun ContentLoginView(navController: NavHostController) {
                                                     .putString("perfil_tipo", perfil?.tipo)
                                                     .putString("perfil_completo", perfilJson)
                                                     .apply()
+
+                                                // 🔁 Actualiza en SessionManager para acceso global
+                                                val usuarioCompleto = Gson().fromJson(perfilJson, Usuario::class.java)
+                                                SessionManager.usuarioActual = usuarioCompleto
 
                                                 Log.d("LOGIN", "Perfil encontrado. Navegando al menú principal.")
                                                 Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()

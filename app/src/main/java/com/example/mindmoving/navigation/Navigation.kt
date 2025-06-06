@@ -16,10 +16,8 @@ import com.example.mindmoving.views.login.RegisterScreen
 
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import com.example.mindmoving.views.calibracion.guiada.CalibracionCompletaScreen
 import com.example.mindmoving.views.calibracion.guiada.CalibracionInicioScreen
-import com.example.mindmoving.views.calibracion.guiada.FaseEnfoqueScreen
-import com.example.mindmoving.views.calibracion.guiada.FaseParpadeoScreen
-import com.example.mindmoving.views.calibracion.guiada.FaseRelajacionScreen
 import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AjustesScreen
@@ -84,16 +82,10 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
 
         //CalibracionGuiada
         composable("calibracion_inicio") {CalibracionInicioScreen(navController = navController)}
-        composable("fase_enfoque") {FaseEnfoqueScreen(navController = navController)}
-        composable("fase_relajacion") {FaseRelajacionScreen(navController = navController)}
-        composable("parpadeo") { FaseParpadeoScreen(navController = navController) }
+        composable("fase_calibracion") {CalibracionCompletaScreen(navController = navController)}
 
         //quitar luego esta de pruebas
         composable("atencion") { AtencionPantalla(navController) }
-
-
-
-
     }
 }
 
