@@ -2,6 +2,7 @@ package com.example.mindmoving.views.calibracion.guiada
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -21,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -31,6 +33,8 @@ import com.example.mindmoving.neuroSkyService.NeuroSkyListener
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.*
 import com.example.mindmoving.utils.SessionManager
+import com.example.mindmoving.utils.SessionManager.usuarioActual
+import com.google.gson.Gson
 import com.neurosky.thinkgear.TGDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +48,26 @@ private const val TAG = "FaseCalibracionCompleta"
 
 @Composable
 fun CalibracionCompletaScreen(navController: NavHostController) {
+
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val perfilJson = prefs.getString("perfil_completo", null)
+
+        if (!perfilJson.isNullOrBlank()) {
+            try {
+                val usuario = Gson().fromJson(perfilJson, Usuario::class.java)
+                SessionManager.usuarioActual = usuario
+                Log.d("CALIBRACION", "✅ Usuario restaurado desde SharedPreferences: ${usuario.id}")
+            } catch (e: Exception) {
+                Log.e("CALIBRACION", "❌ Error al deserializar usuario: ${e.message}")
+            }
+        } else {
+            Log.e("CALIBRACION", "❌ No se encontró perfil_completo en SharedPreferences")
+        }
+    }
+
+
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -55,18 +78,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     var signalLevel by remember { mutableStateOf(200) }
     var estadoDiadema by remember { mutableStateOf("Sin conexión") }
 
-    var usuario by remember { mutableStateOf(SessionManager.usuarioActual ?: Usuario(
-        id = 0,
-        username = "desconocido",
-        email = "",
-        password = "",
-        perfilCalibracion = "",
-        valoresAtencion = ValoresEEG(0, 0, 0, 0f),
-        valoresMeditacion = ValoresEEG(0, 0, 0, 0f),
-        blinking = BlinkingData(0, 0),
-        alternancia = AlternanciaData(0, 0)
-    ))}
-
+    val usuario by remember { derivedStateOf { SessionManager.usuarioActual } }
 
     val atencion = remember { mutableStateListOf<Int>() }
     val meditacion = remember { mutableStateListOf<Int>() }
@@ -304,9 +316,22 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
     //TODO: joan para que veas como se crea la sesion, ya que tendrás que mandarla al server asegurando que coincida formato
     fun crearSesionEEG(): SesionEEGRequest {
+        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val perfilJson = prefs.getString("perfil_completo", null)
+
+        val idUsuario = if (!perfilJson.isNullOrBlank()) {
+            try {
+                val usuario = Gson().fromJson(perfilJson, Usuario::class.java)
+                usuario.id
+            } catch (e: Exception) {
+                ""
+            }
+        } else ""
+
         val duracion = ((System.currentTimeMillis() - (tiempoInicioSesion ?: System.currentTimeMillis())) / 1000).toInt()
+
         return SesionEEGRequest(
-            usuarioId = usuario.id.toString(), //TODO: debe ser el del usuario en sesion
+            usuarioId = idUsuario,
             fechaHora = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(Date()),
             duracion = duracion,
             valorMedioAtencion = calcularEEG(atencion).media.toFloat(),
@@ -315,6 +340,9 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             comandosEjecutados = "Calibración completa"
         )
     }
+
+
+
     //Calculo para determinar perfil de calibracion del usuario con los datos recogidos
     fun determinarPerfil(at: ValoresEEG, med: ValoresEEG): PerfilCalibracion {
         return PerfilCalibracion.values().minByOrNull { perfil ->
@@ -326,32 +354,17 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
     //TODO: joan esta es la más importante, guarda los datos en los objetos, debes aprovecharlos para mandarlos al server
     fun guardarDatos() {
-        val datosAt = calcularEEG(atencion)
-        val datosMed = calcularEEG(meditacion)
-        val datosBlink = BlinkingData(parpadeos.average().toInt(), 50)
+        val usuario = SessionManager.usuarioActual
 
-        val perfilSeleccionado = determinarPerfil(datosAt, datosMed)
+        Log.e("CALIBRACION", "🧠 ID del usuario en sesión: ${usuario?.id}")
+        Log.e("CALIBRACION", "🧠 Usuario completo: $usuario")
 
-        //TODO: joan este es el objeto de usuario que debes introducir sus datos al server (usuario en sesión)
-        // Actualiza el usuario con los nuevos datos
-        //actualizamos globalmente
-        SessionManager.usuarioActual = SessionManager.usuarioActual?.copy(
-            perfilCalibracion = perfilSeleccionado.nombre,
-            valoresAtencion = datosAt,
-            valoresMeditacion = datosMed,
-            blinking = datosBlink,
-            alternancia = perfilSeleccionado.alternancia
-        )
-
-        SessionManager.usuarioActual?.let {
-            usuario = it
+        if (usuario == null || usuario.id.isBlank()) {
+            Log.e("CALIBRACION", "❌ No se puede guardar: ID de usuario vacío")
+            Toast.makeText(context, "Error: ID de usuario no válido", Toast.LENGTH_LONG).show()
+            return
         }
 
-        usuario = SessionManager.usuarioActual!!
-
-
-
-        // Validacion para que no se garden datos sin q falte alguno
         if (atencion.size < 5 || meditacion.size < 5) {
             scope.launch {
                 snackbarHostState.showSnackbar("⚠️ No hay suficientes datos para calcular la calibración.")
@@ -359,17 +372,41 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             return
         }
 
+        val datosAt = calcularEEG(atencion)
+        val datosMed = calcularEEG(meditacion)
+        val datosBlink = BlinkingData(parpadeos.average().toInt(), 50)
+        val perfilSeleccionado = determinarPerfil(datosAt, datosMed)
 
-        sesionEEGGenerada = crearSesionEEG() //TODO joan: lo mismo con la sesion
+        // Actualizar el usuario globalmente con datos de calibración
+        val usuarioCompleto = Usuario(
+            id = usuario.id,
+            username = usuario.username,
+            email = usuario.email,
+            password = "", // o guárdalo si lo tienes
+            perfilCalibracion = perfilSeleccionado.nombre,
+            valoresAtencion = datosAt,
+            valoresMeditacion = datosMed,
+            blinking = datosBlink,
+            alternancia = perfilSeleccionado.alternancia
+        )
+
+        SessionManager.usuarioActual = usuarioCompleto
+
+
+        // Crear sesión EEG
+        sesionEEGGenerada = crearSesionEEG()
 
         Log.i(TAG, "✅ Datos guardados en usuario:")
+        Log.i(TAG, "   Usuario: ${usuario.username}")
         Log.i(TAG, "   Perfil: ${perfilSeleccionado.nombre}")
         Log.i(TAG, "   Atención: $datosAt")
         Log.i(TAG, "   Meditación: $datosMed")
         Log.i(TAG, "   Parpadeos: $datosBlink")
         Log.i(TAG, "   Alternancia: ${perfilSeleccionado.alternancia}")
 
-        scope.launch { snackbarHostState.showSnackbar("✅ Datos guardados y sesión generada") }
+        scope.launch {
+            snackbarHostState.showSnackbar("✅ Datos guardados y sesión generada")
+        }
     }
 
 
@@ -403,6 +440,32 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(8.dp))
             Text("Atención actual: $atencionActual | Meditación: $meditacionActual", color = Color.White)
+
+            //rpeuba joan
+            val usuarioDebug by remember { derivedStateOf { SessionManager.usuarioActual } }
+
+
+            Column {
+                Text(
+                    text = "👤 Usuario actual en sesión:",
+                    color = Color.LightGray,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "ID: ${usuarioDebug?.id ?: "nulo"}",
+                    color = Color.Yellow
+                )
+                Text(
+                    text = "Username: ${usuarioDebug?.username ?: "nulo"}",
+                    color = Color.Yellow
+                )
+                Text(
+                    text = "Email: ${usuarioDebug?.email ?: "nulo"}",
+                    color = Color.Yellow
+                )
+            }
+
+
             Spacer(Modifier.height(16.dp))
 
             if (!conectado && !intentandoConectar) {
@@ -442,19 +505,35 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
             if (datosListos) {
                 Spacer(Modifier.height(8.dp))
+
                 Button(onClick = {
+                    val usuarioSesion = SessionManager.usuarioActual
+
+                    if (usuarioSesion == null || usuarioSesion.id.isBlank()) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("❌ Error: No hay usuario en sesión o ID vacío.")
+                        }
+                        return@Button // 👈 importante
+                    }
+
                     guardarDatos()
                     resultadoAtencion = null
                     resultadoMeditacion = null
                     resultadoParpadeo = null
-                }) { Text("💾 Guardar datos") }
+                }) {
+                    Text("💾 Guardar datos")
+                }
 
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = {
-                    atencion.clear(); meditacion.clear(); parpadeos.clear()
-                    datosListos = false; sesionEEGGenerada = null
+                    atencion.clear()
+                    meditacion.clear()
+                    parpadeos.clear()
+                    datosListos = false
+                    sesionEEGGenerada = null
                 }) { Text("🔄 Repetir calibración") }
             }
+
 
             //Muestra los resultados de la calibracion actual
             resultadoAtencion?.let { at ->
@@ -488,6 +567,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                         Text("Variabilidad de meditación: ${user.valoresMeditacion.variabilidad}", color = Color.Blue)
                         Text("Parpadeo promedio: ${user.blinking.fuerzaPromedio}", color = Color.Yellow)
                     }
+
                 }
             }
 

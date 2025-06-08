@@ -3,7 +3,7 @@ package com.example.mindmoving.retrofit.models
 // Datos relevantes del usuario para personalizar el control del RC según su perfil cognitivo
 
 data class Usuario(
-    val id: Int,
+    val id: String,
     val username: String,
     val email: String,
     val password: String,

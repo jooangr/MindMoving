@@ -35,7 +35,7 @@ interface ApiService {
 
 
     //Pedido por omar
-    @POST("sesiones")
+    @POST("/api/sesiones")
     suspend fun crearSesionEEG(@Body sesion: SesionEEGRequest): Response<Void>
 
     //Recibir sesiones del BACKEND
