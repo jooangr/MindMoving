@@ -213,7 +213,7 @@ fun ContentLoginView(navController: NavHostController) {
                                         // Obtener el perfil del backend y decidir navegación
                                         val userId = response.body()?.userId ?: return@launch
 
-// 1. Obtener datos del usuario desde el backend
+                                        // 1. Obtener datos del usuario desde el backend
                                         val userInfoResponse = apiService.getUsuario(userId)
                                         if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
                                             Toast.makeText(context, "Error obteniendo información del usuario", Toast.LENGTH_SHORT).show()
@@ -221,11 +221,11 @@ fun ContentLoginView(navController: NavHostController) {
                                         }
                                         val userInfo = userInfoResponse.body()!!
 
-// 2. Obtener perfil de calibración si existe
+                                        // 2. Obtener perfil de calibración si existe
                                         val perfilResponse = apiService.getPerfil(userId)
                                         val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
-// 3. Construir usuario completo con datos combinados
+                                        // 3. Construir usuario completo con datos combinados
                                         val usuarioCompleto = Usuario(
                                             id = userId,
                                             username = userInfo.username,
@@ -238,7 +238,7 @@ fun ContentLoginView(navController: NavHostController) {
                                             alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
                                         )
 
-// 4. Guardar en SharedPreferences y en SessionManager
+                                        // 4. Guardar en SharedPreferences y en SessionManager
                                         val perfilJson = Gson().toJson(usuarioCompleto)
                                         sharedPrefs.edit()
                                             .putString("perfil_tipo", perfil?.tipo)
@@ -250,7 +250,7 @@ fun ContentLoginView(navController: NavHostController) {
                                         Log.d("LOGIN", "✅ Usuario COMPLETO guardado con ID: ${usuarioCompleto.id}")
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
 
-// 5. Navegar según si tiene perfil o no
+                                        // 5. Navegar según si tiene perfil o no
                                         if (perfil != null) {
                                             navController.navigate("menu") {
                                                 popUpTo(0) { inclusive = true }
