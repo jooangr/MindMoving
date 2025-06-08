@@ -37,7 +37,7 @@ fun CalibracionInicioScreen(navController: NavHostController) {
             )
             Spacer(Modifier.height(32.dp))
             Button(
-                onClick = { navController.navigate("fase_enfoque") },
+                onClick = { navController.navigate("fase_calibracion") },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
             ) {
                 Text("INICIAR CALIBRACIÓN")

@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,13 +53,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
+import com.example.mindmoving.retrofit.models.AlternanciaData
+import com.example.mindmoving.retrofit.models.BlinkingData
 import com.example.mindmoving.retrofit.models.LoginRequest
+import com.example.mindmoving.retrofit.models.Usuario
+import com.example.mindmoving.retrofit.models.UsuarioLogin
+import com.example.mindmoving.retrofit.models.ValoresEEG
+import com.example.mindmoving.utils.SessionManager
 import com.google.gson.Gson
 
 
 @Composable
 fun Login(navController: NavHostController) {
+
     ContentLoginView(navController)
+
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -174,7 +183,6 @@ fun ContentLoginView(navController: NavHostController) {
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row {
-                val context = LocalContext.current
 
                 Row {
                     val startColorButton = Color(67, 137, 254)
@@ -203,45 +211,56 @@ fun ContentLoginView(navController: NavHostController) {
                                             .apply()
 
                                         // Obtener el perfil del backend y decidir navegación
-                                        try {
-                                            val perfilResponse = apiService.getPerfil(response.body()?.userId ?: "")
-                                            if (perfilResponse.isSuccessful && perfilResponse.body() != null) {
-                                                val perfil = perfilResponse.body()
-                                                val perfilJson = Gson().toJson(perfil)
+                                        val userId = response.body()?.userId ?: return@launch
 
-                                                // Guardar tipo y perfil completo
-                                                sharedPrefs.edit()
-                                                    .putString("perfil_tipo", perfil?.tipo)
-                                                    .putString("perfil_completo", perfilJson)
-                                                    .apply()
-
-                                                Log.d("LOGIN", "Perfil encontrado. Navegando al menú principal.")
-                                                Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
-
-                                                // 👇 Usuario con perfil → Menú
-                                                navController.navigate("menu") {
-                                                    popUpTo(0) { inclusive = true }
-                                                }
-
-                                            } else {
-                                                // 👇 Usuario sin perfil → Calibración
-                                                Log.d("LOGIN", "No hay perfil. Navegando a calibración.")
-                                                Toast.makeText(context, "Bienvenido, calibremos tu perfil", Toast.LENGTH_SHORT).show()
-
-                                                navController.navigate("calibracion_menu") {
-                                                    popUpTo(0) { inclusive = true }
-                                                }
-                                            }
-                                        } catch (e: Exception) {
-                                            Log.e("Login", "Error al obtener perfil: ${e.message}")
-                                            Toast.makeText(context, "Error cargando perfil", Toast.LENGTH_SHORT).show()
+// 1. Obtener datos del usuario desde el backend
+                                        val userInfoResponse = apiService.getUsuario(userId)
+                                        if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
+                                            Toast.makeText(context, "Error obteniendo información del usuario", Toast.LENGTH_SHORT).show()
+                                            return@launch
                                         }
+                                        val userInfo = userInfoResponse.body()!!
 
+// 2. Obtener perfil de calibración si existe
+                                        val perfilResponse = apiService.getPerfil(userId)
+                                        val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
+// 3. Construir usuario completo con datos combinados
+                                        val usuarioCompleto = Usuario(
+                                            id = userId,
+                                            username = userInfo.username,
+                                            email = userInfo.email,
+                                            password = "", //contraseña no por qle backend no deja
+                                            perfilCalibracion = perfil?.tipo ?: "",
+                                            valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
+                                            valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
+                                            blinking = perfil?.blinking ?: BlinkingData(0, 0),
+                                            alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
+                                        )
+
+// 4. Guardar en SharedPreferences y en SessionManager
+                                        val perfilJson = Gson().toJson(usuarioCompleto)
+                                        sharedPrefs.edit()
+                                            .putString("perfil_tipo", perfil?.tipo)
+                                            .putString("perfil_completo", perfilJson)
+                                            .apply()
+
+                                        SessionManager.usuarioActual = usuarioCompleto
+
+                                        Log.d("LOGIN", "✅ Usuario COMPLETO guardado con ID: ${usuarioCompleto.id}")
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
-                                        navController.navigate("calibracion_menu") {
-                                            popUpTo(0) { inclusive = true } // ⚠️ elimina TODA la pila de navegación
+
+// 5. Navegar según si tiene perfil o no
+                                        if (perfil != null) {
+                                            navController.navigate("menu") {
+                                                popUpTo(0) { inclusive = true }
+                                            }
+                                        } else {
+                                            navController.navigate("calibracion_menu") {
+                                                popUpTo(0) { inclusive = true }
+                                            }
                                         }
+
 
                                     } else {
                                         Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
