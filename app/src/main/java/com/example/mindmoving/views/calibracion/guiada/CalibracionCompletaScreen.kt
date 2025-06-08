@@ -78,8 +78,6 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     var signalLevel by remember { mutableStateOf(200) }
     var estadoDiadema by remember { mutableStateOf("Sin conexión") }
 
-    val usuario by remember { derivedStateOf { SessionManager.usuarioActual } }
-
     val atencion = remember { mutableStateListOf<Int>() }
     val meditacion = remember { mutableStateListOf<Int>() }
     val parpadeos = remember { mutableStateListOf<Int>() }
