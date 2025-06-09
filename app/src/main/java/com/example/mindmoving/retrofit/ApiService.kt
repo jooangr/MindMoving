@@ -4,6 +4,7 @@ import com.example.mindmoving.retrofit.models.ActualizarUsuarioRequest
 import com.example.mindmoving.retrofit.models.GenericResponse
 import com.example.mindmoving.retrofit.models.LoginRequest
 import com.example.mindmoving.retrofit.models.LoginResponse
+import com.example.mindmoving.retrofit.models.PerfilCalibracionRequest
 import com.example.mindmoving.retrofit.models.PerfilCalibracionResponse
 import com.example.mindmoving.retrofit.models.RegisterRequest
 import com.example.mindmoving.retrofit.models.SesionEEGRequest
@@ -26,7 +27,7 @@ interface ApiService {
     suspend fun loginUser(@Body request: LoginRequest): Response<LoginResponse>
 
     // Registrarse por primera vez
-    @POST("api/register")
+    @POST("/api/register")
     suspend fun registerUser(@Body request: RegisterRequest): Response<GenericResponse>
 
     // Guardar sesion de EEG
@@ -46,13 +47,10 @@ interface ApiService {
     @GET("/api/perfil/{usuarioId}")
     suspend fun getPerfil(@Path("usuarioId") usuarioId: String): Response<PerfilCalibracionResponse>
 
-    @POST("/api/verify-password")//login
-    suspend fun verificarPasswordLogin(
-        @Query("userId") userId: String,
-        @Body password: String
-    ): Response<VerificarPasswordResponse>
+    @POST("/api/perfil")
+    suspend fun crearPerfil(@Body perfil: PerfilCalibracionRequest): Response<GenericResponse>
 
-    @POST("/api/verificar-password/{id}")//editarpefil
+    @POST("/api/verificar-password/{id}")//editarpefil y register
     suspend fun verificarPasswordEditarPerfil(
         @Path("id") id: String,
         @Body request: VerificarPasswordRequest

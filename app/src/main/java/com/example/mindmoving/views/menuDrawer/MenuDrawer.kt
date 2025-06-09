@@ -26,6 +26,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.platform.LocalContext
+import com.example.mindmoving.utils.SessionManager
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +36,11 @@ import androidx.compose.material3.DropdownMenuItem
 fun MainLayout(navController: NavHostController, content: @Composable (PaddingValues) -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+
+
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -88,13 +96,39 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Cerrar sesión") },
                     selected = false,
                     onClick = {
-                        navController.navigate("login") {
-                            popUpTo(0) // limpia navegación
-                        }
-                        scope.launch { drawerState.close() }
+                        mostrarDialogoCerrarSesion = true
                     }
                 )
             }
+
+            if (mostrarDialogoCerrarSesion) {
+                AlertDialog(
+                    onDismissRequest = { mostrarDialogoCerrarSesion = false },
+                    title = { Text("Cerrar sesión") },
+                    text = { Text("¿Estás seguro de que quieres cerrar sesión?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            SessionManager.logout(context)
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                            scope.launch { drawerState.close() }
+                            mostrarDialogoCerrarSesion = false
+                        }) {
+                            Text("Sí")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            mostrarDialogoCerrarSesion = false
+                        }) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
+
+
 
         }
     ) {

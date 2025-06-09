@@ -1,6 +1,6 @@
 package com.example.mindmoving.retrofit.models
 
 data class GenericResponse(
-    val success: Boolean,
+    val success: Boolean? = null,
     val message: String
 )
