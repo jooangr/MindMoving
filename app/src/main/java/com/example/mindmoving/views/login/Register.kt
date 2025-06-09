@@ -1,43 +1,32 @@
 package com.example.mindmoving.views.login
 
-import android.widget.Toast
+
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TextButton
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.compose.material3.Button
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.RegisterRequest
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun RegisterScreen(navController: NavHostController) {
@@ -45,10 +34,29 @@ fun RegisterScreen(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = {
+                Text("Error en el registro", color = Color.Black)
+            },
+            text = {
+                Text(dialogMessage, color = Color.Black)
+            },
+            confirmButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Aceptar", color = Color(0xFF4CAF50))
+                }
+            },
+            containerColor = Color.White
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -56,13 +64,12 @@ fun RegisterScreen(navController: NavHostController) {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF3F2B96), // morado azulado
-                        Color(0xFF5C258D), // violeta intenso
-                        Color(0xFF6A0572)  // púrpura oscuro
+                        Color(0xFF3F2B96),
+                        Color(0xFF5C258D),
+                        Color(0xFF6A0572)
                     )
                 )
             )
-
             .padding(24.dp)
     ) {
         Column(
@@ -79,30 +86,21 @@ fun RegisterScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = {
-                    Text(
-                        text = "Nombre de usuario",
-                        color = Color(0xFFCCCCCC) // Gris claro
-                    )
-                },
+                label = { Text("Nombre de usuario", color = Color(0xFFCCCCCC)) },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color.White,
                     unfocusedBorderColor = Color.Gray,
                     textColor = Color.White,
                     cursorColor = Color.White
-                    // Puedes quitar focusedLabelColor si ya lo estás poniendo arriba manualmente
                 )
             )
-
 
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = {
-                    Text(
-                        text= "Correo electrónico", color = Color(0xFFCCCCCC))},
+                label = { Text("Correo electrónico", color = Color(0xFFCCCCCC)) },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color.White,
                     unfocusedBorderColor = Color.Gray,
@@ -117,8 +115,7 @@ fun RegisterScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(
-                    text = "Contraseña", color = Color(0xFFCCCCCC) ) },
+                label = { Text("Contraseña", color = Color(0xFFCCCCCC)) },
                 visualTransformation = PasswordVisualTransformation(),
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color.White,
@@ -141,19 +138,25 @@ fun RegisterScreen(navController: NavHostController) {
                                     email = email,
                                     password = password
                                 )
-
                             )
-                            if (response.isSuccessful && response.body()?.success == true) {
-                                Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                            if (response.isSuccessful) {
                                 navController.navigate("login") {
                                     popUpTo("register") { inclusive = true }
                                 }
                             } else {
-                                val errorMsg = response.body()?.message ?: "Error al registrar"
-                                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                                val errorBody = response.errorBody()?.string()
+                                Log.e("Registro", "Error: $errorBody")
+                                dialogMessage = when {
+                                    errorBody?.contains("Correo ya registrado") == true -> "Ese correo ya está en uso"
+                                    errorBody?.contains("Nombre de usuario ya registrado") == true -> "Ese nombre de usuario ya está en uso"
+                                    else -> "Ocurrió un error. Intenta nuevamente"
+                                }
+
+                                showDialog = true
                             }
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                            dialogMessage = "Error de red: ${e.message}"
+                            showDialog = true
                         }
                     }
                 },
@@ -161,7 +164,6 @@ fun RegisterScreen(navController: NavHostController) {
             ) {
                 Text("Registrarse", color = Color.White)
             }
-
 
             Spacer(modifier = Modifier.height(16.dp))
 

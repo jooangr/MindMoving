@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,6 +80,25 @@ fun ContentLoginView(navController: NavHostController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
+
+    //Error y avisos
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Error de inicio de sesión", color = Color.Black) },
+            text = { Text(dialogMessage, color = Color.Black) },
+            confirmButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Aceptar", color = Color(0xFF4CAF50))
+                }
+            },
+            containerColor = Color.White
+        )
+    }
+
 
     Box(
         modifier = Modifier.fillMaxSize().padding(),
@@ -216,13 +237,16 @@ fun ContentLoginView(navController: NavHostController) {
                                         // 1. Obtener datos del usuario desde el backend
                                         val userInfoResponse = apiService.getUsuario(userId)
                                         if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
-                                            Toast.makeText(context, "Error obteniendo información del usuario", Toast.LENGTH_SHORT).show()
+                                            dialogMessage = "Error obteniendo información del usuario"
+                                            showDialog = true
                                             return@launch
                                         }
                                         val userInfo = userInfoResponse.body()!!
 
                                         // 2. Obtener perfil de calibración si existe
                                         val perfilResponse = apiService.getPerfil(userId)
+                                        Log.d("LOGIN", "Perfil recibido del backend: ${perfilResponse.body()}")
+
                                         val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
                                         // 3. Construir usuario completo con datos combinados
@@ -263,10 +287,12 @@ fun ContentLoginView(navController: NavHostController) {
 
 
                                     } else {
-                                        Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
+                                        dialogMessage = "Usuario, correo o contraseña incorrectos"
+                                        showDialog = true
                                     }
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                                    dialogMessage = "Error de red: ${e.message}"
+                                    showDialog = true
                                 }
                             }
 

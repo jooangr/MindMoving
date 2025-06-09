@@ -99,6 +99,11 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
     var sesionEnviada by remember { mutableStateOf(false) }
 
+    //PerfilCalibracion
+    var mostrarPerfilAsignado by remember { mutableStateOf(false) }
+    var perfilAsignadoNombre by remember { mutableStateOf("") }
+
+
 
     // Función para obtener descripción de calidad de señal
     fun getSignalQualityDescription(signal: Int): String {
@@ -339,8 +344,6 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         )
     }
 
-
-
     //Calculo para determinar perfil de calibracion del usuario con los datos recogidos
     fun determinarPerfil(at: ValoresEEG, med: ValoresEEG): PerfilCalibracion {
         return PerfilCalibracion.values().minByOrNull { perfil ->
@@ -375,6 +378,12 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         val datosBlink = BlinkingData(parpadeos.average().toInt(), 50)
         val perfilSeleccionado = determinarPerfil(datosAt, datosMed)
 
+        perfilAsignadoNombre = perfilSeleccionado.nombre
+        mostrarPerfilAsignado = true
+
+
+
+
         // Actualizar el usuario globalmente con datos de calibración
         val usuarioCompleto = Usuario(
             id = usuario.id,
@@ -405,6 +414,29 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         scope.launch {
             snackbarHostState.showSnackbar("✅ Datos guardados y sesión generada")
         }
+
+        val perfilRequest = PerfilCalibracionRequest(
+            usuarioId = usuario.id,
+            tipo = perfilSeleccionado.nombre,
+            valoresAtencion = datosAt,
+            valoresMeditacion = datosMed,
+            alternancia = perfilSeleccionado.alternancia,
+            blinking = datosBlink
+        )
+
+        scope.launch {
+            try {
+                val response = ApiClient.getApiService().crearPerfil(perfilRequest)
+                if (response.isSuccessful) {
+                    snackbarHostState.showSnackbar("✅ Perfil creado correctamente: ${perfilSeleccionado.nombre}")
+                } else {
+                    snackbarHostState.showSnackbar("❌ Error al crear perfil: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                snackbarHostState.showSnackbar("⚠️ Error red al crear perfil: ${e.localizedMessage}")
+            }
+        }
+
     }
 
 
@@ -606,13 +638,26 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                 }
             }
 
-
-
             // Espacio final para mejor visualización
             Spacer(Modifier.height(32.dp))
+
+            if (mostrarPerfilAsignado) {
+                AlertDialog(
+                    onDismissRequest = { mostrarPerfilAsignado = false },
+                    title = { Text("🎯 Perfil asignado") },
+                    text = { Text("Se te ha asignado el perfil: $perfilAsignadoNombre") },
+                    confirmButton = {
+                        TextButton(onClick = { mostrarPerfilAsignado = false }) {
+                            Text("Aceptar")
+                        }
+                    }
+                )
+            }
         }
     }
 }
+
+
 
 @Composable
 @Preview
