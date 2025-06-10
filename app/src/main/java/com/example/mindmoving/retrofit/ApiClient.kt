@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 
-    private const val BASE_URL = "http://192.168.1.137:3000/" //IP de tu pc en puto
+    private const val BASE_URL = "http://192.168.1.129:3000/" //IP de tu pc en puto
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()

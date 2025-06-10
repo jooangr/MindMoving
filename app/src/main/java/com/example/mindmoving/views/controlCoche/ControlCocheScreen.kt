@@ -51,6 +51,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.InetSocketAddress
@@ -165,7 +166,7 @@ fun ControlCocheScreen(navController: NavHostController) {
                     val jsonEncoded = URLEncoder.encode(json, "UTF-8")
                     val ip = "192.168.4.1"
                     val puerto = 100
-                    val comando = """{"N":1,"D1":2,"D2":150}""" // Avanzar
+                    val comando = """{"N":3,"H":"0001","D1":1,"D2":100}""" // Avanzar
 
                     //enviarComandoSocket("192.168.4.1", 80, json)
                     //sendTcpCommand("""{"command":"forward"}""", port = 100)
@@ -177,28 +178,32 @@ fun ControlCocheScreen(navController: NavHostController) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = {
                         val url = "http://192.168.4.1"
-                        val json = """{"N":3,"H":"0001","D1":3,"D2":150}""" // Izquierda
+                        val json = """{"N":3,"H":"0003","D1":3,"D2":150}""" // Izquierda
                         val jsonEncoded = URLEncoder.encode(json, "UTF-8")
+                        val comando = """{"N":3,"H":"0004","D1":3,"D2":150}""" // Izquierda
+
                         val ip = "192.168.4.1"
                         val puerto = 100
 
                         //enviarComandoSocket("192.168.4.1", 80, json)
                         //sendTcpCommand("left", port = 100)
-                        enviarComandoTCP(ip, puerto, json)
+                        enviarComandoTCP(ip, puerto, comando)
                     }) {
                         Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Izquierda", tint = Color.White, modifier = Modifier.size(48.dp))
                     }
                     Spacer(modifier = Modifier.width(48.dp))
                     IconButton(onClick = {
                         val url = "http://192.168.4.1"
-                        val json = """{"N":3,"H":"0001","D1":4,"D2":150}""" // Derecha
+                        val json = """{"N":3,"H":"0004","D1":4,"D2":150}""" // Derecha
                         val jsonEncoded = URLEncoder.encode(json, "UTF-8")
+                        val comando = """{"N":3,"D1":4,"D2":150}""" // Derecha
+
                         val ip = "192.168.4.1"
                         val puerto = 100
 
                         //enviarComandoSocket("192.168.4.1", 80, json)
                         //sendTcpCommand("right", port = 100)
-                        enviarComandoTCP(ip, puerto, json)
+                        enviarComandoTCP(ip, puerto, comando)
                     }) {
                         Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Derecha", tint = Color.White, modifier = Modifier.size(48.dp))
                     }
@@ -206,13 +211,14 @@ fun ControlCocheScreen(navController: NavHostController) {
 
                 IconButton(onClick = {
                     val url = "http://192.168.4.1"
-                    val json = """{"N":3,"H":"0001","D1":2,"D2":150}""" // Atrás
+                    val json = """{"N":3,"H":"0002","D1":2,"D2":150}""" // Atrás
                     val jsonEncoded = URLEncoder.encode(json, "UTF-8")
+                    val comando = """{"N":3,"D1":2,"D2":100}""" // Retroceder
                     val ip = "192.168.4.1"
                     val puerto = 100
 
                     //sendTcpCommand("backward", port = 100)
-                    enviarComandoTCP(ip, puerto, json)
+                    enviarComandoTCP(ip, puerto, comando)
                 }) {
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Atrás", tint = Color.White, modifier = Modifier.size(48.dp))
                 }
@@ -298,6 +304,44 @@ fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
     Thread {
         try {
             val socket = Socket(ip, puerto)
+            val writer = BufferedWriter(OutputStreamWriter(socket.getOutputStream(), Charsets.US_ASCII))
+            writer.write(comando)  // Se agrega terminador de línea estándar
+            writer.flush()
+            writer.close()
+            socket.close()
+            Log.d("SocketCoche", "Comando enviado correctamente")
+        } catch (e: Exception) {
+            Log.e("SocketCoche", "Error al enviar comando: ${e.message}")
+        }
+    }.start()
+}
+
+
+/*
+fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
+    Thread {
+        try {
+            Log.d("SocketCoche", "Enviando: $comando a $ip:$puerto")
+            val socket = Socket(ip, puerto)
+            val output = socket.getOutputStream()
+            output.write(comando.toByteArray(Charsets.UTF_8))
+            output.flush()
+            output.close()
+            socket.close()
+            Log.d("SocketCoche", "Comando enviado correctamente")
+        } catch (e: Exception) {
+            Log.e("SocketCoche", "Error al enviar comando: ${e.message}")
+        }
+    }.start()
+}
+
+ */
+
+/*
+fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
+    Thread {
+        try {
+            val socket = Socket(ip, puerto)
             val output = socket.getOutputStream()
             output.write(comando.toByteArray())
             output.flush()
@@ -307,25 +351,6 @@ fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
             Log.e("SocketCoche", "Error al enviar comando: ${e.message}")
         }
     }.start()
-}
-
-/*
-fun sendTcpCommand(command: String, port: Int = 100) {
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val socket = Socket()
-            socket.connect(InetSocketAddress("192.168.4.1", port), 2000)
-
-            val output = PrintWriter(socket.getOutputStream(), true)
-            output.print(command)
-            output.flush()
-
-            socket.close()
-            Log.d("SocketCoche", "Comando enviado correctamente: $command")
-        } catch (e: Exception) {
-            Log.e("SocketCoche", "Error al enviar: ${e.message}")
-        }
-    }
 }
 
  */
