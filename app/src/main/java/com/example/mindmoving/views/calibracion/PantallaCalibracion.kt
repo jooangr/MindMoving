@@ -27,7 +27,10 @@ import androidx.compose.ui.platform.LocalContext
 fun PantallaCalibracion(navController: NavHostController) {
 
     val gradientBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+        colors = listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.primaryContainer
+        )
     )
     /**
      * Intercepta el botón físico de atrás cuando estás en esta pantalla
@@ -38,7 +41,6 @@ fun PantallaCalibracion(navController: NavHostController) {
     BackHandler(enabled = true) {
         (context as? Activity)?.finish()
     }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -53,8 +55,8 @@ fun PantallaCalibracion(navController: NavHostController) {
         ) {
             Text(
                 text = "Opciones de Calibración",
-                fontSize = 26.sp,
-                color = Color.White
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onPrimary
             )
 
             CalibracionButton("Perfil de calibración") {
@@ -81,19 +83,20 @@ fun PantallaCalibracion(navController: NavHostController) {
                 navController.navigate("simulador_comandos")
             }
 
-            // Botón "Hacer luego"
             TextButton(
                 onClick = {
                     navController.navigate("menu") {
                         popUpTo(0) { inclusive = true }
                     }
-
                 },
                 modifier = Modifier.padding(top = 12.dp)
             ) {
-                Text("Hacer luego", color = Color.White, fontSize = 16.sp)
+                Text(
+                    "Hacer luego",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
-
         }
     }
 }
@@ -106,7 +109,7 @@ fun CalibracionButton(text: String, onClick: () -> Unit) {
             .fillMaxWidth()
             .height(55.dp),
         shape = RoundedCornerShape(30),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Text(text = text, fontSize = 18.sp, color = Color.White)
     }

@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 fun EditarPerfilScreen(navController: NavHostController) {
 
     val gradientBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
     )
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()

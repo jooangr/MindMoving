@@ -69,6 +69,7 @@ dependencies {
     //Implementacion del SDK del NeuroSky
     implementation("com.github.pwittchen:neurosky-android-sdk:0.0.2")
     implementation(libs.protolite.well.known.types)
+    implementation(libs.androidx.ui.text.google.fonts)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -81,6 +82,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.6")
     //Dependencia de BottomNavigation
     implementation("androidx.compose.material:material:1.3.1")
+
+    implementation ("androidx.compose.material3:material3:1.3.2")
 
     //Room Database
     /**implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")

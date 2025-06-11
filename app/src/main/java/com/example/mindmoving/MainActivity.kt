@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.navigation.NavGraph
 import com.example.mindmoving.retrofit.models.Usuario
-import com.example.mindmoving.ui.theme.MindMovingTheme
+import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.utils.SessionManager
 import com.google.gson.Gson
 
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            MindMovingTheme {
+            AppTheme {
                 AppNavigator()
             }
         }

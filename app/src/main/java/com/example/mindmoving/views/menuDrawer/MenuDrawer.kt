@@ -39,9 +39,6 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
     var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-
-
-
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = true,
@@ -191,7 +188,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color(0xFFF5F5F5),
+                        containerColor = MaterialTheme.colorScheme.surface,
                         titleContentColor = Color.Black,
                         navigationIconContentColor = Color.Black
                     )

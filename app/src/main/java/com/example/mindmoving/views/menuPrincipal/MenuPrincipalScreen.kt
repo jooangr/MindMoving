@@ -52,7 +52,8 @@ import kotlinx.coroutines.delay
 fun MainScreenMenu(navController: NavHostController) {
 
     val gradientBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+      //  colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
     )
 
     val context = LocalContext.current
@@ -128,7 +129,8 @@ fun MainScreenMenu(navController: NavHostController) {
                         Text(
                             "Bienvenido a MindMoving",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFF3F51B5)
+                            //color = Color(0xFF3F51B5)
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             "Menú Principal",
@@ -185,7 +187,8 @@ fun MainScreenMenu(navController: NavHostController) {
                 ) {
                     Button(
                         onClick = { navController.navigate("atencion") },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
+                       // colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier
                             .fillMaxWidth(0.8f)
                             .padding(vertical = 8.dp)
@@ -236,7 +239,8 @@ fun MainScreenMenu(navController: NavHostController) {
                             Text(
                                 "Gráficas recientes",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color(0xFF3F51B5)
+                                //color = Color(0xFF3F51B5)
+                                color = MaterialTheme.colorScheme.primary
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -244,7 +248,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             SimpleBarChart(
                                 title = "Nivel de Atención",
                                 values = listOf(20f, 35f, 50f, 70f, 60f),
-                                color = Color(0xFF42A5F5)
+                                color = MaterialTheme.colorScheme.primary
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -252,7 +256,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             SimpleBarChart(
                                 title = "Nivel de Relajación",
                                 values = listOf(15f, 40f, 30f, 60f, 45f),
-                                color = Color(0xFF66BB6A)
+                                color = MaterialTheme.colorScheme.tertiary
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -260,7 +264,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             SimpleBarChart(
                                 title = "Nivel de Parpadeo",
                                 values = listOf(5f, 10f, 7f, 12f, 8f),
-                                color = Color(0xFFEF5350)
+                                color = MaterialTheme.colorScheme.error
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -268,7 +272,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             SimpleLineChartPlano(
                                 title = "Nivel de Atención",
                                 values = listOf(20f, 35f, 50f, 70f, 60f),
-                                lineColor = Color(0xFF42A5F5)
+                                lineColor = MaterialTheme.colorScheme.primary
                             )
                         }
                     }

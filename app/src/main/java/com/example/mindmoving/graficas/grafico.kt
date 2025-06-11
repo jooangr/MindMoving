@@ -2,15 +2,7 @@ package com.example.mindmoving.graficas
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +16,7 @@ import androidx.compose.ui.unit.dp
 fun SimpleBarChart(
     title: String,
     values: List<Float>,
-    color: Color,
+    color: Color = MaterialTheme.colorScheme.primary,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -33,7 +25,11 @@ fun SimpleBarChart(
             .fillMaxWidth(),
         horizontalAlignment = Alignment.Start
     ) {
-        Text(title, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -48,7 +44,7 @@ fun SimpleBarChart(
                 Box(
                     modifier = Modifier
                         .width(20.dp)
-                        .height(value.dp * 2) // Escalado visual
+                        .height(value.dp * 2)
                         .background(color)
                 )
             }
@@ -61,26 +57,31 @@ fun SimpleLineChartPlano(
     title: String,
     values: List<Float>,
     modifier: Modifier = Modifier,
-    lineColor: Color = Color.Cyan
+    lineColor: Color = MaterialTheme.colorScheme.primary
 ) {
     val maxValue = values.maxOrNull() ?: 1f
     val minValue = values.minOrNull() ?: 0f
-    val verticalPadding = 16.dp
-    val horizontalSpacing = 60f
 
     Column(
         modifier = modifier
             .padding(16.dp)
             .fillMaxWidth()
     ) {
-        Text(title, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
-        Canvas(modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .background(Color(0x22222222))) {
 
+        val axisColor = MaterialTheme.colorScheme.onBackground
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.13f))
+        ) {
             val canvasHeight = size.height
             val canvasWidth = size.width
             val pointSpacing = canvasWidth / (values.size - 1).coerceAtLeast(1)
@@ -90,7 +91,6 @@ fun SimpleLineChartPlano(
                 Offset(index * pointSpacing, scaledY)
             }
 
-            // Dibujar líneas entre puntos
             for (i in 0 until points.size - 1) {
                 drawLine(
                     color = lineColor,
@@ -100,14 +100,12 @@ fun SimpleLineChartPlano(
                 )
             }
 
-            // Dibujar puntos
             points.forEach { point ->
                 drawCircle(color = lineColor, radius = 6f, center = point)
             }
 
-            // Dibujar ejes base (opcional)
             drawLine(
-                color = Color.White,
+                color = axisColor,
                 start = Offset(0f, canvasHeight),
                 end = Offset(canvasWidth, canvasHeight),
                 strokeWidth = 2f
@@ -115,4 +113,3 @@ fun SimpleLineChartPlano(
         }
     }
 }
-

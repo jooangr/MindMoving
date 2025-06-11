@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -446,7 +447,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFF101020))
+                .background(MaterialTheme.colorScheme.surface)//backgorund estaba antes
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
@@ -569,7 +570,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             resultadoAtencion?.let { at ->
                 resultadoMeditacion?.let { med ->
                     resultadoParpadeo?.let { blink ->
-                        Card(Modifier.padding(16.dp), colors = CardDefaults.cardColors(Color(0xFF1E1E2E))) {
+                        Card(Modifier.padding(16.dp), colors = cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                             Column(Modifier.padding(16.dp)) {
                                 Text("📊 Resultados actuales:", color = Color.White)
                                 Text("Atención media: ${at.media}", color = Color.Green)
@@ -586,7 +587,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             //TODO: joan, el usuario es el del objeto, o sea que empieza con 0 hasta que se guardan datos, molaría que fuese el del usuario en sesión desde el primer momento
             //Muestra los datos guardado del usuario en sesión por el sesionManager
             Spacer(Modifier.height(16.dp))
-            Card(Modifier.padding(16.dp), colors = CardDefaults.cardColors(Color(0xFF2A2A3E))) {
+            Card(Modifier.padding(16.dp), colors = cardColors(contentColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Column(Modifier.padding(16.dp)) {
                     SessionManager.usuarioActual?.let { user ->
                         Text("👤 Usuario: ${user.username}", color = Color.Cyan)
@@ -602,7 +603,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             }
 
             sesionEEGGenerada?.let {
-                Card(Modifier.padding(16.dp), colors = CardDefaults.cardColors(Color(0xFF0F3460))) {
+                Card(Modifier.padding(16.dp), colors = CardDefaults.cardColors(contentColor = MaterialTheme.colorScheme.primaryContainer)) {
                     Column(Modifier.padding(16.dp)) {
                         Text("📄 Sesión EEG generada:", color = Color.White)
                         Text("Duración: ${it.duracion}s", color = Color.LightGray)

@@ -22,12 +22,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,14 +42,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mindmoving.ui.theme.Typography
+import androidx.compose.material3.OutlinedTextFieldDefaults
+
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavHostController
 import com.example.mindmoving.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
@@ -59,10 +56,11 @@ import com.example.mindmoving.retrofit.models.AlternanciaData
 import com.example.mindmoving.retrofit.models.BlinkingData
 import com.example.mindmoving.retrofit.models.LoginRequest
 import com.example.mindmoving.retrofit.models.Usuario
-import com.example.mindmoving.retrofit.models.UsuarioLogin
 import com.example.mindmoving.retrofit.models.ValoresEEG
+import com.example.mindmoving.ui.theme.AppTypography
 import com.example.mindmoving.utils.SessionManager
 import com.google.gson.Gson
+
 
 
 @Composable
@@ -92,13 +90,12 @@ fun ContentLoginView(navController: NavHostController) {
             text = { Text(dialogMessage, color = Color.Black) },
             confirmButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Aceptar", color = Color(0xFF4CAF50))
+                    Text("Aceptar", color = MaterialTheme.colorScheme.primary)
                 }
             },
             containerColor = Color.White
         )
     }
-
 
     Box(
         modifier = Modifier.fillMaxSize().padding(),
@@ -130,43 +127,42 @@ fun ContentLoginView(navController: NavHostController) {
                     text = "MindMoving",
                     color = Color.White,
                     fontSize = 40.sp,
-                    style = Typography.titleMedium
+                    style = AppTypography.titleMedium
                 )
             }
             Spacer(modifier = Modifier.height(32.dp))
             Row {
                 OutlinedTextField(
-                    value = userdata, onValueChange = {userdata = it},
-                    placeholder = { // Usamos placeholder en lugar de label para texto interior
+                    value = userdata,
+                    onValueChange = { userdata = it },
+                    placeholder = {
                         Text(
                             text = "Correo electrónico o username",
-                            color = Color(185, 185, 185),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal
                         )
                     },
                     shape = RoundedCornerShape(40),
-                    colors = TextFieldDefaults.textFieldColors(
-                        // Color del texto cuando escribes
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        // Color de fondo del campo
-                        containerColor = Color(0xFF1F1A33).copy(alpha = 0.4f), // Un color oscuro semi-transparente (ajústalo al exacto si lo tienes)
-                        // Colores del indicador (la línea de abajo), los hacemos transparentes
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                        errorIndicatorColor = Color.Transparent, // También para el estado de error si lo manejas
-                        // Color del cursor
-                        cursorColor = Color.White
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Transparent,
+                        unfocusedLabelColor = Color.Transparent,
+                        errorBorderColor = Color.Transparent,
+                        cursorColor = Color.White,
+
+                        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
                     ),
                     singleLine = true,
-                    textStyle = TextStyle(
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal
-                    )
+                    textStyle = AppTypography.bodySmall.copy(color = Color.White, fontSize = 14.sp)
+
                 )
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             Row (
                 modifier = Modifier.padding(15.dp)
             ) {
@@ -175,39 +171,43 @@ fun ContentLoginView(navController: NavHostController) {
                     placeholder = { // Usamos placeholder en lugar de label para texto interior
                         Text(
                             text = "Contraseña",
-                            color = Color(185, 185, 185),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Light
                         )
                     },
                     shape = RoundedCornerShape(40),
-                    colors = TextFieldDefaults.textFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         // Color del texto cuando escribes
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        // Color de fondo del campo
-                        containerColor = Color(0xFF1F1A33).copy(alpha = 0.4f), // Un color oscuro semi-transparente (ajústalo al exacto si lo tienes)
-                        // Colores del indicador (la línea de abajo), los hacemos transparentes
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                        errorIndicatorColor = Color.Transparent, // También para el estado de error si lo manejas
-                        // Color del cursor
+                        //Color del fonod del campo
+                        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        errorBorderColor = Color.Transparent,
+
+
                         cursorColor = Color.White
+
                     ),
                     singleLine = true,
-                    textStyle = TextStyle(
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Light
-                    )
+                    textStyle = AppTypography.bodySmall.copy(color = Color.White, fontSize = 14.sp)
+
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row {
 
                 Row {
-                    val startColorButton = Color(67, 137, 254)
-                    val endColorButton = Color(2, 97, 254)
+                    val startColorButton = MaterialTheme.colorScheme.primary
+                    val endColorButton = MaterialTheme.colorScheme.secondary
+
                     val gradientBrushButton = Brush.horizontalGradient(
                         colors = listOf(startColorButton, endColorButton)
                     )
@@ -320,7 +320,7 @@ fun ContentLoginView(navController: NavHostController) {
                                 text = "Iniciar sesión",
                                 color = Color.White,
                                 fontSize = 20.sp,
-                                style = Typography.bodyMedium
+                                style = AppTypography.bodyMedium
                             )
                         }
                     }
@@ -332,7 +332,7 @@ fun ContentLoginView(navController: NavHostController) {
             Row {
                 Text(
                     text = "¿No tienes cuenta? Regístrate",
-                    color = Color(114, 32, 248),
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable {
                         navController.navigate("register")
                     }
