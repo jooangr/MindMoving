@@ -18,10 +18,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -49,6 +54,8 @@ import androidx.navigation.NavHostController
 import com.example.mindmoving.R
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
@@ -131,6 +138,9 @@ fun ContentLoginView(navController: NavHostController) {
 
             // Campo usuario
             OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
                 value = userdata,
                 onValueChange = { userdata = it },
                 placeholder = {
@@ -156,36 +166,20 @@ fun ContentLoginView(navController: NavHostController) {
                 textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface)
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Campo contraseña
-            OutlinedTextField(
+            PasswordField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = {
-                    Text(
-                        text = "Contraseña",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        fontSize = 16.sp
-                    )
-                },
-                shape = RoundedCornerShape(40),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                ),
-                singleLine = true,
-                textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface)
+                placeholder = "Contraseña",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Botón login
             val gradientBrush = Brush.horizontalGradient(
@@ -302,4 +296,50 @@ fun ContentLoginView(navController: NavHostController) {
 fun PreviewLoginScreen() {
     val navController = rememberNavController()
     Login(navController = navController)
+}
+@Composable
+fun PasswordField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(
+                placeholder,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                fontSize = 16.sp
+            )
+        },
+        shape = RoundedCornerShape(40),
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Icon(
+                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                    contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            focusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = Color.Transparent
+        ),
+        textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+        modifier = modifier
+    )
 }

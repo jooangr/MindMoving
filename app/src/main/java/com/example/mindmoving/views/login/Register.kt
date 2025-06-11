@@ -6,6 +6,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -13,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -114,9 +119,28 @@ fun RegisterScreen(navController: NavHostController) {
                 )
             }
 
-            inputField(username, { username = it }, "Nombre de usuario")
-            inputField(email, { email = it }, "Correo electrónico")
-            inputField(password, { password = it }, "Contraseña", isPassword = true)
+            // Campos de entrada
+            inputField(username, { username = it }, "Nombre de usuario",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
+
+            inputField(email, { email = it }, "Correo electrónico",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
+
+            PasswordFieldR(
+                value = password,
+                onValueChange = { password = it },
+                placeholder = "Contraseña",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -198,3 +222,82 @@ fun PreviewRegisterScreen() {
     val navController = rememberNavController()
     RegisterScreen(navController = navController)
 }
+
+@Composable
+fun PasswordFieldR(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(
+                text = placeholder,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                fontSize = 16.sp
+            )
+        },
+        shape = RoundedCornerShape(40),
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Icon(
+                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                    contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            focusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = Color.Transparent
+        ),
+        textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+        modifier = modifier
+    )
+}
+
+@Composable
+fun inputField(
+    value: String,
+    onChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        placeholder = {
+            Text(placeholder, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        },
+        shape = RoundedCornerShape(40),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            focusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = Color.Transparent
+        ),
+        textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+        singleLine = true,
+        modifier = modifier
+    )
+}
+

@@ -141,7 +141,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menú")
+                            Icon(Icons.Default.Menu, contentDescription = "Menú", tint = MaterialTheme.colorScheme.onSurface)
                         }
                     },
                     actions = {
@@ -152,7 +152,8 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Menú usuario",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
+
                                 )
                             }
 
@@ -189,9 +190,11 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = Color.Black,
-                        navigationIconContentColor = Color.Black
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
                     )
+
                 )
 
             }

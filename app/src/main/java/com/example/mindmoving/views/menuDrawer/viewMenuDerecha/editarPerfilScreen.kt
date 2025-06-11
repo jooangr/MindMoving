@@ -1,11 +1,11 @@
 package com.example.mindmoving.views.menuDrawer.viewMenuDerecha
 
+
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
@@ -14,13 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.ActualizarUsuarioRequest
@@ -28,13 +26,9 @@ import com.example.mindmoving.retrofit.models.UsuarioResponse
 import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
 
-    val gradientBrush = Brush.verticalGradient(
-        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
-    )
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
@@ -46,7 +40,6 @@ fun EditarPerfilScreen(navController: NavHostController) {
     var emailNuevo by remember { mutableStateOf("") }
     var passwordNueva by remember { mutableStateOf("") }
     var mostrarPassword by remember { mutableStateOf(false) }
-
     var passwordEditable by remember { mutableStateOf(false) }
 
     var passwordActualDialog by remember { mutableStateOf("") }
@@ -56,6 +49,11 @@ fun EditarPerfilScreen(navController: NavHostController) {
     var showConfirmPasswordDialog by remember { mutableStateOf(false) }
 
     var userActual by remember { mutableStateOf<UsuarioResponse?>(null) }
+    var showMessageDialog by remember { mutableStateOf(false) }
+    var messageText by remember { mutableStateOf("") }
+
+    val isDark = isSystemInDarkTheme()
+    val backgroundColor = if (isDark) Color(0xFF121212) else Color(0xFFF2F3FC)
 
     LaunchedEffect(Unit) {
         userId?.let {
@@ -66,7 +64,6 @@ fun EditarPerfilScreen(navController: NavHostController) {
                 usernameNuevo = user?.username ?: ""
                 emailNuevo = user?.email ?: ""
             }
-
         }
     }
 
@@ -76,17 +73,16 @@ fun EditarPerfilScreen(navController: NavHostController) {
         "Nuevo username"
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradientBrush)
+            .background(backgroundColor)
             .padding(24.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+        Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -97,7 +93,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
             Icon(
                 imageVector = Icons.Filled.ArrowBack,
                 contentDescription = "Volver al menú",
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -150,25 +146,24 @@ fun EditarPerfilScreen(navController: NavHostController) {
             if (passwordNueva.isNotBlank()) {
                 showConfirmPasswordDialog = true
             } else {
-                // Sin cambiar contraseña
                 coroutineScope.launch {
                     try {
                         val response = apiService.actualizarUsuario(
                             userId ?: "",
                             ActualizarUsuarioRequest(usernameNuevo, emailNuevo, "")
                         )
-                        if (response.isSuccessful) {
-                            Toast.makeText(context, "Datos actualizados", Toast.LENGTH_SHORT).show()
+                        messageText = if (response.isSuccessful) {
                             navController.navigate("menu")
+                            "Datos actualizados"
+                        } else if (response.code() == 409) {
+                            "Email o username ya en uso"
                         } else {
-                            if (response.code() == 409) {
-                                Toast.makeText(context, "Email o username ya en uso", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Error al actualizar", Toast.LENGTH_SHORT).show()
-                            }
+                            "Error al actualizar"
                         }
+                        showMessageDialog = true
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        messageText = "Error: ${e.message}"
+                        showMessageDialog = true
                     }
                 }
             }
@@ -177,7 +172,6 @@ fun EditarPerfilScreen(navController: NavHostController) {
         }
     }
 
-    // Dialogo para pedir la contraseña actual
     if (showPasswordCheckDialog) {
         AlertDialog(
             onDismissRequest = { showPasswordCheckDialog = false },
@@ -201,13 +195,15 @@ fun EditarPerfilScreen(navController: NavHostController) {
                             )
                             if (res.isSuccessful && res.body()?.success == true) {
                                 passwordEditable = true
-                                Toast.makeText(context, "Contraseña verificada", Toast.LENGTH_SHORT).show()
                                 showPasswordCheckDialog = false
+                                messageText = "Contraseña verificada"
                             } else {
-                                Toast.makeText(context, "Contraseña incorrecta", Toast.LENGTH_SHORT).show()
+                                messageText = "Contraseña incorrecta"
                             }
+                            showMessageDialog = true
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            messageText = "Error: ${e.message}"
+                            showMessageDialog = true
                         }
                     }
                 }) {
@@ -222,7 +218,6 @@ fun EditarPerfilScreen(navController: NavHostController) {
         )
     }
 
-    // Dialogo para confirmar la nueva contraseña antes de guardar
     if (showConfirmPasswordDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmPasswordDialog = false },
@@ -245,23 +240,24 @@ fun EditarPerfilScreen(navController: NavHostController) {
                                     userId ?: "",
                                     ActualizarUsuarioRequest(usernameNuevo, emailNuevo, passwordNueva)
                                 )
-                                if (response.isSuccessful) {
-                                    Toast.makeText(context, "Datos actualizados", Toast.LENGTH_SHORT).show()
+                                messageText = if (response.isSuccessful) {
                                     navController.navigate("menu")
+                                    "Datos actualizados"
+                                } else if (response.code() == 409) {
+                                    "Email o username ya en uso"
                                 } else {
-                                    if (response.code() == 409) {
-                                        Toast.makeText(context, "Email o username ya en uso", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, "Error al actualizar", Toast.LENGTH_SHORT).show()
-                                    }
+                                    "Error al actualizar"
                                 }
+                                showMessageDialog = true
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                messageText = "Error: ${e.message}"
+                                showMessageDialog = true
                             }
                         }
                         showConfirmPasswordDialog = false
                     } else {
-                        Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                        messageText = "Las contraseñas no coinciden"
+                        showMessageDialog = true
                     }
                 }) {
                     Text("Confirmar")
@@ -270,6 +266,19 @@ fun EditarPerfilScreen(navController: NavHostController) {
             dismissButton = {
                 TextButton(onClick = { showConfirmPasswordDialog = false }) {
                     Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    if (showMessageDialog) {
+        AlertDialog(
+            onDismissRequest = { showMessageDialog = false },
+            title = { Text("Información") },
+            text = { Text(messageText) },
+            confirmButton = {
+                TextButton(onClick = { showMessageDialog = false }) {
+                    Text("Aceptar")
                 }
             }
         )

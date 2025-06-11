@@ -217,6 +217,13 @@ val surfaceContainerDarkHighContrast = Color(0xFF2E3037)
 val surfaceContainerHighDarkHighContrast = Color(0xFF393B42)
 val surfaceContainerHighestDarkHighContrast = Color(0xFF44474E)
 
+val GradientStartLight = primaryLight
+val GradientEndLight = secondaryLight
+
+val GradientStartDark = primaryDark
+val GradientEndDark = secondaryDark
+
+
 
 
 

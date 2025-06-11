@@ -43,18 +43,34 @@ import com.example.mindmoving.views.menuDrawer.MainLayout
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import com.example.mindmoving.ui.theme.FadeInColumn
+import com.example.mindmoving.ui.theme.GradientEndDark
+import com.example.mindmoving.ui.theme.GradientEndLight
+import com.example.mindmoving.ui.theme.GradientStartDark
+import com.example.mindmoving.ui.theme.GradientStartLight
 import kotlinx.coroutines.delay
 
 
 @Composable
 fun MainScreenMenu(navController: NavHostController) {
 
-    val gradientBrush = Brush.verticalGradient(
+   /* val gradientBrush = Brush.verticalGradient(
       //  colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
         colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
-    )
+    )*/
+
+    val isDark = isSystemInDarkTheme()
+    val backgroundColor = if (isDark) Color(0xFF121212) else Color(0xFFF2F3FC)
+
+
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -98,7 +114,7 @@ fun MainScreenMenu(navController: NavHostController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(gradientBrush)
+                .background(backgroundColor)
                 .padding(padding)
         ) {
 
@@ -118,25 +134,31 @@ fun MainScreenMenu(navController: NavHostController) {
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .padding(horizontal = 8.dp),
-                    shape = MaterialTheme.shapes.medium
+                    shape = MaterialTheme.shapes.medium,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color.White)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            "Bienvenido a MindMoving",
-                            style = MaterialTheme.typography.headlineSmall,
-                            //color = Color(0xFF3F51B5)
-                            color = MaterialTheme.colorScheme.primary
+                            text = "Bienvenido a MindMoving",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 26.sp),
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
+
                         Text(
                             "Menú Principal",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.DarkGray
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         )
+
                         Text(
                             "Selecciona una opción para comenzar",
                             style = MaterialTheme.typography.bodySmall,
@@ -162,17 +184,6 @@ fun MainScreenMenu(navController: NavHostController) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                /*Button(
-                    onClick = { navController.navigate("atencion") },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(vertical = 8.dp)
-                ) {
-                    Icon(Icons.Default.Visibility, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Comprobar nivel de Atención")
-                }*/
                 // Estados para controlar la visibilidad animada
                 var showContent by remember { mutableStateOf(false) }
 
@@ -188,12 +199,21 @@ fun MainScreenMenu(navController: NavHostController) {
                     Button(
                         onClick = { navController.navigate("atencion") },
                        // colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = RoundedCornerShape(24.dp),
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .padding(vertical = 8.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp, vertical = 8.dp)
+                            .height(50.dp)
                     ) {
-                        Icon(Icons.Default.Visibility, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
                         Spacer(Modifier.width(8.dp))
                         Text("Comprobar nivel de Atención")
                     }
@@ -210,12 +230,24 @@ fun MainScreenMenu(navController: NavHostController) {
                                 // } else {
                                 //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
                                 // }
-                            }
-                            , // ← Vista a view de controlar coche
+                            },
+                            shape = RoundedCornerShape(24.dp),
                             modifier = Modifier
-                                .fillMaxWidth(0.8f)
-                                .padding(vertical = 8.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 32.dp, vertical = 8.dp)
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.DirectionsCar, // necesitas importarlo
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
                             Text("Controlar Coche (En desarrollo)")
                         }
 
