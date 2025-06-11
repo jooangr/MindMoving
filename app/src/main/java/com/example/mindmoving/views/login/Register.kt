@@ -30,9 +30,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.sp
 import com.example.mindmoving.R
 import com.example.mindmoving.ui.theme.AppTypography
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,27 +45,25 @@ fun RegisterScreen(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
-    // Error y avisos
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
 
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Error en el registro", color = Color.Black) },
-            text = { Text(dialogMessage, color = Color.Black) },
+            title = { Text("Error en el registro", color = MaterialTheme.colorScheme.onPrimary) },
+            text = { Text(dialogMessage, color = MaterialTheme.colorScheme.onPrimary) },
             confirmButton = {
                 TextButton(onClick = { showDialog = false }) {
                     Text("Aceptar", color = MaterialTheme.colorScheme.primary)
                 }
             },
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
-    // Fondo degradado como en login
     Box(
-        modifier = Modifier.fillMaxSize().padding(),
+        modifier = Modifier.fillMaxSize()
     ) {
         Image(
             painter = painterResource(id = R.drawable.fondo_5),
@@ -72,6 +71,7 @@ fun RegisterScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,93 +81,45 @@ fun RegisterScreen(navController: NavHostController) {
         ) {
             Text(
                 text = "Crear cuenta",
-                style = AppTypography.titleMedium.copy(color = Color.White),
+                color = MaterialTheme.colorScheme.onBackground,
+                style = AppTypography.titleMedium,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
+            @Composable
+            fun inputField(value: String, onChange: (String) -> Unit, placeholder: String, isPassword: Boolean = false) {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onChange,
+                    placeholder = {
+                        Text(placeholder, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    },
+                    shape = RoundedCornerShape(40),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent
+                    ),
+                    textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                    singleLine = true,
+                    visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                )
+            }
 
-            // Campo: Nombre de usuario
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                placeholder = {
-                    Text("Nombre de usuario", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                },
-                shape = RoundedCornerShape(40),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    cursorColor = Color.White,
-
-                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
-                ),
-                textStyle = AppTypography.bodySmall.copy(color = Color.White),
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-
-            // Campo: Correo electrónico
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                placeholder = {
-                    Text("Correo electrónico", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                },
-                shape = RoundedCornerShape(40),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    unfocusedContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    disabledContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    errorContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    cursorColor = Color.White
-                ),
-                textStyle = AppTypography.bodySmall.copy(color = Color.White),
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-
-            // Campo: Contraseña
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                placeholder = {
-                    Text("Contraseña", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                },
-                shape = RoundedCornerShape(40),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    unfocusedContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    disabledContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    errorContainerColor = Color(0xFF1F1A33).copy(alpha = 0.4f),
-                    cursorColor = Color.White
-                ),
-                textStyle = AppTypography.bodySmall.copy(color = Color.White),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
+            inputField(username, { username = it }, "Nombre de usuario")
+            inputField(email, { email = it }, "Correo electrónico")
+            inputField(password, { password = it }, "Contraseña", isPassword = true)
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón de registro con degradado como en login
             Button(
                 onClick = {
                     coroutineScope.launch {
@@ -181,7 +133,6 @@ fun RegisterScreen(navController: NavHostController) {
                                 }
                             } else {
                                 val errorBody = response.errorBody()?.string()
-                                Log.e("Registro", "Error: $errorBody")
                                 dialogMessage = when {
                                     errorBody?.contains("Correo ya registrado") == true -> "Ese correo ya está en uso"
                                     errorBody?.contains("Nombre de usuario ya registrado") == true -> "Ese nombre de usuario ya está en uso"
@@ -208,13 +159,18 @@ fun RegisterScreen(navController: NavHostController) {
                         .fillMaxSize()
                         .background(
                             brush = Brush.horizontalGradient(
-                                colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.secondary
+                                )
                             ),
                             shape = RoundedCornerShape(40)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Registrarse", color = Color.White, style = AppTypography.bodyMedium)
+                    Text("Registrarse", color = MaterialTheme.colorScheme.onPrimary,
+                        style = AppTypography.bodyMedium,
+                        fontSize = 20.sp,)
                 }
             }
 
@@ -227,14 +183,13 @@ fun RegisterScreen(navController: NavHostController) {
             }) {
                 Text(
                     "¿Ya tienes cuenta? Inicia sesión",
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.primary,
                     style = AppTypography.bodySmall
                 )
             }
         }
     }
 }
-
 
 
 @Preview(showBackground = true, showSystemUi = true)

@@ -65,10 +65,9 @@ import com.google.gson.Gson
 
 @Composable
 fun Login(navController: NavHostController) {
-
     ContentLoginView(navController)
-
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentLoginView(navController: NavHostController) {
@@ -86,262 +85,218 @@ fun ContentLoginView(navController: NavHostController) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Error de inicio de sesión", color = Color.Black) },
-            text = { Text(dialogMessage, color = Color.Black) },
+            title = { Text("Error de inicio de sesión", color = MaterialTheme.colorScheme.onSurface) },
+            text = { Text(dialogMessage, color = MaterialTheme.colorScheme.onSurface) },
             confirmButton = {
                 TextButton(onClick = { showDialog = false }) {
                     Text("Aceptar", color = MaterialTheme.colorScheme.primary)
                 }
             },
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().padding(),
-    ){
+        modifier = Modifier.fillMaxSize()
+    ) {
         Image(
             painter = painterResource(id = R.drawable.fondo_5),
             contentDescription = "Fondo de pantalla",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
-
         ) {
             Spacer(modifier = Modifier.height(70.dp))
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(
-                   painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
+                    painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
                     contentDescription = "Imagen Logo",
-                    modifier = Modifier
-                        .size(200.dp)
-                        .padding(5.dp)
+                    modifier = Modifier.size(200.dp).padding(5.dp)
                 )
                 Text(
                     text = "MindMoving",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 40.sp,
                     style = AppTypography.titleMedium
                 )
             }
+
             Spacer(modifier = Modifier.height(32.dp))
-            Row {
-                OutlinedTextField(
-                    value = userdata,
-                    onValueChange = { userdata = it },
-                    placeholder = {
-                        Text(
-                            text = "Correo electrónico o username",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                    },
-                    shape = RoundedCornerShape(40),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent,
-                        errorBorderColor = Color.Transparent,
-                        cursorColor = Color.White,
 
-                        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
-                    ),
-                    singleLine = true,
-                    textStyle = AppTypography.bodySmall.copy(color = Color.White, fontSize = 14.sp)
+            // Campo usuario
+            OutlinedTextField(
+                value = userdata,
+                onValueChange = { userdata = it },
+                placeholder = {
+                    Text(
+                        text = "Correo electrónico o username",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        fontSize = 16.sp
+                    )
+                },
+                shape = RoundedCornerShape(40),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent
+                ),
+                singleLine = true,
+                textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface)
+            )
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Campo contraseña
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                placeholder = {
+                    Text(
+                        text = "Contraseña",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        fontSize = 16.sp
+                    )
+                },
+                shape = RoundedCornerShape(40),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent
+                ),
+                singleLine = true,
+                textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Botón login
+            val gradientBrush = Brush.horizontalGradient(
+                colors = listOf(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.secondary
                 )
+            )
+            val buttonShape = RoundedCornerShape(40)
+
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        try {
+                            val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
+                            if (response.isSuccessful && response.body()?.userId != null) {
+                                val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                                val now = System.currentTimeMillis()
+                                sharedPrefs.edit()
+                                    .putString("userId", response.body()?.userId)
+                                    .putLong("lastLoginTime", now)
+                                    .putLong("lastPausedTime", now)
+                                    .apply()
+
+                                val userId = response.body()?.userId ?: return@launch
+                                val userInfoResponse = apiService.getUsuario(userId)
+                                if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
+                                    dialogMessage = "Error obteniendo información del usuario"
+                                    showDialog = true
+                                    return@launch
+                                }
+                                val userInfo = userInfoResponse.body()!!
+                                val perfilResponse = apiService.getPerfil(userId)
+                                val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
+
+                                val usuarioCompleto = Usuario(
+                                    id = userId,
+                                    username = userInfo.username,
+                                    email = userInfo.email,
+                                    password = "",
+                                    perfilCalibracion = perfil?.tipo ?: "",
+                                    valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
+                                    valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
+                                    blinking = perfil?.blinking ?: BlinkingData(0, 0),
+                                    alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
+                                )
+
+                                val perfilJson = Gson().toJson(usuarioCompleto)
+                                sharedPrefs.edit()
+                                    .putString("perfil_tipo", perfil?.tipo)
+                                    .putString("perfil_completo", perfilJson)
+                                    .apply()
+
+                                SessionManager.usuarioActual = usuarioCompleto
+                                Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
+
+                                if (perfil != null) {
+                                    navController.navigate("menu") {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                } else {
+                                    navController.navigate("calibracion_menu") {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
+                            } else {
+                                dialogMessage = "Usuario, correo o contraseña incorrectos"
+                                showDialog = true
+                            }
+                        } catch (e: Exception) {
+                            dialogMessage = "Error de red: ${e.message}"
+                            showDialog = true
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 60.dp).height(55.dp),
+                shape = buttonShape,
+                contentPadding = PaddingValues(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(gradientBrush, shape = buttonShape)
+                        .clip(buttonShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Iniciar sesión",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontSize = 20.sp,
+                        style = AppTypography.bodyMedium
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Row (
-                modifier = Modifier.padding(15.dp)
-            ) {
-                OutlinedTextField(
-                    value = password, onValueChange = {password = it},
-                    placeholder = { // Usamos placeholder en lugar de label para texto interior
-                        Text(
-                            text = "Contraseña",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Light
-                        )
-                    },
-                    shape = RoundedCornerShape(40),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        // Color del texto cuando escribes
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        //Color del fonod del campo
-                        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        disabledBorderColor = Color.Transparent,
-                        errorBorderColor = Color.Transparent,
-
-
-                        cursorColor = Color.White
-
-                    ),
-                    singleLine = true,
-                    textStyle = AppTypography.bodySmall.copy(color = Color.White, fontSize = 14.sp)
-
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row {
-
-                Row {
-                    val startColorButton = MaterialTheme.colorScheme.primary
-                    val endColorButton = MaterialTheme.colorScheme.secondary
-
-                    val gradientBrushButton = Brush.horizontalGradient(
-                        colors = listOf(startColorButton, endColorButton)
-                    )
-                    val buttonShapeButton = RoundedCornerShape(40)
-
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                try {
-                                    val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
-                                    if (response.isSuccessful && response.body()?.userId != null) {
-
-                                        // Guardar userId en SharedPreferences
-                                        val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                                        val currentTime = System.currentTimeMillis()
-
-                                        val now = System.currentTimeMillis()
-                                        sharedPrefs.edit()
-                                            .putString("userId", response.body()?.userId)
-                                            .putLong("lastLoginTime", now)
-                                            .putLong("lastPausedTime", now) // 🔥 importante: reinicia el contador de inactividad
-                                            .apply()
-
-                                        // Obtener el perfil del backend y decidir navegación
-                                        val userId = response.body()?.userId ?: return@launch
-
-                                        // 1. Obtener datos del usuario desde el backend
-                                        val userInfoResponse = apiService.getUsuario(userId)
-                                        if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
-                                            dialogMessage = "Error obteniendo información del usuario"
-                                            showDialog = true
-                                            return@launch
-                                        }
-                                        val userInfo = userInfoResponse.body()!!
-
-                                        // 2. Obtener perfil de calibración si existe
-                                        val perfilResponse = apiService.getPerfil(userId)
-                                        Log.d("LOGIN", "Perfil recibido del backend: ${perfilResponse.body()}")
-
-                                        val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
-
-                                        // 3. Construir usuario completo con datos combinados
-                                        val usuarioCompleto = Usuario(
-                                            id = userId,
-                                            username = userInfo.username,
-                                            email = userInfo.email,
-                                            password = "", //contraseña no por qle backend no deja
-                                            perfilCalibracion = perfil?.tipo ?: "",
-                                            valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
-                                            valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
-                                            blinking = perfil?.blinking ?: BlinkingData(0, 0),
-                                            alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
-                                        )
-
-                                        // 4. Guardar en SharedPreferences y en SessionManager
-                                        val perfilJson = Gson().toJson(usuarioCompleto)
-                                        sharedPrefs.edit()
-                                            .putString("perfil_tipo", perfil?.tipo)
-                                            .putString("perfil_completo", perfilJson)
-                                            .apply()
-
-                                        SessionManager.usuarioActual = usuarioCompleto
-
-                                        Log.d("LOGIN", "✅ Usuario COMPLETO guardado con ID: ${usuarioCompleto.id}")
-                                        Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
-
-                                        // 5. Navegar según si tiene perfil o no
-                                        if (perfil != null) {
-                                            navController.navigate("menu") {
-                                                popUpTo(0) { inclusive = true }
-                                            }
-                                        } else {
-                                            navController.navigate("calibracion_menu") {
-                                                popUpTo(0) { inclusive = true }
-                                            }
-                                        }
-
-
-                                    } else {
-                                        dialogMessage = "Usuario, correo o contraseña incorrectos"
-                                        showDialog = true
-                                    }
-                                } catch (e: Exception) {
-                                    dialogMessage = "Error de red: ${e.message}"
-                                    showDialog = true
-                                }
-                            }
-
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 60.dp)
-                            .height(55.dp),
-                        shape = buttonShapeButton,
-                        contentPadding = PaddingValues(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 0.dp,
-                            pressedElevation = 0.dp
-                        )
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(brush = gradientBrushButton, shape = buttonShapeButton)
-                                .clip(buttonShapeButton),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Iniciar sesión",
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                style = AppTypography.bodyMedium
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "¿No tienes cuenta? Regístrate",
+                color = MaterialTheme.colorScheme.primary,
+                style = AppTypography.bodySmall,
+                modifier = Modifier.clickable {
+                    navController.navigate("register")
                 }
-            }
-                Spacer(modifier = Modifier.height(9.dp))
-            Row {
-                Text(
-                    text = "¿No tienes cuenta? Regístrate",
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable {
-                        navController.navigate("register")
-                    }
-                )
-
-            }
+            )
         }
     }
 }
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewLoginScreen() {
