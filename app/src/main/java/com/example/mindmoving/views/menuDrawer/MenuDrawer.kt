@@ -39,9 +39,6 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
     var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-
-
-
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = true,
@@ -144,7 +141,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menú")
+                            Icon(Icons.Default.Menu, contentDescription = "Menú", tint = MaterialTheme.colorScheme.onSurface)
                         }
                     },
                     actions = {
@@ -155,7 +152,8 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Menú usuario",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
+
                                 )
                             }
 
@@ -191,10 +189,12 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color(0xFFF5F5F5),
-                        titleContentColor = Color.Black,
-                        navigationIconContentColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
                     )
+
                 )
 
             }

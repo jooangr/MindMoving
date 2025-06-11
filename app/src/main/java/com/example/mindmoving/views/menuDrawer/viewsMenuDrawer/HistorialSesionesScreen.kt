@@ -26,7 +26,8 @@ import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 fun HistorialSesionesScreen(navController: NavHostController) {
 
     val gradientBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+        //colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
     )
     val context = LocalContext.current
     val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)

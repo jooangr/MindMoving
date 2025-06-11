@@ -30,12 +30,7 @@ interface ApiService {
     @POST("/api/register")
     suspend fun registerUser(@Body request: RegisterRequest): Response<GenericResponse>
 
-    // Guardar sesion de EEG
-    @POST("/api/sesiones")
-    suspend fun guardarSesion(@Body sesion: SesionEEGRequest): Response<GenericResponse>
-
-
-    //Pedido por omar
+    //Crear Sesion
     @POST("/api/sesiones")
     suspend fun crearSesionEEG(@Body sesion: SesionEEGRequest): Response<Void>
 

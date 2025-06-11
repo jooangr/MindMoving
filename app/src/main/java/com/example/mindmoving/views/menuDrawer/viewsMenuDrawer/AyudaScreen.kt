@@ -22,7 +22,8 @@ import androidx.navigation.NavController
 @Composable
 fun AyudaScreen(navController: NavController) {
     val gradientBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+       // colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
+       colors =  listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
     )
 
     Scaffold(
@@ -91,7 +92,8 @@ fun AyudaSection(title: String, description: String) {
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF1A237E)) // Azul marino oscuro
+           // .background(Color(0xFF1A237E)) // Azul marino oscuro
+            .background(MaterialTheme.colorScheme.primary)
             .padding(16.dp)
     ) {
         Text(text = title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
