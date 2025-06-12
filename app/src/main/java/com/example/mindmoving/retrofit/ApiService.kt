@@ -12,11 +12,13 @@ import com.example.mindmoving.retrofit.models.UsuarioResponse
 import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
 import com.example.mindmoving.retrofit.models.VerificarPasswordResponse
 import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -60,4 +62,13 @@ interface ApiService {
     @GET("/api/users/{id}")
     suspend fun getUsuario(@Path("id") id: String): Response<UsuarioResponse>
 
+    //theme
+    @GET("users/{id}/theme")
+    fun getTheme(@Path("id") userId: String): Call<ThemeResponse>
+
+    @PUT("users/{id}/theme")
+    fun updateTheme(@Path("id") userId: String, @Body body: ThemeRequest): Call<Void>
+
+    data class ThemeResponse(val theme: String)
+    data class ThemeRequest(val theme: String)
 }

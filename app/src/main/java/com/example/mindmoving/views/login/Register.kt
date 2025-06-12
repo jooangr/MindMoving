@@ -1,8 +1,6 @@
 package com.example.mindmoving.views.login
 
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,17 +30,23 @@ import com.example.mindmoving.retrofit.models.RegisterRequest
 import kotlinx.coroutines.launch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
-import com.example.mindmoving.R
+import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.ui.theme.AppTypography
+
+
+@Composable
+fun RegisterScreen(navController: NavHostController) {
+    AppTheme(darkTheme = true) { // ← Forzamos el tema oscuro aquí
+        RegisterContent(navController)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(navController: NavHostController) {
+fun RegisterContent(navController: NavHostController) {
+
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -53,29 +57,36 @@ fun RegisterScreen(navController: NavHostController) {
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
 
+    val gradientBackground = Brush.verticalGradient(
+        colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
+    )
+
+
     if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Error en el registro", color = MaterialTheme.colorScheme.onPrimary) },
-            text = { Text(dialogMessage, color = MaterialTheme.colorScheme.onPrimary) },
-            confirmButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Aceptar", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        AppTheme(darkTheme = true) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = {
+                    Text(
+                        "Error en el registro",
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                text = { Text(dialogMessage, color = MaterialTheme.colorScheme.onSurface)
+                },
+                confirmButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Aceptar", color = MaterialTheme.colorScheme.onSurface)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        }
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(gradientBackground)
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.fondo_5),
-            contentDescription = "Fondo de pantalla",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
 
         Column(
             modifier = Modifier
@@ -86,38 +97,10 @@ fun RegisterScreen(navController: NavHostController) {
         ) {
             Text(
                 text = "Crear cuenta",
-                color = MaterialTheme.colorScheme.onBackground,
+                color = Color.White,
                 style = AppTypography.titleMedium,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
-            @Composable
-            fun inputField(value: String, onChange: (String) -> Unit, placeholder: String, isPassword: Boolean = false) {
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = onChange,
-                    placeholder = {
-                        Text(placeholder, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                    },
-                    shape = RoundedCornerShape(40),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent
-                    ),
-                    textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
-                    singleLine = true,
-                    visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                )
-            }
 
             // Campos de entrada
             inputField(username, { username = it }, "Nombre de usuario",
@@ -148,6 +131,12 @@ fun RegisterScreen(navController: NavHostController) {
                 onClick = {
                     coroutineScope.launch {
                         try {
+                            if (username.isBlank() || email.isBlank() || password.isBlank()) {
+                                dialogMessage = "Completa todos los campos"
+                                showDialog = true
+                                return@launch
+                            }
+
                             val response = apiService.registerUser(
                                 RegisterRequest(username.trim(), email.trim(), password.trim())
                             )
