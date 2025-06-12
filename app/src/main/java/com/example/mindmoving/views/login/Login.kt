@@ -1,7 +1,6 @@
 package com.example.mindmoving.views.login
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Image
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -41,14 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.OutlinedTextFieldDefaults
-
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavHostController
 import com.example.mindmoving.R
@@ -59,23 +53,28 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
+import com.example.mindmoving.retrofit.ApiService
 import com.example.mindmoving.retrofit.models.AlternanciaData
 import com.example.mindmoving.retrofit.models.BlinkingData
 import com.example.mindmoving.retrofit.models.LoginRequest
 import com.example.mindmoving.retrofit.models.Usuario
 import com.example.mindmoving.retrofit.models.ValoresEEG
+import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.ui.theme.AppTypography
 import com.example.mindmoving.utils.SessionManager
 import com.google.gson.Gson
-
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
 @Composable
 fun Login(navController: NavHostController) {
-    ContentLoginView(navController)
+    AppTheme(darkTheme = true) {
+        ContentLoginView(navController)
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentLoginView(navController: NavHostController) {
     var userdata by remember { mutableStateOf("") }
@@ -88,6 +87,12 @@ fun ContentLoginView(navController: NavHostController) {
     //Error y avisos
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
+
+    //theme
+    val darkThemeState = remember { mutableStateOf(false) }
+    val gradientBackground = Brush.verticalGradient(
+            colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
+    )
 
     if (showDialog) {
         AlertDialog(
@@ -104,15 +109,9 @@ fun ContentLoginView(navController: NavHostController) {
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.fondo_5),
-            contentDescription = "Fondo de pantalla",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+        modifier = Modifier.fillMaxSize().background(gradientBackground)
 
+    ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -128,7 +127,7 @@ fun ContentLoginView(navController: NavHostController) {
                 )
                 Text(
                     text = "MindMoving",
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = Color.White,
                     fontSize = 40.sp,
                     style = AppTypography.titleMedium
                 )
@@ -205,46 +204,64 @@ fun ContentLoginView(navController: NavHostController) {
                                     .apply()
 
                                 val userId = response.body()?.userId ?: return@launch
+
+                                // Obtener info del usuario
                                 val userInfoResponse = apiService.getUsuario(userId)
                                 if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
                                     dialogMessage = "Error obteniendo información del usuario"
                                     showDialog = true
                                     return@launch
                                 }
+
                                 val userInfo = userInfoResponse.body()!!
                                 val perfilResponse = apiService.getPerfil(userId)
                                 val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
-                                val usuarioCompleto = Usuario(
-                                    id = userId,
-                                    username = userInfo.username,
-                                    email = userInfo.email,
-                                    password = "",
-                                    perfilCalibracion = perfil?.tipo ?: "",
-                                    valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
-                                    valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
-                                    blinking = perfil?.blinking ?: BlinkingData(0, 0),
-                                    alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
-                                )
+                                // Obtener y aplicar el tema
+                                apiService.getTheme(userId).enqueue(object : Callback<ApiService.ThemeResponse> {
+                                    override fun onResponse(call: Call<ApiService.ThemeResponse>, response: Response<ApiService.ThemeResponse>) {
+                                        val theme = if (response.isSuccessful) response.body()?.theme ?: "light" else "light"
+                                        darkThemeState.value = theme == "dark"
+                                        sharedPrefs.edit().putString("user_theme", theme).apply()
 
-                                val perfilJson = Gson().toJson(usuarioCompleto)
-                                sharedPrefs.edit()
-                                    .putString("perfil_tipo", perfil?.tipo)
-                                    .putString("perfil_completo", perfilJson)
-                                    .apply()
+                                        // Continuar flujo luego del tema
+                                        val usuarioCompleto = Usuario(
+                                            id = userId,
+                                            username = userInfo.username,
+                                            email = userInfo.email,
+                                            password = "",
+                                            perfilCalibracion = perfil?.tipo ?: "",
+                                            valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
+                                            valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
+                                            blinking = perfil?.blinking ?: BlinkingData(0, 0),
+                                            alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
+                                        )
 
-                                SessionManager.usuarioActual = usuarioCompleto
-                                Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
+                                        val perfilJson = Gson().toJson(usuarioCompleto)
+                                        sharedPrefs.edit()
+                                            .putString("perfil_tipo", perfil?.tipo)
+                                            .putString("perfil_completo", perfilJson)
+                                            .apply()
 
-                                if (perfil != null) {
-                                    navController.navigate("menu") {
-                                        popUpTo(0) { inclusive = true }
+                                        SessionManager.usuarioActual = usuarioCompleto
+                                        Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
+
+                                        if (perfil != null) {
+                                            navController.navigate("menu") {
+                                                popUpTo(0) { inclusive = true }
+                                            }
+                                        } else {
+                                            navController.navigate("calibracion_menu") {
+                                                popUpTo(0) { inclusive = true }
+                                            }
+                                        }
                                     }
-                                } else {
-                                    navController.navigate("calibracion_menu") {
-                                        popUpTo(0) { inclusive = true }
+
+                                    override fun onFailure(call: Call<ApiService.ThemeResponse>, t: Throwable) {
+                                        dialogMessage = "No se pudo obtener el tema del usuario"
+                                        showDialog = true
                                     }
-                                }
+                                })
                             } else {
                                 dialogMessage = "Usuario, correo o contraseña incorrectos"
                                 showDialog = true

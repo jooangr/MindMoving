@@ -21,28 +21,32 @@ import androidx.navigation.NavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AyudaScreen(navController: NavController) {
-    val gradientBrush = Brush.verticalGradient(
-       // colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
-       colors =  listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
-    )
-
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Info sobre la App") },
+            CenterAlignedTopAppBar(
+                title = {
+                    Text("Info sobre la App", color = MaterialTheme.colorScheme.onSurface)
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(gradientBrush)
-                .padding(padding) // Padding del Scaffold
+                .background(MaterialTheme.colorScheme.background)
+                .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -51,8 +55,8 @@ fun AyudaScreen(navController: NavController) {
             Text(
                 text = "Ayuda de MindMoving",
                 fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -92,12 +96,20 @@ fun AyudaSection(title: String, description: String) {
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .clip(RoundedCornerShape(12.dp))
-           // .background(Color(0xFF1A237E)) // Azul marino oscuro
-            .background(MaterialTheme.colorScheme.primary)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
-        Text(text = title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+        Text(
+            text = title,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.primary
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = description, fontSize = 14.sp, color = Color.White)
+        Text(
+            text = description,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }

@@ -12,6 +12,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.navigation.NavGraph
 import com.example.mindmoving.retrofit.models.Usuario
 import com.example.mindmoving.ui.theme.AppTheme
+import com.example.mindmoving.utils.LocalThemeViewModel
+import com.example.mindmoving.utils.ProvideThemeViewModel
 import com.example.mindmoving.utils.SessionManager
 import com.google.gson.Gson
 
@@ -36,10 +38,17 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            AppTheme {
-                AppNavigator()
+            ProvideThemeViewModel {
+                val themeViewModel = LocalThemeViewModel.current
+
+                AppTheme(darkTheme = themeViewModel.isDarkTheme.value) {
+                    AppNavigator()
+                }
             }
         }
+
+
+
     }
 
 }

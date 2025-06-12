@@ -25,11 +25,10 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun PantallaCalibracion(navController: NavHostController) {
-
     val gradientBrush = Brush.verticalGradient(
         colors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.primaryContainer
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.surfaceVariant
         )
     )
     /**
@@ -41,6 +40,7 @@ fun PantallaCalibracion(navController: NavHostController) {
     BackHandler(enabled = true) {
         (context as? Activity)?.finish()
     }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -56,7 +56,7 @@ fun PantallaCalibracion(navController: NavHostController) {
             Text(
                 text = "Opciones de Calibración",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             CalibracionButton("Perfil de calibración") {
@@ -93,7 +93,7 @@ fun PantallaCalibracion(navController: NavHostController) {
             ) {
                 Text(
                     "Hacer luego",
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
@@ -111,13 +111,17 @@ fun CalibracionButton(text: String, onClick: () -> Unit) {
         shape = RoundedCornerShape(30),
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
-        Text(text = text, fontSize = 18.sp, color = Color.White)
+        Text(
+            text = text,
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }
+
 @Composable
 @Preview(showBackground = true, showSystemUi = true)
 fun PreviewPantallaCalibracion() {
-    // Importante: este require tener 'androidx.navigation:navigation-compose' en tu proyecto
     val navController = rememberNavController()
     PantallaCalibracion(navController)
 }
