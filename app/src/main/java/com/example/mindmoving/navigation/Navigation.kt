@@ -18,6 +18,9 @@ import com.example.mindmoving.views.menu.calibracion.CalibracionParpadeoScreen
 import com.example.mindmoving.views.menu.calibracion.CalibracionRelajacionScreen
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mindmoving.views.controlCoche.ComandosDiademaScreen
+import com.example.mindmoving.views.controlCoche.ComandosDiademaViewModel
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
 
 
@@ -43,8 +46,13 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("register") {RegisterScreen(navController) }
         composable("calibracion_atencion") { CalibracionAtencionScreen(navController) }
         composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
-        composable("control_coche") {ControlCocheScreen(navController)
+        composable("control_coche") {ControlCocheScreen(navController)}
+        composable("comandos_diadema") {
+            // Así se instancia un ViewModel sin Hilt
+            val viewModel: ComandosDiademaViewModel = viewModel()
+            ComandosDiademaScreen(viewModel = viewModel)
         }
+
 
 
     }

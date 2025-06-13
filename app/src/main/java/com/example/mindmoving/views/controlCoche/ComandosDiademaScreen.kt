@@ -32,7 +32,12 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 
 import androidx.compose.ui.draw.clip
@@ -43,99 +48,128 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
-/*
+
 @Composable
-fun ComandosDireccion (navController: NavHostController){
-    Box(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
+fun ComandosDiademaScreen(
+    viewModel: ComandosDiademaViewModel = viewModel()//... tu forma de instanciarlo
+) {
+
+    // 2. Recoge el estado
+    val uiState by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) { paddingValues ->
         Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5))
+                    )
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween // Para distribuir los elementos
         ) {
-            // Fila 1: Botón arriba
-
-            IconButton(onClick = {  }) {
-                Image(
-                    painter = painterResource(
-                        id = R.drawable.icon_flecha_anvanzar_2),
-                    contentDescription = "Forward",
-                    modifier = Modifier.size(300.dp),
-                    contentScale = ContentScale.FillBounds
-                )
-            }
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Fila 2: Botón izquierda - espacio vacío - botón derecha
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            // Contenedor para las cards de información
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
             ) {
-                IconButton(onClick = {  }) {
-                    Icon(
-                        painter = painterResource(
-                            id = R.drawable.baseline_arrow_back_ios_new_24),
-                        contentDescription = "Left",
-                        tint = Color.Black,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(80.dp)) // Espacio central (vacío)
-
-                IconButton(onClick = {  }) {
-                    Icon(
-                        painter = painterResource(
-                            id = R.drawable.baseline_arrow_back_ios_new_24),
-                        contentDescription = "Right",
-                        tint = Color.Black,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Fila 3: Botón abajo
-            IconButton(onClick = {  }) {
-                Icon(
-                    painter = painterResource(
-                        id = R.drawable.baseline_arrow_back_ios_new_24),
-                    contentDescription = "Backward",
-                    modifier = Modifier.size(30.dp)
+                CardDatosUsuario(
+                    // Parámetros que vendrán del ViewModel en el futuro
+                    nombreUsuario = uiState.usuario?.username ?: "Cargando...",
+                    perfilCalibracion = uiState.usuario?.perfilCalibracion ?: "N/A",
+                    nSesiones = 0
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                CardEstadoReal(
+                    // Parámetros que vendrán del ViewModel en el futuro
+                    estadoConexion = uiState.estadoConexion.name, // .name convierte el enum a String
+                    calidadSeñal = getSignalQualityDescription(uiState.calidadSeñal), // Usa una función helper
+                    atencion = uiState.atencionActual,
+                    meditacion = uiState.meditacionActual,
+                    fuerzaParpadeo = uiState.fuerzaParpadeoActual
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { viewModel.onBotonSesionClick() },
+                ) {
+                    // El texto ahora depende del estado
+                    Text(if (uiState.sesionActiva) "Detener Sesión" else "Comenzar Sesión")
+                }
             }
+
+            // D-Pad al final de la pantalla
+            ModernDpad(
+                modifier = Modifier.padding(bottom = 32.dp),
+                onDirectionClick = { direction ->
+                    viewModel.onDpadClick(direction)
+                }
+            )
         }
     }
 }
 
- */
-
-@Preview(showBackground = true)
 @Composable
-fun ModernDpadScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            // Un fondo con gradiente sutil para que el D-Pad destaque
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5))
-                )
-            ),
-        contentAlignment = Alignment.BottomCenter
+fun CardDatosUsuario(nombreUsuario: String,
+                     perfilCalibracion: String,
+                     nSesiones: Int //TODO numero de sesiones realizadas
+){
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Spacer(modifier = Modifier.size(20.dp))
-        ModernDpad { direction ->
-            // Aquí manejas la lógica del clic
-            // Por ejemplo, imprimir en la consola para depurar
-            println("Botón presionado: $direction")
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Usuario", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Nombre: $nombreUsuario")
+            Text("Perfil: $perfilCalibracion")
         }
-
     }
 }
+
+@Composable
+fun CardEstadoReal(estadoConexion: String,
+                   calidadSeñal: String,
+                   atencion: Int,
+                   meditacion: Int,
+                   fuerzaParpadeo: Int){
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Estado en Tiempo Real", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Conexión: $estadoConexion")
+            Text("Calidad de Señal: $calidadSeñal")
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Atención: $atencion")
+            Text("Meditación: $meditacion")
+            Text("Parpadeo: $fuerzaParpadeo")
+        }
+    }
+
+}
+
+// Función helper que puedes poner en el mismo archivo o en uno de utilidades
+private fun getSignalQualityDescription(signal: Int): String {
+    return when {
+        signal == 0 -> "Excelente"
+        signal in 1..50 -> "Buena"
+        signal in 51..100 -> "Aceptable"
+        signal in 101..150 -> "Débil"
+        signal in 151..199 -> "Muy débil"
+        signal >= 200 -> "Sin contacto/No colocada"
+        else -> "Desconocida"
+    }
+}
+
+//********************** Lógica Dpad **********************
 
 @Composable
 fun ModernDpad(

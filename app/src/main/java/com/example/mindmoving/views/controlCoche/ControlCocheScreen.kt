@@ -77,33 +77,15 @@ fun ControlCocheScreen(navController: NavHostController) {
         modifier = Modifier
             .fillMaxSize()
     ) {
-
         Image(
             painter = painterResource(id = R.drawable.fondo_5),
             contentDescription = "Fondo de pantalla",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-
-
-
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-
-            /*
-            LaunchedEffect(iniciarConexion, conectado) {
-                if (iniciarConexion && !conectado) {
-                    delay(30_000L) // Esperar 30 segundos solo si no se conectó
-                    if (!conectado) {
-                        showLoading = false
-                        showError = true
-                    }
-                }
-                
-            }
-
-             */
 
             LaunchedEffect(iniciarConexion) {
                 if (iniciarConexion) {
@@ -117,7 +99,6 @@ fun ControlCocheScreen(navController: NavHostController) {
                             return@LaunchedEffect
                         }
                     }
-
                     // Si después de 30s aún no está conectado, mostrar error
                     if (!conectado) {
                         showLoading = false
@@ -137,9 +118,7 @@ fun ControlCocheScreen(navController: NavHostController) {
                     keyValue = streamKey
                 )
             }
-
         }
-
         IconButton(
             onClick = { navController.popBackStack() },
             modifier = Modifier.padding(10.dp)
@@ -152,7 +131,6 @@ fun ControlCocheScreen(navController: NavHostController) {
                 modifier = Modifier.size(30.dp)
             )
         }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -166,7 +144,8 @@ fun ControlCocheScreen(navController: NavHostController) {
                     val jsonEncoded = URLEncoder.encode(json, "UTF-8")
                     val ip = "192.168.4.1"
                     val puerto = 100
-                    val comando = """{"N":3,"H":"0001","D1":1,"D2":100}""" // Avanzar
+                    val comando = """"{"N":106,"D1":1}""""
+                        //"""{"H":ID,"N":3,"D1":4,"D2":100}""" // Avanzar
 
                     //enviarComandoSocket("192.168.4.1", 80, json)
                     //sendTcpCommand("""{"command":"forward"}""", port = 100)
@@ -299,7 +278,7 @@ fun ControlCocheScreen(navController: NavHostController) {
 
 }
 
-
+/*
 fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
     Thread {
         try {
@@ -315,9 +294,9 @@ fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
         }
     }.start()
 }
+*/
 
 
-/*
 fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
     Thread {
         try {
@@ -335,8 +314,6 @@ fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
     }.start()
 }
 
- */
-
 /*
 fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
     Thread {
@@ -352,7 +329,6 @@ fun enviarComandoTCP(ip: String, puerto: Int, comando: String) {
         }
     }.start()
 }
-
  */
 
 

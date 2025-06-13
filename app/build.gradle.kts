@@ -69,6 +69,7 @@ dependencies {
     //Implementacion del SDK del NeuroSky
     implementation("com.github.pwittchen:neurosky-android-sdk:0.0.2")
     implementation(libs.protolite.well.known.types)
+    implementation(libs.androidx.ui.desktop)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
