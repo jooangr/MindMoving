@@ -36,5 +36,8 @@ data class ComandosDiademaState(
     val mensajeUsuario: String? = null, // Para mostrar Snackbars o Toasts
 
     val perfilVerificado: Boolean = false,
-    val necesitaCalibracion: Boolean = false
+    val necesitaCalibracion: Boolean = false,
+
+    // Controla si se debe mostrar el diálogo de guardado de sesion
+    val mostrarDialogoGuardar: Boolean = false
 )

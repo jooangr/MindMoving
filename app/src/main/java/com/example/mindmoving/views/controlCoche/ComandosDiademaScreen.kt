@@ -31,10 +31,14 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -49,10 +53,12 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 
 
 @Composable
@@ -64,7 +70,7 @@ fun ComandosDiademaScreen(
     // 2. Recoge el estado
     val uiState by viewModel.uiState.collectAsState()
 
-    // --> AÑADIDO 1: LÓGICA DEL DIÁLOGO DE AVISO
+    // LÓGICA DEL DIÁLOGO DE AVISO
     // Se mostrará solo cuando el perfil se haya verificado y se determine que se necesita calibración.
     if (uiState.perfilVerificado && uiState.necesitaCalibracion) {
         AlertDialog(
@@ -93,6 +99,39 @@ fun ComandosDiademaScreen(
         )
     }
 
+    // Se mostrará solo cuando el usuario haya detenido la sesion o la sesion haya terminado, para guardar los datos de la sesion
+    if (uiState.mostrarDialogoGuardar) {
+        AlertDialog(
+            onDismissRequest = {
+                // Si el usuario toca fuera del diálogo, lo consideramos un "cancelar".
+                viewModel.onCancelarGuardarSesion()
+            },
+            title = { Text(text = "Fin de la Sesión") },
+            text = { Text(text = "¿Deseas guardar los resultados de esta sesión?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // El usuario pulsa "Guardar"
+                        viewModel.onConfirmarGuardarSesion()
+                    }
+                ) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        // El usuario pulsa "Descartar"
+                        viewModel.onCancelarGuardarSesion()
+                    }
+                ) {
+                    Text("Descartar")
+                }
+            }
+        )
+    }
+
+
     // LÓGICA DEL SNACKBAR PARA MENSAJES
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -116,18 +155,18 @@ fun ComandosDiademaScreen(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5))
-                    )
-                ),
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest), // Color sutil del tema M3
+
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Center
         ) {
 
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(16.dp)
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 CardDatosUsuario(
                     nombreUsuario = uiState.usuario?.username ?: "Cargando...",
@@ -138,8 +177,6 @@ fun ComandosDiademaScreen(
                     nSesiones = 0
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
                 CardEstadoReal(
                     estadoConexion = uiState.estadoConexion.name,
                     calidadSeñal = getSignalQualityDescription(uiState.calidadSeñal),
@@ -147,42 +184,65 @@ fun ComandosDiademaScreen(
                     meditacion = uiState.meditacionActual,
                     fuerzaParpadeo = uiState.fuerzaParpadeoActual
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // --> CAMBIO: Lógica condicional para los botones
-                when (uiState.estadoConexion) {
-                    ConnectionStatus.CONECTADO -> {
-                        // Si está CONECTADO, mostramos el botón de la sesión
-                        Button(
-                            onClick = { viewModel.onBotonSesionClick() },
-                            // Se deshabilita si la sesión ya está activa para evitar doble clic
-                            enabled = !uiState.sesionActiva
-                        ) {
-                            Text(if (uiState.sesionActiva) "Sesión en Curso..." else "Comenzar Sesión")
-                        }
-                    }
-                    ConnectionStatus.CONECTANDO -> {
-                        // Si está CONECTANDO, mostramos un botón deshabilitado
-                        Button(onClick = {}, enabled = false) {
-                            Text("Conectando...")
-                        }
-                    }
-                    else -> { // DESCONECTADO o ERROR
-                        // Si está DESCONECTADO, mostramos el botón para conectar
-                        Button(onClick = { viewModel.onConectarDiademaClick() }) {
-                            Text("Conectar Diadema")
-                        }
-                    }
-                }
             }
 
-            ModernDpad(
-                modifier = Modifier.padding(bottom = 32.dp),
-                onDirectionClick = { direction ->
-                    viewModel.onDpadClick(direction)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // --> CAMBIO DE DISEÑO: Botones con un estilo más limpio y consistente
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(48.dp), // Altura fija para el área del botón
+                    contentAlignment = Alignment.Center
+                ) {
+                    // --> CAMBIO: Lógica condicional para los botones
+                    when (uiState.estadoConexion) {
+                        ConnectionStatus.CONECTADO -> {
+                            // Si está CONECTADO, mostramos el botón de la sesión
+                            Button(
+                                onClick = { viewModel.onBotonSesionClick() },
+                                // Se deshabilita si la sesión ya está activa para evitar doble clic
+                                enabled = !uiState.sesionActiva
+                            ) {
+                                Text(if (uiState.sesionActiva) "Sesión en Curso..." else "Comenzar Sesión")
+                            }
+                        }
+
+                        ConnectionStatus.CONECTANDO -> {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text(
+                                    "Conectando...",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        else -> { // DESCONECTADO o ERROR
+                            // Si está DESCONECTADO, mostramos el botón para conectar
+                            Button(onClick = { viewModel.onConectarDiademaClick() }) {
+                                Text("Conectar Diadema")
+                            }
+                        }
+                    }
+
                 }
-            )
+
+                Spacer(Modifier. height(20.dp))
+
+                ModernDpad(
+                    modifier = Modifier.padding(bottom = 32.dp),
+                    onDirectionClick = { direction ->
+                        viewModel.onDpadClick(direction)
+                    },
+                    // --> AÑADIDO: Pasamos el comando activo desde el state
+                    comandoActivado = uiState.comandoActivado
+                )
+            }
         }
     }
 }
@@ -192,13 +252,28 @@ fun CardDatosUsuario(nombreUsuario: String,
                      perfilCalibracion: String,
                      nSesiones: Int //TODO numero de sesiones realizadas
 ){
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface // Fondo limpio
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Usuario", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            //Text("Usuario", style = MaterialTheme.typography.titleMedium)
+            // Título de la Card con icono
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Usuario",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text("Usuario", style = MaterialTheme.typography.titleLarge)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
             Text("Nombre: $nombreUsuario")
             Text("Perfil: $perfilCalibracion")
         }
@@ -210,23 +285,69 @@ fun CardEstadoReal(estadoConexion: String,
                    calidadSeñal: String,
                    atencion: Int,
                    meditacion: Int,
-                   fuerzaParpadeo: Int){
-    Card(
+                   fuerzaParpadeo: Int)
+{
+
+    val connectionColor = when (estadoConexion) {
+        ConnectionStatus.CONECTADO.name -> Color(0xFF4CAF50) // Verde
+        ConnectionStatus.CONECTANDO.name -> Color(0xFFFFC107) // Ambar
+        else -> MaterialTheme.colorScheme.error // Rojo
+    }
+
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Estado en Tiempo Real", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Conexión: $estadoConexion")
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    )  {
+        Column(
+            modifier = Modifier.padding(10.dp)
+        ){
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.SignalCellularAlt,
+                    contentDescription = "Estado",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text("Estado en Tiempo Real", style = MaterialTheme.typography.titleLarge)
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+            InfoRow(label = "Conexión", value = estadoConexion.toString(), valueColor = connectionColor)
             Text("Calidad de Señal: $calidadSeñal")
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text("Atención: $atencion")
             Text("Meditación: $meditacion")
             Text("Parpadeo: $fuerzaParpadeo")
         }
     }
 
+}
+
+/**
+ * Muestra una fila con una etiqueta a la izquierda y un valor a la derecha.
+ */
+@Composable
+private fun InfoRow(label: String, value: String, valueColor: Color = Color.Unspecified) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = valueColor
+        )
+    }
 }
 
 // Función helper que puedes poner en el mismo archivo o en uno de utilidades
@@ -247,36 +368,51 @@ private fun getSignalQualityDescription(signal: Int): String {
 @Composable
 fun ModernDpad(
     modifier: Modifier = Modifier,
-    onDirectionClick: (Direction) -> Unit
+    onDirectionClick: (Direction) -> Unit,
+    comandoActivado: Direction?
 ) {
     Box(
         modifier = modifier.size(220.dp), // Tamaño total del D-Pad
         contentAlignment = Alignment.Center
     ) {
-        // --- Botones Direccionales (sin cambios aquí) ---
+        // --- Botones Direccionales ---
         DirectionalButton(
             onClick = { onDirectionClick(Direction.UP) },
+            isActivatedByEEG = comandoActivado == Direction.UP,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Arriba",
             modifier = Modifier.align(Alignment.TopCenter)
         )
         DirectionalButton(
             onClick = { onDirectionClick(Direction.LEFT) },
+            isActivatedByEEG = comandoActivado == Direction.LEFT,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Izquierda",
             modifier = Modifier.align(Alignment.CenterStart).rotate(-90f)
         )
         DirectionalButton(
             onClick = { onDirectionClick(Direction.RIGHT) },
+            isActivatedByEEG = comandoActivado == Direction.RIGHT,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Derecha",
             modifier = Modifier.align(Alignment.CenterEnd).rotate(90f)
         )
         DirectionalButton(
             onClick = { onDirectionClick(Direction.DOWN) },
+            isActivatedByEEG = comandoActivado == Direction.DOWN,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Abajo",
             modifier = Modifier.align(Alignment.BottomCenter).rotate(180f)
+        )
+
+        // --- Botón Central ---
+        // --> AÑADIDO: Haremos que el botón central también reaccione
+        val isCenterActivated = comandoActivado == Direction.CENTER
+        val centerScale by animateFloatAsState(if (isCenterActivated) 1.1f else 1.0f, label = "center_scale")
+        val centerColor by animateColorAsState(
+            if (isCenterActivated) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.surfaceBright,
+            label = "center_color"
         )
 
         // --- Botón Central (Opcional, actualizado a M3) ---
@@ -288,7 +424,7 @@ fun ModernDpad(
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surfaceBright,
+                            centerColor, // Usamos el color animado
                             MaterialTheme.colorScheme.surfaceContainer
                         ),
                         radius = 40f
@@ -306,6 +442,7 @@ fun ModernDpad(
 fun DirectionalButton(
     onClick: () -> Unit,
     icon: ImageVector,
+    isActivatedByEEG: Boolean,
     contentDescription: String,
     modifier: Modifier = Modifier,
     buttonSize: Dp = 100.dp,
@@ -314,33 +451,36 @@ fun DirectionalButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    // Animaciones para el efecto de presionado
-    val elevation by animateDpAsState(if (isPressed) 2.dp else 8.dp, label = "elevation")
-    val scale by animateFloatAsState(if (isPressed) 0.95f else 1f, label = "scale")
+    // La variable que combina ambos estados. Esta es nuestra única fuente de verdad.
+    val isActivated = isPressed || isActivatedByEEG
 
-    // Colores del tema de Material 3 para adaptarse a temas claro/oscuro
+    // --> CORRECCIÓN: Todas las animaciones ahora dependen de 'isActivated'.
+    val elevation by animateDpAsState(if (isActivated) 2.dp else 8.dp, label = "elevation")
+    val scale by animateFloatAsState(if (isActivated) 0.95f else 1f, label = "scale")
+
     val containerColor by animateColorAsState(
-        if (isPressed) MaterialTheme.colorScheme.surfaceContainerHigh
+        if (isActivated) MaterialTheme.colorScheme.surfaceContainerHigh
         else MaterialTheme.colorScheme.surface,
         label = "containerColor"
     )
     val iconColor by animateColorAsState(
-        if (isPressed) MaterialTheme.colorScheme.primary
+        if (isActivated) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
         label = "iconColor"
     )
 
+    // El resto del Box y el Icon no necesitan cambios.
     Box(
         modifier = modifier
             .size(buttonSize)
-            .scale(scale)
+            .scale(scale) // La escala se aplica aquí
             .shadow(
-                elevation = elevation,
+                elevation = elevation, // La elevación se aplica aquí
                 shape = ArcShape(90f),
                 clip = false
             )
             .clip(ArcShape(90f))
-            .background(containerColor)
+            .background(containerColor) // El color se aplica aquí
             .clickable(interactionSource = interactionSource, indication = null) {
                 onClick()
             }
@@ -348,7 +488,7 @@ fun DirectionalButton(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = iconColor,
+            tint = iconColor, // El color del icono se aplica aquí
             modifier = Modifier
                 .align(Alignment.Center)
                 .size(iconSize)

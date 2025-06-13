@@ -69,6 +69,19 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
+    //La UI la llamará cuando el usuario confirme que quiere guardar.
+    fun onConfirmarGuardarSesion() {
+        // Ocultamos el diálogo primero
+        _uiState.update { it.copy(mostrarDialogoGuardar = false) }
+        // Y luego llamamos a la lógica de guardado que ya teníamos
+        guardarResultadosDeSesion()
+    }
+
+    fun onCancelarGuardarSesion() {
+        // Simplemente ocultamos el diálogo. No se hace nada más.
+        _uiState.update { it.copy(mostrarDialogoGuardar = false) }
+    }
+
     // --> AÑADIDO: Función para que la UI pueda manejar el aviso
     fun onIgnorarAvisoCalibracion() {
         _uiState.update { it.copy(necesitaCalibracion = false) }
@@ -151,14 +164,21 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
     private fun detenerSesion() {
         sesionJob?.cancel()
         sesionJob = null
-        _uiState.update { it.copy(sesionActiva = false) }
 
-        // --> COMPLETADO: Ahora llamamos a la función de guardado
-        guardarResultadosDeSesion()
+        // En lugar de guardar directamente, ahora actualizamos el estado
+        // para que la UI muestre el diálogo de confirmación.
+        _uiState.update {
+            it.copy(
+                sesionActiva = false,
+                mostrarDialogoGuardar = true // <-- ¡LA CLAVE DEL CAMBIO!
+            )
+        }
     }
 
 
+    /*
     private fun procesarEEG(datos: EEGData) {
+
         // --> AÑADIDO: Recopilación de datos en cada tick
         atencionRecogida.add(datos.attention)
         meditacionRecogida.add(datos.meditation)
@@ -167,33 +187,121 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         }
 
         val usuario = uiState.value.usuario ?: return
-        // --> MEJORA: Usamos la constante del enum en lugar de un String "hardcodeado"
-        val perfil = PerfilCalibracion.values().find { it.nombre == usuario.perfilCalibracion }
-            ?: PerfilCalibracion.EQUILIBRADO
+        // 1. Obtener el perfil de calibración o usar uno por defecto.
+        val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
+            ?: PerfilCalibracion.EQUILIBRADO // Si no hay perfil, usamos 'EQUILIBRADO' como predeterminado.
 
-        // --> MEJORA: La lógica de umbrales ahora usa los datos reales del perfil
-        val umbralAtencion = perfil.valoresAtencion.media * 1.20 // Ejemplo: 20% sobre la media
-        val umbralMeditacion = perfil.valoresMeditacion.media * 1.20
+        // 2. Calcular los umbrales dinámicos.
+        // Un comando se activa si el valor actual supera la media de calibración en un 0%.
+        // Puedes ajustar este multiplicador (1.25) para hacer el juego más fácil o difícil.
+        val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.20).toInt()
+        val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.20).toInt()
 
+        // Para los parpadeos, usamos rangos más fijos como razonamos.
+        val umbralParpadeoSuave_Min = 20
+        val umbralParpadeoSuave_Max = 60
+        val umbralParpadeoFuerte = 75
+
+        // 3. Determinar qué comando se activa (usando una estructura `when` para exclusividad).
         var comandoGenerado: Direction? = null
 
         when {
-            datos.attention > umbralAtencion -> comandoGenerado = Direction.UP
-            // --> MEJORA: Usamos el umbral dinámico también para la meditación
-            datos.meditation > umbralMeditacion -> comandoGenerado = Direction.DOWN
+            // Prioridad 1: Parpadeo Fuerte
+            datos.blinkStrength > umbralParpadeoFuerte -> {
+                comandoGenerado = Direction.CENTER // Asignamos el parpadeo fuerte al botón central
+            }
+            // Prioridad 2: Atención
+            datos.attention > umbralAtencion -> {
+                comandoGenerado = Direction.UP
+            }
+            // Prioridad 3: Meditación
+            datos.meditation > umbralMeditacion -> {
+                comandoGenerado = Direction.DOWN
+            }
+            // Prioridad 4: Parpadeo Suave
+            datos.blinkStrength in umbralParpadeoSuave_Min..umbralParpadeoSuave_Max -> {
+                comandoGenerado = Direction.RIGHT
+            }
+        }
+
+        // 4. Actualizar el estado para que la UI reaccione.
+        // Esta lógica ya la tenías y es correcta: activa el comando y lo desactiva tras 1000ms.
+        if (comandoGenerado != null) {
+            if (uiState.value.comandoActivado != comandoGenerado) {
+                _uiState.update { it.copy(comandoActivado = comandoGenerado) }
+
+                // Registramos el comando ejecutado (lógica que ya tenías)
+                if (comandosEjecutadosStr.isNotEmpty()) {
+                    comandosEjecutadosStr += ","
+                }
+                comandosEjecutadosStr += comandoGenerado.name
+
+                viewModelScope.launch {
+                    delay(1000) // Duración de la "presión" visual del botón
+                    if (uiState.value.comandoActivado == comandoGenerado) {
+                        _uiState.update { it.copy(comandoActivado = null) }
+                    }
+                }
+            }
+        }
+    }
+*/
+
+    private fun procesarEEG(datos: EEGData) {
+        if (!uiState.value.sesionActiva) return
+
+        atencionRecogida.add(datos.attention)
+        meditacionRecogida.add(datos.meditation)
+        if (datos.blinkStrength > 0) {
+            parpadeosRecogidos.add(datos.blinkStrength)
+        }
+
+        val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
+            ?: PerfilCalibracion.EQUILIBRADO
+
+        // --> CAMBIO 1: Hacemos el multiplicador más bajo para pruebas (1.10 = 10% por encima)
+        val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
+        val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
+
+        val umbralParpadeoSuave_Min = 20
+        val umbralParpadeoSuave_Max = 60
+        val umbralParpadeoFuerte = 75
+
+        var comandoGenerado: Direction? = null
+
+        // --> CAMBIO 2: Añadimos LOGS para ver los valores en tiempo real
+        Log.d("EEG_Debug", "Datos -> Atención: ${datos.attention} (Umbral: $umbralAtencion) | Meditación: ${datos.meditation} (Umbral: $umbralMeditacion) | Parpadeo: ${datos.blinkStrength}")
+
+        when {
+            datos.blinkStrength > umbralParpadeoFuerte -> {
+                comandoGenerado = Direction.CENTER
+            }
+            datos.attention > umbralAtencion -> {
+                comandoGenerado = Direction.UP
+            }
+            datos.meditation > umbralMeditacion -> {
+                comandoGenerado = Direction.DOWN
+            }
+            datos.blinkStrength in umbralParpadeoSuave_Min..umbralParpadeoSuave_Max -> {
+                comandoGenerado = Direction.RIGHT
+            }
         }
 
         if (comandoGenerado != null) {
-            // --> AÑADIDO: Registro del comando ejecutado
-            if (comandosEjecutadosStr.isNotEmpty()) {
-                comandosEjecutadosStr += ","
-            }
-            comandosEjecutadosStr += comandoGenerado.name
+            // --> CAMBIO 3: Log para confirmar que un comando se ha generado
+            Log.i("EEG_Debug", "¡COMANDO GENERADO: $comandoGenerado!")
 
-            // La lógica de resaltar el botón se mantiene igual
+            // Tu lógica para actualizar el estado se queda igual
             if (uiState.value.comandoActivado != comandoGenerado) {
                 _uiState.update { it.copy(comandoActivado = comandoGenerado) }
+
+                if (comandosEjecutadosStr.isNotEmpty()) {
+                    comandosEjecutadosStr += ","
+                }
+                comandosEjecutadosStr += comandoGenerado.name
+
                 viewModelScope.launch {
+                    // --> CAMBIO 4: Reducimos el delay para que la respuesta sea más rápida en pruebas
                     delay(500)
                     if (uiState.value.comandoActivado == comandoGenerado) {
                         _uiState.update { it.copy(comandoActivado = null) }
