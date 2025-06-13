@@ -18,6 +18,7 @@ import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import com.example.mindmoving.views.calibracion.guiada.CalibracionCompletaScreen
 import com.example.mindmoving.views.calibracion.guiada.CalibracionInicioScreen
+import com.example.mindmoving.views.controlCoche.ComandosDiademaScreen
 import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AjustesScreen
@@ -86,6 +87,10 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
 
         //quitar luego esta de pruebas
         composable("atencion") { AtencionPantalla(navController) }
+
+        composable("comandos_diadema") {
+            ComandosDiademaScreen(navController = navController)
+        }
     }
 }
 
