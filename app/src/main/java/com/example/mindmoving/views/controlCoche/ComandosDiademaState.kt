@@ -35,5 +35,8 @@ data class ComandosDiademaState(
     val comandoActivado: Direction? = null,
 
     // --- Mensajes para el usuario (opcional pero muy útil) ---
-    val mensajeUsuario: String? = null // Para mostrar Snackbars o Toasts
+    val mensajeUsuario: String? = null, // Para mostrar Snackbars o Toasts
+
+    val perfilVerificado: Boolean = false,
+    val necesitaCalibracion: Boolean = false
 )

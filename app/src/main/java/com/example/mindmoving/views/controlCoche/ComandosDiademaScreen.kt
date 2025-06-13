@@ -32,12 +32,16 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 
 import androidx.compose.ui.draw.clip
@@ -49,17 +53,66 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 
 
 @Composable
 fun ComandosDiademaScreen(
-    viewModel: ComandosDiademaViewModel = viewModel()//... tu forma de instanciarlo
+    viewModel: ComandosDiademaViewModel = viewModel(),
+    navController: NavController
 ) {
 
     // 2. Recoge el estado
     val uiState by viewModel.uiState.collectAsState()
 
+    // --> AÑADIDO 1: LÓGICA DEL DIÁLOGO DE AVISO
+    // Se mostrará solo cuando el perfil se haya verificado y se determine que se necesita calibración.
+    if (uiState.perfilVerificado && uiState.necesitaCalibracion) {
+        AlertDialog(
+            onDismissRequest = { /* No hacemos nada para forzar al usuario a tomar una decisión */ },
+            title = { Text(text = "Perfil No Encontrado") },
+            text = { Text(text = "Para una experiencia personalizada, te recomendamos realizar la calibración primero.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Navega a tu pantalla de calibración.
+                        // Cambia "calibracion_route" por la ruta real que hayas definido en tu NavHost.
+                        navController.navigate("calibracion_route")
+                    }
+                ) {
+                    Text("Ir a Calibrar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        // Notifica al ViewModel que el usuario ha decidido ignorar el aviso.
+                        viewModel.onIgnorarAvisoCalibracion()
+                    }
+                ) {
+                    Text("Continuar sin calibrar")
+                }
+            }
+        )
+    }
+
+    // LÓGICA DEL SNACKBAR PARA MENSAJES
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.mensajeUsuario) {
+        val mensaje = uiState.mensajeUsuario
+
+        if (mensaje  != null) {
+            snackbarHostState.showSnackbar(message = mensaje)
+            // El ViewModel se encarga de limpiar el mensaje después de un tiempo,
+        }
+    }
+
+
+    // --> CAMBIO 3: MODIFICACIÓN DEL SCAFFOLD
+    // Añadimos el `snackbarHost` al Scaffold para que sepa dónde mostrar los Snackbars.
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
         Column(
@@ -72,24 +125,27 @@ fun ComandosDiademaScreen(
                     )
                 ),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween // Para distribuir los elementos
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Contenedor para las cards de información
+            // El resto de tu UI se queda igual. Ya está correctamente conectada
+            // al uiState, por lo que reaccionará a los cambios sin necesidad
+            // de modificar nada más aquí.
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(16.dp)
             ) {
                 CardDatosUsuario(
-                    // Parámetros que vendrán del ViewModel en el futuro
                     nombreUsuario = uiState.usuario?.username ?: "Cargando...",
                     perfilCalibracion = uiState.usuario?.perfilCalibracion ?: "N/A",
+                    // TODO: Para el número de sesiones, necesitarías una llamada a la API
+                    // que las cuente, o tener ese dato en el objeto Usuario.
+                    // Por ahora lo dejamos en 0.
                     nSesiones = 0
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 CardEstadoReal(
-                    // Parámetros que vendrán del ViewModel en el futuro
-                    estadoConexion = uiState.estadoConexion.name, // .name convierte el enum a String
-                    calidadSeñal = getSignalQualityDescription(uiState.calidadSeñal), // Usa una función helper
+                    estadoConexion = uiState.estadoConexion.name,
+                    calidadSeñal = getSignalQualityDescription(uiState.calidadSeñal),
                     atencion = uiState.atencionActual,
                     meditacion = uiState.meditacionActual,
                     fuerzaParpadeo = uiState.fuerzaParpadeoActual
@@ -98,12 +154,10 @@ fun ComandosDiademaScreen(
                 Button(
                     onClick = { viewModel.onBotonSesionClick() },
                 ) {
-                    // El texto ahora depende del estado
                     Text(if (uiState.sesionActiva) "Detener Sesión" else "Comenzar Sesión")
                 }
             }
 
-            // D-Pad al final de la pantalla
             ModernDpad(
                 modifier = Modifier.padding(bottom = 32.dp),
                 onDirectionClick = { direction ->

@@ -6,6 +6,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mindmoving.retrofit.models.PerfilCalibracion
+import com.example.mindmoving.retrofit.models.SesionEEGRequest
 import com.example.mindmoving.views.EEGData
 import com.example.mindmoving.views.NeuroSkyManager
 import kotlinx.coroutines.delay
@@ -16,33 +18,36 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class ComandosDiademaViewModel (application: Application) : AndroidViewModel(application){
-    // Ya no son privados, y les damos un valor por defecto
-    // Instancia las dependencias aquí dentro, pasando el contexto
+class ComandosDiademaViewModel(application: Application) : AndroidViewModel(application) {
+
+    // --- DEPENDENCIAS ---
     private val repository: UsuarioRepository = UsuarioRepository()
     private val neuroSkyManager: NeuroSkyManager = NeuroSkyManager(application.applicationContext)
 
-
     // --- GESTIÓN DEL ESTADO ---
-    // El StateFlow privado y mutable que gestionará el estado internamente
     private val _uiState = MutableStateFlow(ComandosDiademaState())
-
-    // El StateFlow público e inmutable que la UI observará
     val uiState = _uiState.asStateFlow()
+
+    // --- PROPIEDADES INTERNAS DE LA SESIÓN ---
+    private var sesionJob: Job? = null
+    private val atencionRecogida = mutableListOf<Int>()
+    private val meditacionRecogida = mutableListOf<Int>()
+    private val parpadeosRecogidos = mutableListOf<Int>()
+    private var comandosEjecutadosStr = ""
 
     // --- INICIALIZACIÓN ---
     init {
-        // Acciones que se ejecutan en cuanto el ViewModel se crea
-        cargarUsuario()
+        cargarUsuarioYVerificarPerfil()
         iniciarConexionDiadema()
     }
 
-    // --- FUNCIONES PÚBLICAS (Eventos desde la UI) ---
+    // --- EVENTOS DESDE LA UI ---
 
     fun onBotonSesionClick() {
-        // Lógica para iniciar o detener la sesión
-        // (La implementaremos en el Paso 4)
         if (uiState.value.sesionActiva) {
             detenerSesion()
         } else {
@@ -50,45 +55,45 @@ class ComandosDiademaViewModel (application: Application) : AndroidViewModel(app
         }
     }
 
+    // --> AÑADIDO: Función para que la UI pueda manejar el aviso
+    fun onIgnorarAvisoCalibracion() {
+        _uiState.update { it.copy(necesitaCalibracion = false) }
+    }
 
+    // Opcional: para manejar clics manuales en el D-pad si fuera necesario
     fun onDpadClick(direction: Direction) {
-        // Opcional: para manejar clics manuales en el D-pad si fuera necesario
         println("El usuario ha presionado manualmente: $direction")
     }
 
-    // --- LÓGICA PRIVADA (Acciones internas del ViewModel) ---
+    // --- LÓGICA DE FLUJO PRINCIPAL ---
 
-    private fun cargarUsuario() {
-        // Lógica para obtener el usuario del repositorio y actualizar el state
-        // (La implementaremos en el Paso 5)
-        // val usuario = repository.getUsuarioActual()
-        // _uiState.update { it.copy(usuario = usuario) }
+    private fun cargarUsuarioYVerificarPerfil() {
+        viewModelScope.launch {
+            val usuarioConPerfil = repository.getUsuarioConPerfil()
+            _uiState.update { it.copy(usuario = usuarioConPerfil) }
+
+            if (usuarioConPerfil == null || usuarioConPerfil.perfilCalibracion.isNullOrBlank() || usuarioConPerfil.perfilCalibracion.equals("ninguno", ignoreCase = true)) {
+                _uiState.update { it.copy(necesitaCalibracion = true, perfilVerificado = true) }
+            } else {
+                _uiState.update { it.copy(necesitaCalibracion = false, perfilVerificado = true) }
+            }
+        }
     }
 
+
     private fun iniciarConexionDiadema() {
-        // 1. Conectar con la diadema
-        // Aquí es donde deberías gestionar los permisos. Por ahora, asumimos que están concedidos.
-        // En una app real, llamarías a esto DESPUÉS de que la UI confirme los permisos.
         neuroSkyManager.conectar()
 
-        // 2. Escuchar el estado de la conexión
         neuroSkyManager.connectionState
-            .onEach { estado ->
-                _uiState.update { it.copy(estadoConexion = estado) }
-            }
-            .launchIn(viewModelScope) // Lanza la corrutina en el scope del ViewModel
-
-        // 3. Escuchar la calidad de la señal
-        neuroSkyManager.signalQuality
-            .onEach { calidad ->
-                _uiState.update { it.copy(calidadSeñal = calidad.level) }
-            }
+            .onEach { estado -> _uiState.update { it.copy(estadoConexion = estado) } }
             .launchIn(viewModelScope)
 
-        // 4. Escuchar los datos EEG (Atención, Meditación, Parpadeo)
+        neuroSkyManager.signalQuality
+            .onEach { calidad -> _uiState.update { it.copy(calidadSeñal = calidad.level) } }
+            .launchIn(viewModelScope)
+
         neuroSkyManager.eegData
             .onEach { datos ->
-                // Actualizamos el estado de la UI con los datos en tiempo real
                 _uiState.update {
                     it.copy(
                         atencionActual = datos.attention,
@@ -96,8 +101,6 @@ class ComandosDiademaViewModel (application: Application) : AndroidViewModel(app
                         fuerzaParpadeoActual = datos.blinkStrength
                     )
                 }
-
-                // Si la sesión está activa, procesamos los datos para generar comandos
                 if (uiState.value.sesionActiva) {
                     procesarEEG(datos)
                 }
@@ -105,98 +108,117 @@ class ComandosDiademaViewModel (application: Application) : AndroidViewModel(app
             .launchIn(viewModelScope)
     }
 
-    // Propiedad para gestionar el trabajo del temporizador
-    private var sesionJob: Job? = null
-
-    // Propiedades para acumular datos durante la sesión
-    private val atencionRecogida = mutableListOf<Int>()
-    private val meditacionRecogida = mutableListOf<Int>()
-    private val parpadeosRecogidos = mutableListOf<Int>()
-    private var comandosEjecutadosStr = ""
 
     private fun iniciarSesion() {
-        // Si ya hay una sesión activa, no hacemos nada
         if (sesionJob?.isActive == true) return
-
-        // Cancelamos cualquier job anterior por si acaso
         sesionJob?.cancel()
 
-        // Iniciamos una nueva corrutina para el temporizador
+        // --> AÑADIDO: Limpieza de datos de la sesión anterior
+        atencionRecogida.clear()
+        meditacionRecogida.clear()
+        parpadeosRecogidos.clear()
+        comandosEjecutadosStr = ""
+
         sesionJob = viewModelScope.launch {
-            // Actualizamos el estado para reflejar que la sesión ha comenzado
             _uiState.update {
                 it.copy(
                     sesionActiva = true,
-                    tiempoRestanteSeg = 120 // Reinicia el tiempo
+                    tiempoRestanteSeg = 120
                 )
             }
-
-            // Bucle del temporizador
             while (uiState.value.tiempoRestanteSeg > 0) {
-                delay(1000) // Espera un segundo
-                _uiState.update {
-                    it.copy(tiempoRestanteSeg = it.tiempoRestanteSeg - 1)
-                }
+                delay(1000)
+                _uiState.update { it.copy(tiempoRestanteSeg = it.tiempoRestanteSeg - 1) }
             }
-
-            // Cuando el tiempo llega a 0, detenemos la sesión
             detenerSesion()
         }
     }
 
+
     private fun detenerSesion() {
-        sesionJob?.cancel() // Detiene el temporizador si sigue activo
+        sesionJob?.cancel()
         sesionJob = null
         _uiState.update { it.copy(sesionActiva = false) }
 
-        // TODO en Paso 5: Aquí llamaremos a la función para guardar los resultados en la BBDD.
-        Log.d("ViewModel", "Sesión terminada. Listo para guardar datos.")
+        // --> COMPLETADO: Ahora llamamos a la función de guardado
+        guardarResultadosDeSesion()
     }
 
-    // --- LÓGICA DE TRADUCCIÓN EEG A COMANDOS ---
-    private fun procesarEEG(datos: EEGData) {
-        // Obtenemos el perfil del usuario desde el estado actual
-        val perfil = uiState.value.usuario?.perfilCalibracion ?: "EQUILIBRADO"
 
-        // Lógica de ejemplo. ¡Aquí es donde debes implementar tus reglas!
-        // Estas reglas dependen completamente de tu `PerfilCalibracion` y de cómo definas los umbrales.
-        val umbralAtencion: Int = when (perfil) {
-            "CONCENTRADO" -> 70 // Para un perfil concentrado, el umbral es más bajo
-            "EQUILIBRADO" -> 80
-            "RELAJADO" -> 90 // Para un perfil relajado, se necesita más esfuerzo
-            else -> 80
+    private fun procesarEEG(datos: EEGData) {
+        // --> AÑADIDO: Recopilación de datos en cada tick
+        atencionRecogida.add(datos.attention)
+        meditacionRecogida.add(datos.meditation)
+        if (datos.blinkStrength > 0) {
+            parpadeosRecogidos.add(datos.blinkStrength)
         }
+
+        val usuario = uiState.value.usuario ?: return
+        // --> MEJORA: Usamos la constante del enum en lugar de un String "hardcodeado"
+        val perfil = PerfilCalibracion.values().find { it.nombre == usuario.perfilCalibracion }
+            ?: PerfilCalibracion.EQUILIBRADO
+
+        // --> MEJORA: La lógica de umbrales ahora usa los datos reales del perfil
+        val umbralAtencion = perfil.valoresAtencion.media * 1.20 // Ejemplo: 20% sobre la media
+        val umbralMeditacion = perfil.valoresMeditacion.media * 1.20
 
         var comandoGenerado: Direction? = null
 
-        if (datos.attention > umbralAtencion) {
-            comandoGenerado = Direction.UP
-            Log.i(
-                "ViewModel",
-                "COMANDO ARRIBA: Atención (${datos.attention}) > Umbral ($umbralAtencion)"
-            )
-        } else if (datos.meditation > 80) {
-            // Podrías añadir lógica para otros comandos
-            // comandoGenerado = Direction.DOWN
+        when {
+            datos.attention > umbralAtencion -> comandoGenerado = Direction.UP
+            // --> MEJORA: Usamos el umbral dinámico también para la meditación
+            datos.meditation > umbralMeditacion -> comandoGenerado = Direction.DOWN
         }
 
-        // Si se generó un comando, lo actualizamos en el estado
         if (comandoGenerado != null) {
-            // Solo actualizamos si el comando es diferente al anterior para evitar spam
+            // --> AÑADIDO: Registro del comando ejecutado
+            if (comandosEjecutadosStr.isNotEmpty()) {
+                comandosEjecutadosStr += ","
+            }
+            comandosEjecutadosStr += comandoGenerado.name
+
+            // La lógica de resaltar el botón se mantiene igual
             if (uiState.value.comandoActivado != comandoGenerado) {
                 _uiState.update { it.copy(comandoActivado = comandoGenerado) }
-
-                // Opcional: Ponemos el comando a null después de un breve instante
-                // para que la animación en la UI solo dure un momento.
                 viewModelScope.launch {
-                    delay(500) // Duración del "resaltado" del botón
-                    // Solo lo ponemos a null si no ha sido sobreescrito por otro comando
+                    delay(500)
                     if (uiState.value.comandoActivado == comandoGenerado) {
                         _uiState.update { it.copy(comandoActivado = null) }
                     }
                 }
             }
         }
+    }
 
+
+    // --> COMPLETADO: Función final para guardar los datos
+    private fun guardarResultadosDeSesion() {
+        val usuario = uiState.value.usuario
+        if (usuario == null || atencionRecogida.isEmpty()) {
+            Log.w("ViewModel", "Guardado cancelado: no hay usuario o no se recogieron datos.")
+            return
+        }
+
+        val duracionReal = 120 - uiState.value.tiempoRestanteSeg
+        val sesionRequest = SesionEEGRequest(
+            usuarioId = usuario.id,
+            fechaHora = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(Date()),
+            duracion = duracionReal,
+            valorMedioAtencion = atencionRecogida.average().toFloat(),
+            valorMedioRelajacion = meditacionRecogida.average().toFloat(),
+            valorMedioPestaneo = parpadeosRecogidos.average().takeIf { !it.isNaN() }?.toFloat() ?: 0f,
+            comandosEjecutados = comandosEjecutadosStr.removeSuffix(",")
+        )
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(mensajeUsuario = "Guardando sesión...") }
+            val exito = repository.guardarSesionDeJuego(sesionRequest)
+            val mensaje = if (exito) "Sesión guardada con éxito" else "Error al guardar la sesión"
+
+            _uiState.update { it.copy(mensajeUsuario = mensaje) }
+
+            delay(3000)
+            _uiState.update { it.copy(mensajeUsuario = null) }
+        }
     }
 }

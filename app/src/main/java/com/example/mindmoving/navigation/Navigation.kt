@@ -48,9 +48,7 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("calibracion_relajacion") { CalibracionRelajacionScreen(navController) }
         composable("control_coche") {ControlCocheScreen(navController)}
         composable("comandos_diadema") {
-            // Así se instancia un ViewModel sin Hilt
-            val viewModel: ComandosDiademaViewModel = viewModel()
-            ComandosDiademaScreen(viewModel = viewModel)
+            ComandosDiademaScreen(navController = navController)
         }
 
 
