@@ -24,7 +24,11 @@ import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.ActualizarUsuarioRequest
 import com.example.mindmoving.retrofit.models.UsuarioResponse
 import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
@@ -54,6 +58,11 @@ fun EditarPerfilScreen(navController: NavHostController) {
 
     val isDark = isSystemInDarkTheme()
     val backgroundColor = if (isDark) Color(0xFF121212) else Color(0xFFF2F3FC)
+
+    // Estados para eliminar usuario
+    var showConfirmDeleteDialog by remember { mutableStateOf(false) }
+    var showPasswordDeleteDialog by remember { mutableStateOf(false) }
+    var passwordEliminarCuenta by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         userId?.let {
@@ -170,7 +179,22 @@ fun EditarPerfilScreen(navController: NavHostController) {
         }) {
             Text("Guardar cambios")
         }
+        Spacer(modifier = Modifier.height(24.dp))
+
+
+        // Botón "Eliminar cuenta"
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = { showConfirmDeleteDialog = true },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+        ) {
+            Text("Eliminar cuenta", color = Color.White)
+        }
+
+
     }
+
+
 
     if (showPasswordCheckDialog) {
         AlertDialog(
@@ -206,6 +230,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
                             showMessageDialog = true
                         }
                     }
+
                 }) {
                     Text("Verificar")
                 }
@@ -283,4 +308,91 @@ fun EditarPerfilScreen(navController: NavHostController) {
             }
         )
     }
+
+    //eliminado de cuenta
+    // Confirmar intención de borrar
+    if (showConfirmDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDeleteDialog = false },
+            title = { Text("¿Estás seguro?") },
+            text = { Text("Esta acción eliminará tu cuenta permanentemente.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showConfirmDeleteDialog = false
+                    showPasswordDeleteDialog = true
+                }) {
+                    Text("Sí, eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDeleteDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+// Verificar contraseña
+    if (showPasswordDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showPasswordDeleteDialog = false },
+            title = { Text("Verifica tu contraseña") },
+            text = {
+                OutlinedTextField(
+                    value = passwordEliminarCuenta,
+                    onValueChange = { passwordEliminarCuenta = it },
+                    label = { Text("Contraseña") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    coroutineScope.launch {
+                        try {
+                            val response = apiService.eliminarUsuario(
+                                userId = userId ?: "",
+                                password = passwordEliminarCuenta
+                            )
+
+                            if (response.isSuccessful) {
+                                messageText = "Usuario eliminado correctamente"
+                                showMessageDialog = true
+
+                                //  Navegar después de un pequeño delay (opcional)
+                                coroutineScope.launch {
+                                    delay(1500)  // Mostrar el mensaje un momento
+                                    val prefsEditor = prefs.edit()
+                                    prefsEditor.clear().apply()
+                                    navController.navigate("login") {
+                                        popUpTo(0)
+                                    }
+                                }
+                            } else {
+                                messageText = "Contraseña incorrecta o error al eliminar"
+                                showMessageDialog = true
+                            }
+
+                        } catch (e: Exception) {
+                            messageText = "Error: ${e.message}"
+                            showMessageDialog = true
+                        }
+                    }
+                    showPasswordDeleteDialog = false
+                }) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPasswordDeleteDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+
+
 }
+
+

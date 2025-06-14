@@ -15,6 +15,7 @@ import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -27,6 +28,15 @@ interface ApiService {
     // Validar credenciales en el login
     @POST("/api/login")
     suspend fun loginUser(@Body request: LoginRequest): Response<LoginResponse>
+
+    //Eliminar Usuario
+    @DELETE("users/{id}")
+    suspend fun eliminarUsuario(
+        @Path("id") userId: String,
+        @Query("password") password: String
+    ): Response<Void>
+
+
 
     // Registrarse por primera vez
     @POST("/api/register")
@@ -68,6 +78,7 @@ interface ApiService {
 
     @PUT("users/{id}/theme")
     fun updateTheme(@Path("id") userId: String, @Body body: ThemeRequest): Call<Void>
+
 
     data class ThemeResponse(val theme: String)
     data class ThemeRequest(val theme: String)

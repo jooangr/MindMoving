@@ -1,6 +1,7 @@
 package com.example.mindmoving.views.login
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Image
@@ -182,6 +183,8 @@ fun ContentLoginView(navController: NavHostController) {
                         isLoading = true // EMPIEZA A CARGAR
 
                         try {
+                            Log.d("LOGIN_ATTEMPT", "Usuario: ${userdata}, Contraseña: ${password}")
+
                             val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
 
                             if (response.isSuccessful && response.body()?.userId != null) {
