@@ -36,6 +36,20 @@ interface ApiService {
         @Query("password") password: String
     ): Response<Void>
 
+    @PATCH("perfil/{id}/tipo")
+    suspend fun actualizarTipoPerfil(
+        @Path("id") userId: String,
+        @Body body: Map<String, String>
+    ): Response<PerfilCalibracionResponse>
+
+    @POST("perfil/perfil/{id}/predefinido")
+    suspend fun crearPerfilPredefinido(
+        @Path("id") id: String,
+        @Body body: Map<String, String>
+    ): Response<Any>
+
+
+
 
 
     // Registrarse por primera vez

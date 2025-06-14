@@ -170,7 +170,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Cambiar calibración") },
+                                    text = { Text("Opciones de calibración") },
                                     onClick = {
                                         expanded = false
                                         navController.navigate("calibracion_menu")
