@@ -231,7 +231,7 @@ fun MainScreenMenu(navController: NavHostController) {
                                 //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
 
                                 // if (tienePerfil) {
-                                navController.navigate("control_coche")
+                                navController.navigate("comandos_diadema")
                                 // } else {
                                 //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
                                 // }
