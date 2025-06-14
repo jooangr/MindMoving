@@ -83,9 +83,15 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         //CalibracionGuiada
         composable("calibracion_inicio") {CalibracionInicioScreen(navController = navController)}
         composable("fase_calibracion") {CalibracionCompletaScreen(navController = navController)}
+        composable("perfil_calibracion") { PerfilCalibracionScreen(navController = navController)
+        }
+
+
 
         //quitar luego esta de pruebas
         composable("atencion") { AtencionPantalla(navController) }
+
+
     }
 }
 

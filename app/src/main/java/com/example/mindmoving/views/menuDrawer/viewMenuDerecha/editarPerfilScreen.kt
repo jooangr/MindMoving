@@ -76,13 +76,13 @@ fun EditarPerfilScreen(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(24.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground)
+        Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -93,7 +93,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
             Icon(
                 imageVector = Icons.Filled.ArrowBack,
                 contentDescription = "Volver al menú",
-                tint = MaterialTheme.colorScheme.onBackground
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 

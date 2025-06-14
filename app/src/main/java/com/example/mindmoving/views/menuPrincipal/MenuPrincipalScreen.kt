@@ -51,6 +51,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.example.mindmoving.graficas.MetricCard
+import com.example.mindmoving.retrofit.ApiClient
+import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 import com.example.mindmoving.ui.theme.FadeInColumn
 import com.example.mindmoving.ui.theme.GradientEndDark
 import com.example.mindmoving.ui.theme.GradientEndLight
@@ -61,6 +64,8 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun MainScreenMenu(navController: NavHostController) {
+
+
 
    /* val gradientBrush = Brush.verticalGradient(
       //  colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
@@ -267,6 +272,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             .padding(8.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
+                        /*
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 "Gráficas recientes",
@@ -276,38 +282,127 @@ fun MainScreenMenu(navController: NavHostController) {
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
+                            val sesiones = remember { mutableStateListOf<SesionEEGResponse>() }
+
+                            LaunchedEffect(Unit) {
+                                val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                                val userId = prefs.getString("userId", null)
+
+                                if (userId != null) {
+                                    try {
+                                        val response = ApiClient.getApiService().getSesiones(userId)
+                                        if (response.isSuccessful) {
+                                            val todas = response.body() ?: emptyList()
+                                            sesiones.clear()
+                                            sesiones.addAll(todas.takeLast(5)) // Últimas 5
+                                        }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Error cargando sesiones", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+
+                            val atencionData = sesiones.map { it.valorMedioAtencion }
+                            val relajacionData = sesiones.map { it.valorMedioRelajacion }
+                            val pestaneoData = sesiones.map { it.valorMedioPestaneo }
+
 
                             SimpleBarChart(
                                 title = "Nivel de Atención",
-                                values = listOf(20f, 35f, 50f, 70f, 60f),
+                                values = atencionData,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            SimpleBarChart(
+                                title = "Nivel de Relajación",
+                                values = relajacionData,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+
+                            SimpleBarChart(
+                                title = "Nivel de Parpadeo",
+                                values = pestaneoData,
+                                color = MaterialTheme.colorScheme.error
+                            )
+
+                            SimpleLineChartPlano(
+                                title = "Evolución Atención",
+                                values = atencionData,
+                                lineColor = MaterialTheme.colorScheme.primary
+                            )
+
+                        }*/
+
+                        val sesiones = remember { mutableStateListOf<SesionEEGResponse>() }
+
+                        LaunchedEffect(Unit) {
+                            val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                            val userId = prefs.getString("userId", null)
+
+                            if (userId != null) {
+                                try {
+                                    val response = ApiClient.getApiService().getSesiones(userId)
+                                    if (response.isSuccessful) {
+                                        val todas = response.body() ?: emptyList()
+                                        sesiones.clear()
+                                        sesiones.addAll(todas.takeLast(5)) // Últimas 5 sesiones
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Error cargando sesiones", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+
+                        Column {
+                            Text(
+                                "Resumen de métricas recientes",
+                                style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            SimpleBarChart(
-                                title = "Nivel de Relajación",
-                                values = listOf(15f, 40f, 30f, 60f, 45f),
-                                color = MaterialTheme.colorScheme.tertiary
-                            )
+                            if (sesiones.size >= 2) {
+                                val ultimas = sesiones.takeLast(2)
+                                val atencion = ultimas.map { it.valorMedioAtencion }
+                                val relajacion = ultimas.map { it.valorMedioRelajacion }
+                                val pestaneo = ultimas.map { it.valorMedioPestaneo }
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                                MetricCard(
+                                    title = "Atención",
+                                    icon = "🧠",
+                                    value = atencion[1],
+                                    change = atencion[1] - atencion[0],
+                                    color = MaterialTheme.colorScheme.primary
+                                )
 
-                            SimpleBarChart(
-                                title = "Nivel de Parpadeo",
-                                values = listOf(5f, 10f, 7f, 12f, 8f),
-                                color = MaterialTheme.colorScheme.error
-                            )
+                                MetricCard(
+                                    title = "Relajación",
+                                    icon = "🧘",
+                                    value = relajacion[1],
+                                    change = relajacion[1] - relajacion[0],
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
 
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            SimpleLineChartPlano(
-                                title = "Nivel de Atención",
-                                values = listOf(20f, 35f, 50f, 70f, 60f),
-                                lineColor = MaterialTheme.colorScheme.primary
-                            )
+                                MetricCard(
+                                    title = "Pestañeo",
+                                    icon = "👁️",
+                                    value = pestaneo[1],
+                                    change = pestaneo[1] - pestaneo[0],
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            } else {
+                                Text(
+                                    "No hay suficientes sesiones registradas para comparar.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
+
                     }
+
+                    //probar a poner graficas
                 }
 
             }
