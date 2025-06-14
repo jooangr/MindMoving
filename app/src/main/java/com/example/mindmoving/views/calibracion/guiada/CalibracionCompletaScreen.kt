@@ -123,7 +123,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
     fun getSignalColor(signal: Int): Color {
         return when {
             signal == 0 -> Color.Green
-            signal in 1..50 -> Color.Yellow
+            signal in 1..50 -> Color(0xFFFFA500)
             signal in 51..100 -> Color(0xFFFFA500) // Naranja
             signal in 101..150 -> Color.Red
             signal in 151..199 -> Color.Red
@@ -443,59 +443,33 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
     // UI
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+        Spacer(Modifier.height(35.dp))
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(MaterialTheme.colorScheme.surface)//backgorund estaba antes
+                .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("🧠 Calibración NeuroSky", color = Color.Cyan, style = MaterialTheme.typography.headlineSmall)
+            Text("🧠 Calibración NeuroSky", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(16.dp))
 
-            // Estado de conexión con colores
             Text("Estado: $estadoConexion",
                 color = when {
                     conectado -> Color.Green
-                    intentandoConectar -> Color.Yellow
+                    intentandoConectar -> Color(0xFFFFA500)
                     else -> Color.Red
                 }
             )
 
-            // Indicador de señal con colores
             Text("Señal: ${getSignalQualityDescription(signalLevel)} ($signalLevel)",
                 color = getSignalColor(signalLevel)
             )
 
             Spacer(Modifier.height(8.dp))
-            Text("Atención actual: $atencionActual | Meditación: $meditacionActual", color = Color.White)
-
-            //rpeuba joan
-            val usuarioDebug by remember { derivedStateOf { SessionManager.usuarioActual } }
-
-
-            Column {
-                Text(
-                    text = "👤 Usuario actual en sesión:",
-                    color = Color.LightGray,
-                    fontSize = 16.sp
-                )
-                Text(
-                    text = "ID: ${usuarioDebug?.id ?: "nulo"}",
-                    color = Color.Yellow
-                )
-                Text(
-                    text = "Username: ${usuarioDebug?.username ?: "nulo"}",
-                    color = Color.Yellow
-                )
-                Text(
-                    text = "Email: ${usuarioDebug?.email ?: "nulo"}",
-                    color = Color.Yellow
-                )
-            }
-
+            Text("Atención actual: $atencionActual | Meditación: $meditacionActual", color = MaterialTheme.colorScheme.onSurface)
 
             Spacer(Modifier.height(16.dp))
 
@@ -523,9 +497,9 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             }
 
             if (recogiendoDatos) {
-                Text("Fase: $faseActual", color = Color.White)
-                Text(mensajeInstruccion, color = Color.Yellow)
-                Text("Tiempo restante: $tiempoRestante s", color = Color.White)
+                Text("Fase: $faseActual", color = MaterialTheme.colorScheme.primary)
+                Text(mensajeInstruccion, color = MaterialTheme.colorScheme.secondary)
+                Text("Tiempo restante: $tiempoRestante s", color = MaterialTheme.colorScheme.onSurface)
             }
 
             if (datosListos && resultadoAtencion == null) {
@@ -544,7 +518,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                         scope.launch {
                             snackbarHostState.showSnackbar("❌ Error: No hay usuario en sesión o ID vacío.")
                         }
-                        return@Button // 👈 importante
+                        return@Button
                     }
 
                     guardarDatos()
@@ -565,38 +539,34 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                 }) { Text("🔄 Repetir calibración") }
             }
 
-
-            //Muestra los resultados de la calibracion actual
             resultadoAtencion?.let { at ->
                 resultadoMeditacion?.let { med ->
                     resultadoParpadeo?.let { blink ->
                         Card(Modifier.padding(16.dp), colors = cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                             Column(Modifier.padding(16.dp)) {
-                                Text("📊 Resultados actuales:", color = Color.White)
-                                Text("Atención media: ${at.media}", color = Color.Green)
+                                Text("📊 Resultados actuales:", color = MaterialTheme.colorScheme.primary)
+                                Text("Atención media: ${at.media}", color = MaterialTheme.colorScheme.primary)
                                 Text("Variabilidad de atención: ${at.variabilidad}", color = Color.Green)
-                                Text("Meditación media: ${med.media}", color = Color.Blue)
+                                Text("Meditación media: ${med.media}", color = MaterialTheme.colorScheme.secondary)
                                 Text("Variabilidad de meditación: ${med.variabilidad}", color = Color.Blue)
-                                Text("Parpadeo promedio: ${blink.fuerzaPromedio}", color = Color.Yellow)
+                                Text("Parpadeo promedio: ${blink.fuerzaPromedio}", color = MaterialTheme.colorScheme.tertiary)
                             }
                         }
                     }
                 }
             }
 
-            //TODO: joan, el usuario es el del objeto, o sea que empieza con 0 hasta que se guardan datos, molaría que fuese el del usuario en sesión desde el primer momento
-            //Muestra los datos guardado del usuario en sesión por el sesionManager
             Spacer(Modifier.height(16.dp))
             Card(Modifier.padding(16.dp), colors = cardColors(contentColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Column(Modifier.padding(16.dp)) {
                     SessionManager.usuarioActual?.let { user ->
-                        Text("👤 Usuario: ${user.username}", color = Color.Cyan)
-                        Text("Perfil: ${user.perfilCalibracion}", color = Color.White)
-                        Text("Atención media: ${user.valoresAtencion.media}", color = Color.Green)
-                        Text("Variabilidad de atención: ${user.valoresAtencion.variabilidad}", color = Color.Green)
-                        Text("Meditación media: ${user.valoresMeditacion.media}", color = Color.Blue)
-                        Text("Variabilidad de meditación: ${user.valoresMeditacion.variabilidad}", color = Color.Blue)
-                        Text("Parpadeo promedio: ${user.blinking.fuerzaPromedio}", color = Color.Yellow)
+                        Text("👤 Usuario: ${user.username}", color = MaterialTheme.colorScheme.primary)
+                        Text("Perfil: ${user.perfilCalibracion}", color = MaterialTheme.colorScheme.primary)
+                        Text("Atención media: ${user.valoresAtencion.media}", color = MaterialTheme.colorScheme.primary)
+                        Text("Variabilidad de atención: ${user.valoresAtencion.variabilidad}", color = MaterialTheme.colorScheme.primary)
+                        Text("Meditación media: ${user.valoresMeditacion.media}", color = MaterialTheme.colorScheme.primary)
+                        Text("Variabilidad de meditación: ${user.valoresMeditacion.variabilidad}", color = MaterialTheme.colorScheme.primary)
+                        Text("Parpadeo promedio: ${user.blinking.fuerzaPromedio}", color = MaterialTheme.colorScheme.primary)
                     }
 
                 }
@@ -605,7 +575,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             sesionEEGGenerada?.let {
                 Card(Modifier.padding(16.dp), colors = CardDefaults.cardColors(contentColor = MaterialTheme.colorScheme.primaryContainer)) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("📄 Sesión EEG generada:", color = Color.White)
+                        Text("📄 Sesión EEG generada:", color = MaterialTheme.colorScheme.primary)
                         Text("Duración: ${it.duracion}s", color = Color.LightGray)
                         Text("Atención: ${"%.1f".format(it.valorMedioAtencion)}", color = Color.Cyan)
                         Text("Relajación: ${"%.1f".format(it.valorMedioRelajacion)}", color = Color.Blue)
@@ -639,7 +609,6 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                 }
             }
 
-            // Espacio final para mejor visualización
             Spacer(Modifier.height(32.dp))
 
             if (mostrarPerfilAsignado) {

@@ -30,9 +30,9 @@ class MainActivity : ComponentActivity() {
             try {
                 val usuario = Gson().fromJson(perfilJson, Usuario::class.java)
                 SessionManager.usuarioActual = usuario
-                Log.d("INIT", "✔️ Usuario restaurado: ${usuario.id}")
+                Log.d("INIT", "️Usuario restaurado: ${usuario.id}")
             } catch (e: Exception) {
-                Log.e("INIT", "❌ Error al restaurar usuario: ${e.message}")
+                Log.e("INIT", "Error al restaurar usuario: ${e.message}")
             }
         }
 

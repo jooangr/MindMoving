@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -22,7 +24,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -84,20 +86,39 @@ fun ContentLoginView(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
-    //Error y avisos
+    // Estados
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
-    //theme
     val darkThemeState = remember { mutableStateOf(false) }
+
     val gradientBackground = Brush.verticalGradient(
-            colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
+        colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
     )
 
+    // 👉 MOSTRAR DIALOGO DE CARGA SI isLoading = true
+    if (isLoading) {
+        AlertDialog(
+            onDismissRequest = { /* No cerrar al tocar fuera */ },
+            title = { Text("Iniciando sesión...", color = MaterialTheme.colorScheme.primary) },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Por favor espera...", color = MaterialTheme.colorScheme.onSurface)
+                }
+            },
+            confirmButton = {},
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    // 👉 MOSTRAR DIALOGO DE ERROR
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Error de inicio de sesión", color = MaterialTheme.colorScheme.onSurface) },
+            title = { Text("Error de inicio de sesión", color = MaterialTheme.colorScheme.error) },
             text = { Text(dialogMessage, color = MaterialTheme.colorScheme.onSurface) },
             confirmButton = {
                 TextButton(onClick = { showDialog = false }) {
@@ -110,7 +131,6 @@ fun ContentLoginView(navController: NavHostController) {
 
     Box(
         modifier = Modifier.fillMaxSize().background(gradientBackground)
-
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -119,95 +139,63 @@ fun ContentLoginView(navController: NavHostController) {
         ) {
             Spacer(modifier = Modifier.height(70.dp))
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
-                    contentDescription = "Imagen Logo",
-                    modifier = Modifier.size(200.dp).padding(5.dp)
-                )
-                Text(
-                    text = "MindMoving",
-                    color = Color.White,
-                    fontSize = 40.sp,
-                    style = AppTypography.titleMedium
-                )
-            }
+            Image(
+                painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
+                contentDescription = "Logo",
+                modifier = Modifier.size(200.dp).padding(5.dp)
+            )
+            Text(
+                text = "MindMoving",
+                color = Color.White,
+                fontSize = 40.sp,
+                style = AppTypography.titleMedium
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Campo usuario
             OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
                 value = userdata,
                 onValueChange = { userdata = it },
-                placeholder = {
-                    Text(
-                        text = "Correo electrónico o username",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        fontSize = 16.sp
-                    )
-                },
+                placeholder = { Text("Correo electrónico o username") },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
                 shape = RoundedCornerShape(40),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    errorContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                ),
-                singleLine = true,
-                textStyle = AppTypography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface)
+                singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Campo contraseña
             PasswordField(
                 value = password,
                 onValueChange = { password = it },
                 placeholder = "Contraseña",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
             )
-
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Botón login
-            val gradientBrush = Brush.horizontalGradient(
-                colors = listOf(
-                    MaterialTheme.colorScheme.primary,
-                    MaterialTheme.colorScheme.secondary
-                )
-            )
             val buttonShape = RoundedCornerShape(40)
+            val gradientBrush = Brush.horizontalGradient(
+                colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+            )
 
             Button(
                 onClick = {
                     coroutineScope.launch {
+                        isLoading = true // EMPIEZA A CARGAR
+
                         try {
                             val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
+
                             if (response.isSuccessful && response.body()?.userId != null) {
+                                val userId = response.body()!!.userId
                                 val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                                 val now = System.currentTimeMillis()
-                                sharedPrefs.edit()
-                                    .putString("userId", response.body()?.userId)
+                                sharedPrefs.edit().putString("userId", userId)
                                     .putLong("lastLoginTime", now)
                                     .putLong("lastPausedTime", now)
                                     .apply()
 
-                                val userId = response.body()?.userId ?: return@launch
-
-                                // Obtener info del usuario
                                 val userInfoResponse = apiService.getUsuario(userId)
                                 if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
+                                    isLoading = false
                                     dialogMessage = "Error obteniendo información del usuario"
                                     showDialog = true
                                     return@launch
@@ -217,14 +205,12 @@ fun ContentLoginView(navController: NavHostController) {
                                 val perfilResponse = apiService.getPerfil(userId)
                                 val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
-                                // Obtener y aplicar el tema
                                 apiService.getTheme(userId).enqueue(object : Callback<ApiService.ThemeResponse> {
                                     override fun onResponse(call: Call<ApiService.ThemeResponse>, response: Response<ApiService.ThemeResponse>) {
                                         val theme = if (response.isSuccessful) response.body()?.theme ?: "light" else "light"
                                         darkThemeState.value = theme == "dark"
                                         sharedPrefs.edit().putString("user_theme", theme).apply()
 
-                                        // Continuar flujo luego del tema
                                         val usuarioCompleto = Usuario(
                                             id = userId,
                                             username = userInfo.username,
@@ -244,29 +230,27 @@ fun ContentLoginView(navController: NavHostController) {
                                             .apply()
 
                                         SessionManager.usuarioActual = usuarioCompleto
+                                        isLoading = false
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
 
-                                        if (perfil != null) {
-                                            navController.navigate("menu") {
-                                                popUpTo(0) { inclusive = true }
-                                            }
-                                        } else {
-                                            navController.navigate("calibracion_menu") {
-                                                popUpTo(0) { inclusive = true }
-                                            }
+                                        navController.navigate(if (perfil != null) "menu" else "calibracion_menu") {
+                                            popUpTo(0) { inclusive = true }
                                         }
                                     }
 
                                     override fun onFailure(call: Call<ApiService.ThemeResponse>, t: Throwable) {
+                                        isLoading = false
                                         dialogMessage = "No se pudo obtener el tema del usuario"
                                         showDialog = true
                                     }
                                 })
                             } else {
+                                isLoading = false
                                 dialogMessage = "Usuario, correo o contraseña incorrectos"
                                 showDialog = true
                             }
                         } catch (e: Exception) {
+                            isLoading = false
                             dialogMessage = "Error de red: ${e.message}"
                             showDialog = true
                         }
@@ -307,6 +291,7 @@ fun ContentLoginView(navController: NavHostController) {
         }
     }
 }
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
