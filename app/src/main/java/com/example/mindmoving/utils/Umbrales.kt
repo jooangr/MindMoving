@@ -19,7 +19,7 @@ fun obtenerUmbralesParaPerfil(perfil: String?): Umbrales {
         Umbrales(
             atencion = perfilEncontrado.valoresAtencion.minimo,
             meditacion = perfilEncontrado.valoresMeditacion.minimo,
-            parpadeo = 40 // fijo, porque no tienes info calibrada para esto
+            parpadeo = 40
         )
     } else {
         // Si no se encuentra el perfil, se usan valores por defecto (Equilibrado)

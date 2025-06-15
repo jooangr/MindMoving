@@ -22,7 +22,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
+/**
+ * Pantalla de juego para entrenar la meditación
+ *
+ * Muestra una barra de progreso que refleja el nivel de meditación en tiempo real.
+ * Si el nivel supera un umbral (70), se ganan puntos.
+ * Al alcanzar 20 puntos, se muestra un mensaje de éxito.
 
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MissingPermission")
 @Composable

@@ -21,25 +21,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * Pantalla principal de gestión del perfil de calibración del usuario.
+ *
+ * Si el usuario ya tiene un perfil, se muestra con detalles y opciones para modificarlo.
+ * Si no lo tiene, se le da la opción de crear uno o asignar uno predefinido manualmente.
+ * Se conecta con la API para consultar, crear o actualizar el perfil.
+ */
+
 @Composable
 fun PerfilCalibracionScreen(navController: NavHostController) {
     val context = LocalContext.current
     val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     val usuarioId = sharedPrefs.getString("userId", null)
 
-
-
-
     var perfil by remember { mutableStateOf<PerfilCalibracionResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    // Llama a la API para obtener el perfil del usuario cuando se inicia el Composable
     LaunchedEffect(usuarioId) {
         if (usuarioId != null) {
             try {
                 val response = withContext(Dispatchers.IO) {
                     ApiClient.getApiService().getPerfil(usuarioId)
-
                 }
                 if (response.isSuccessful) {
                     perfil = response.body()
@@ -57,17 +62,20 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
         }
     }
 
+    // UI principal según el estado
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
         when {
-            isLoading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
+
             perfil != null -> PerfilContent(perfil!!, navController)
-            else -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+
+            else -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
@@ -78,17 +86,15 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onBackground
                     )
+
                     Spacer(modifier = Modifier.height(24.dp))
+
                     Button(onClick = { navController.navigate("calibracion_inicio") }) {
                         Text("Crear perfil")
                     }
 
-                    val opciones = listOf(
-                        "Equilibrado",
-                        "Predominantemente Atento",
-                        "Predominantemente Meditativo"
-                    )
-
+                    // Menú para seleccionar perfil predefinido
+                    val opciones = listOf("Equilibrado", "Predominantemente Atento", "Predominantemente Meditativo")
                     var perfilSeleccionado by remember { mutableStateOf(opciones.first()) }
                     var showDropdown by remember { mutableStateOf(false) }
 
@@ -99,9 +105,12 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
                             value = perfilSeleccionado,
                             onValueChange = { perfilSeleccionado = it },
                             label = { Text("Selecciona un perfil") },
-                            modifier = Modifier.fillMaxWidth().clickable { showDropdown = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDropdown = true },
                             readOnly = true
                         )
+
                         DropdownMenu(
                             expanded = showDropdown,
                             onDismissRequest = { showDropdown = false }
@@ -118,13 +127,14 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
                         }
                     }
 
+                    // Asignar el perfil predefinido mediante API
                     Spacer(modifier = Modifier.height(16.dp))
                     val coroutineScope = rememberCoroutineScope()
+
                     Button(onClick = {
                         coroutineScope.launch {
                             try {
                                 Toast.makeText(context, "Preparando request...", Toast.LENGTH_SHORT).show()
-
 
                                 val perfilEnum = PerfilCalibracion.values().firstOrNull { it.nombre == perfilSeleccionado }
 
@@ -135,14 +145,14 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
                                         valoresAtencion = perfilEnum.valoresAtencion,
                                         valoresMeditacion = perfilEnum.valoresMeditacion,
                                         alternancia = perfilEnum.alternancia,
-                                        blinking = BlinkingData(30, 60) // puedes ajustar si lo metes luego en el enum
+                                        blinking = BlinkingData(30, 60)
                                     )
 
                                     val response = ApiClient.getApiService().crearPerfil(request)
 
                                     if (response.isSuccessful) {
                                         Toast.makeText(context, "Perfil asignado correctamente", Toast.LENGTH_SHORT).show()
-                                        navController.navigate("perfil_calibracion") // recarga o vuelve
+                                        navController.navigate("perfil_calibracion")
                                     } else {
                                         Toast.makeText(context, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
                                     }
@@ -157,8 +167,6 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
                         Text("Asignar perfil predefinido")
                     }
 
-
-
                     Spacer(modifier = Modifier.height(12.dp))
                     TextButton(onClick = { navController.popBackStack() }) {
                         Text("Volver")
@@ -169,6 +177,10 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
     }
 }
 
+/**
+ * Muestra el contenido cuando ya existe un perfil de calibración.
+ * Incluye detalles del perfil y opción para actualizarlo manualmente.
+ */
 @Composable
 fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostController) {
     Column(
@@ -178,21 +190,14 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "Perfil de Calibración",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-
+        Text("Perfil de Calibración", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
         Divider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
 
-        InfoItem(label = "Tipo", value = perfil.tipo)
-        InfoItem(label = "Atención", value = perfil.valoresAtencion?.toString() ?: "No disponible")
-        InfoItem(label = "Meditación", value = perfil.valoresMeditacion?.toString() ?: "No disponible")
-        InfoItem(label = "Alternancia", value = perfil.alternancia?.toString() ?: "No disponible")
-        InfoItem(label = "Blinking", value = perfil.blinking?.toString() ?: "No disponible")
-
-
+        InfoItem("Tipo", perfil.tipo)
+        InfoItem("Atención", perfil.valoresAtencion?.toString() ?: "No disponible")
+        InfoItem("Meditación", perfil.valoresMeditacion?.toString() ?: "No disponible")
+        InfoItem("Alternancia", perfil.alternancia?.toString() ?: "No disponible")
+        InfoItem("Blinking", perfil.blinking?.toString() ?: "No disponible")
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -200,6 +205,7 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
             Text("Editar perfil personalizadamente")
         }
 
+        // Menú para reasignar perfil desde valores predefinidos
         val opciones = listOf("Equilibrado", "Predominantemente Atento", "Predominantemente Meditativo")
         var expanded by remember { mutableStateOf(false) }
         var seleccionNueva by remember { mutableStateOf("") }
@@ -223,6 +229,7 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
                             expanded = false
                             seleccionNueva = opcion
                             val perfilEnum = PerfilCalibracion.values().firstOrNull { it.nombre == opcion }
+
                             scope.launch {
                                 try {
                                     val request = PerfilCalibracionRequest(
@@ -231,18 +238,15 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
                                         valoresAtencion = perfilEnum?.valoresAtencion ?: perfil.valoresAtencion!!,
                                         valoresMeditacion = perfilEnum?.valoresMeditacion ?: perfil.valoresMeditacion!!,
                                         alternancia = perfilEnum?.alternancia ?: perfil.alternancia!!,
-                                        blinking = BlinkingData(30, 60) // ajusta si quieres usar del enum
+                                        blinking = BlinkingData(30, 60)
                                     )
 
                                     val res = ApiClient.getApiService().actualizarPerfil(request)
 
                                     if (res.isSuccessful) {
-                                        // Obtener perfil actualizado del backend
                                         val perfilActualizado = ApiClient.getApiService().getPerfil(perfil.usuarioId)
                                         if (perfilActualizado.isSuccessful) {
                                             val tipo = perfilActualizado.body()?.tipo
-
-                                            // 💾 Guardar en SharedPreferences
                                             val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                                             prefs.edit().putString("perfil_tipo", tipo).apply()
                                         }
@@ -252,11 +256,9 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
                                         }
 
                                         Toast.makeText(context, "Perfil actualizado", Toast.LENGTH_SHORT).show()
-                                    }
-                                    else {
+                                    } else {
                                         Toast.makeText(context, "Error al actualizar: ${res.code()}", Toast.LENGTH_SHORT).show()
                                     }
-
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "Fallo: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
@@ -265,9 +267,7 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
                     )
                 }
             }
-
         }
-
 
         TextButton(onClick = { navController.popBackStack() }) {
             Text("Volver")
@@ -275,18 +275,14 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
     }
 }
 
+/**
+ * Muestra una fila con una etiqueta y su valor correspondiente, usada para mostrar los campos del perfil.
+ */
 @Composable
 fun InfoItem(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+        Text(value, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
     }
 }
+

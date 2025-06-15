@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ✅ Restaurar usuario al iniciar app
+        // Restaurar usuario al iniciar app
         val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
         val perfilJson = prefs.getString("perfil_completo", null)
 

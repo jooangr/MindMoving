@@ -57,8 +57,16 @@ import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 import com.example.mindmoving.ui.theme.FadeInColumn
 import kotlinx.coroutines.delay
 
+/**
+ * Es la pantalla principal tras iniciar sesión.
+ *
+ * Presenta un menú visual y accesible que permite al usuario navegar hacia las opciones de calibración,
+ * control del coche mediante la diadema EEG y consultar un resumen reciente de
+ * métricas EEG (atención, relajación y pestañeo). También incluye lógica para cerrar sesión automáticamente
+ * si hay inactividad prolongada (más de 15 minutos) y mantiene actualizada la información del perfil desde
+ * SharedPreferences.
 
-@Composable
+ */@Composable
 fun MainScreenMenu(navController: NavHostController) {
 
     val isDark = isSystemInDarkTheme()
@@ -67,21 +75,21 @@ fun MainScreenMenu(navController: NavHostController) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 🧠 Observer que guarda y valida la sesión al salir y volver
+    // Observador del ciclo de vida: guarda la hora de salida y cierra sesión si hubo inactividad prolongada
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    // Salida de la app: guardar hora
+                    // Al salir de la app se guarda la hora
                     prefs.edit().putLong("lastPausedTime", System.currentTimeMillis()).apply()
                 }
                 Lifecycle.Event.ON_START -> {
-                    // Entrada a la app: comprobar inactividad
+                    // Al volver a entrar se comprueba el tiempo de inactividad
                     val lastPaused = prefs.getLong("lastPausedTime", 0L)
                     val now = System.currentTimeMillis()
-                    val inactivityLimit = 1 * 60 * 15000 // cambiado a 15 minutos
+                    val inactivityLimit = 1 * 60 * 15000 // 15 minutos
 
                     if ((now - lastPaused) > inactivityLimit) {
                         prefs.edit().clear().apply()
@@ -102,6 +110,7 @@ fun MainScreenMenu(navController: NavHostController) {
         }
     }
 
+    // Contenedor de la vista con MainLayout y barra superior
     MainLayout(navController = navController) { padding ->
         Box(
             modifier = Modifier
@@ -122,6 +131,7 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // Tarjeta de bienvenida
                 Card(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -161,16 +171,16 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-
+                // Estado para guardar y mostrar el perfil actual
                 val perfilTipoState = remember { mutableStateOf<String?>(null) }
 
-// 1. Cargar el valor inmediatamente al entrar a la pantalla
+                // Carga inicial del perfil desde SharedPreferences
                 LaunchedEffect(Unit) {
                     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                     perfilTipoState.value = prefs.getString("perfil_tipo", null)
                 }
 
-// 2. Observar si vuelve del background y actualizar el perfil visible
+                // Observador de ciclo de vida para actualizar el perfil al volver del background
                 val lifecycleOwner = LocalLifecycleOwner.current
 
                 DisposableEffect(lifecycleOwner) {
@@ -188,6 +198,7 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Texto del perfil configurado o advertencia si no hay ninguno
                 Text(
                     text = if (perfilTipoState.value != null)
                         "Perfil actual: ${perfilTipoState.value}"
@@ -199,22 +210,22 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-
-                // Estados para controlar la visibilidad animada
+                // Controla si mostrar las animaciones y los botones
                 var showContent by remember { mutableStateOf(false) }
 
                 LaunchedEffect(Unit) {
-                    delay(200) // Pequeño retraso para que se note la animación
+                    delay(200)
                     showContent = true
                 }
 
+                // Botones principales con entrada animada
                 FadeInColumn(
                     modifier = Modifier.fillMaxWidth(),
                     delayMillis = 300
                 ) {
+                    // Botón para calibración mental
                     Button(
                         onClick = { navController.navigate("calibracion_menu") },
-                       // colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -234,44 +245,35 @@ fun MainScreenMenu(navController: NavHostController) {
                         Text("Opciones de Calibracion")
                     }
 
-                        Button(
-                            onClick = {
-                                val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-
-                                //Para cuando tengamos lo de omar descomentar lo de teienperfil ya que si tiene perfil podre acceder a lo del coche
-                                //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
-
-                                // if (tienePerfil) {
-                                navController.navigate("comandos_diadema")
-                                // } else {
-                                //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
-                                // }
-                            },
-                            shape = RoundedCornerShape(24.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 32.dp, vertical = 8.dp)
-                                .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DirectionsCar,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Comando Coche")
-                        }
-
+                    // Botón para comandos con el coche RC
+                    Button(
+                        onClick = {
+                            val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                            navController.navigate("comandos_diadema")
+                        },
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp, vertical = 8.dp)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Comando Coche")
+                    }
                 }
-
 
                 Spacer(modifier = Modifier.height(31.dp))
 
+                // Resumen animado con las últimas sesiones registradas
                 AnimatedVisibility(
                     visible = showContent,
                     enter = fadeIn(),
@@ -285,6 +287,7 @@ fun MainScreenMenu(navController: NavHostController) {
                     ) {
                         val sesiones = remember { mutableStateListOf<SesionEEGResponse>() }
 
+                        // Cargar las últimas 5 sesiones del usuario
                         LaunchedEffect(Unit) {
                             val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                             val userId = prefs.getString("userId", null)
@@ -295,7 +298,7 @@ fun MainScreenMenu(navController: NavHostController) {
                                     if (response.isSuccessful) {
                                         val todas = response.body() ?: emptyList()
                                         sesiones.clear()
-                                        sesiones.addAll(todas.takeLast(5)) // Últimas 5 sesiones
+                                        sesiones.addAll(todas.takeLast(5))
                                     }
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "Error cargando sesiones", Toast.LENGTH_SHORT).show()
@@ -313,6 +316,7 @@ fun MainScreenMenu(navController: NavHostController) {
 
                             Spacer(modifier = Modifier.height(12.dp))
 
+                            // Comparación de las dos últimas sesiones
                             if (sesiones.size >= 2) {
                                 val ultimas = sesiones.takeLast(2)
                                 val atencion = ultimas.map { it.valorMedioAtencion }
@@ -350,18 +354,16 @@ fun MainScreenMenu(navController: NavHostController) {
                                 )
                             }
                         }
-
                     }
                 }
-
             }
         }
     }
 }
+
 @Composable
 @Preview(showBackground = true, showSystemUi = true)
 fun PreviewMenu() {
-    // Importante: este require tener 'androidx.navigation:navigation-compose' en tu proyecto
     val navController = rememberNavController()
     MainScreenMenu(navController)
 }

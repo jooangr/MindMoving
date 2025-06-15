@@ -25,7 +25,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-
+/**
+ * Función interativa de entrenamiento o juego enfocado en la concentración
+ *
+ *  Muestra un círculo cuyo tamaño depende del nivel de atención del usuario.
+ *  Si la atención supera un umbral (70), se ganan puntos.
+ *  Al alcanzar 30 puntos, se muestra un mensaje de éxito.
+ */
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,14 +104,14 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
         ) {
             Spacer(Modifier.height(24.dp))
 
-            // 🧠 Información del jugador
+            // Información del jugador previo
             Text("Atención actual: $atencionActual", style = MaterialTheme.typography.titleMedium)
             Text("🎯 Objetivo: ≥ $objetivoAtencion", color = Color(0xFF00C853))
             Text("⭐ Puntos: $puntos", style = MaterialTheme.typography.titleMedium)
 
             Spacer(Modifier.height(32.dp))
 
-            // 🎮 Botón de inicio
+            // Botón de inicio del juego
             if (!juegoActivo) {
                 Button(onClick = {
                     juegoActivo = true
@@ -115,7 +121,7 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
                 }
             }
 
-            // 🟢 Círculo dinámico
+            // Círculo dinámico
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -131,7 +137,7 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
                 }
             }
 
-            // 🏁 Fin del juego si se llega al objetivo
+            // Fin del juego si se llega al objetivo
             if (juegoActivo && puntos >= 30) {
                 AlertDialog(
                     onDismissRequest = { juegoActivo = false },

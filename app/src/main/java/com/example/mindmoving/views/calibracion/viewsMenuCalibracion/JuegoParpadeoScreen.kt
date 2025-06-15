@@ -32,7 +32,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
-
+/**
+ * Pantalla de juego para entrenar el reconocimiento de parpadeos con la diadema NeuroSky.
+ */
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

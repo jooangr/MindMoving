@@ -70,14 +70,26 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+/**
+ * Pantalla de Login que permite al usuario autenticarse con su email o nombre de usuario.
+ * Si el login es exitoso, guarda su información en SharedPreferences y lo redirige al menú principal o calibración.
+ */
 
 @Composable
 fun Login(navController: NavHostController) {
+    // Aplica tema oscuro a esta pantalla
     AppTheme(darkTheme = true) {
         ContentLoginView(navController)
     }
 }
 
+/**
+ * Contenido de la vista de Login:
+ *      Formulario con usuario y contraseña
+ *      Botón para iniciar sesión
+ *      Lógica de validación contra API
+ *      Manejo de loading, errores, y guardado local
+ */
 @Composable
 fun ContentLoginView(navController: NavHostController) {
     var userdata by remember { mutableStateOf("") }
@@ -87,21 +99,20 @@ fun ContentLoginView(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
-    // Estados
+    // Estados para loading, errores y tema
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-
     val darkThemeState = remember { mutableStateOf(false) }
 
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
     )
 
-    // 👉 MOSTRAR DIALOGO DE CARGA SI isLoading = true
+    // Diálogo de carga
     if (isLoading) {
         AlertDialog(
-            onDismissRequest = { /* No cerrar al tocar fuera */ },
+            onDismissRequest = { /* no se puede cerrar */ },
             title = { Text("Iniciando sesión...", color = MaterialTheme.colorScheme.primary) },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -115,7 +126,7 @@ fun ContentLoginView(navController: NavHostController) {
         )
     }
 
-    // 👉 MOSTRAR DIALOGO DE ERROR
+    //  Diálogo de error
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -130,6 +141,7 @@ fun ContentLoginView(navController: NavHostController) {
         )
     }
 
+    // UI principal
     Box(
         modifier = Modifier.fillMaxSize().background(gradientBackground)
     ) {
@@ -140,6 +152,7 @@ fun ContentLoginView(navController: NavHostController) {
         ) {
             Spacer(modifier = Modifier.height(70.dp))
 
+            // Logo + título
             Image(
                 painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
                 contentDescription = "Logo",
@@ -154,6 +167,7 @@ fun ContentLoginView(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Campo usuario
             OutlinedTextField(
                 value = userdata,
                 onValueChange = { userdata = it },
@@ -163,6 +177,7 @@ fun ContentLoginView(navController: NavHostController) {
                 singleLine = true
             )
 
+            // Campo contraseña
             PasswordField(
                 value = password,
                 onValueChange = { password = it },
@@ -172,6 +187,7 @@ fun ContentLoginView(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Botón de login con validación contra API
             val buttonShape = RoundedCornerShape(40)
             val gradientBrush = Brush.horizontalGradient(
                 colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
@@ -180,15 +196,16 @@ fun ContentLoginView(navController: NavHostController) {
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        isLoading = true // EMPIEZA A CARGAR
+                        isLoading = true
 
                         try {
-                            Log.d("LOGIN_ATTEMPT", "Usuario: ${userdata}, Contraseña: ${password}")
-
+                            Log.d("LOGIN_ATTEMPT", "Usuario: $userdata, Contraseña: $password")
                             val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
 
                             if (response.isSuccessful && response.body()?.userId != null) {
                                 val userId = response.body()!!.userId
+
+                                // Guardar en SharedPreferences
                                 val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                                 val now = System.currentTimeMillis()
                                 sharedPrefs.edit().putString("userId", userId)
@@ -196,6 +213,7 @@ fun ContentLoginView(navController: NavHostController) {
                                     .putLong("lastPausedTime", now)
                                     .apply()
 
+                                // Obtener datos del usuario
                                 val userInfoResponse = apiService.getUsuario(userId)
                                 if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
                                     isLoading = false
@@ -208,12 +226,14 @@ fun ContentLoginView(navController: NavHostController) {
                                 val perfilResponse = apiService.getPerfil(userId)
                                 val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
+                                // Obtener tema preferido
                                 apiService.getTheme(userId).enqueue(object : Callback<ApiService.ThemeResponse> {
                                     override fun onResponse(call: Call<ApiService.ThemeResponse>, response: Response<ApiService.ThemeResponse>) {
                                         val theme = if (response.isSuccessful) response.body()?.theme ?: "light" else "light"
                                         darkThemeState.value = theme == "dark"
                                         sharedPrefs.edit().putString("user_theme", theme).apply()
 
+                                        // Crear objeto Usuario
                                         val usuarioCompleto = Usuario(
                                             id = userId,
                                             username = userInfo.username,
@@ -226,16 +246,19 @@ fun ContentLoginView(navController: NavHostController) {
                                             alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
                                         )
 
+                                        // Guardar perfil serializado
                                         val perfilJson = Gson().toJson(usuarioCompleto)
                                         sharedPrefs.edit()
                                             .putString("perfil_tipo", perfil?.tipo)
                                             .putString("perfil_completo", perfilJson)
                                             .apply()
 
+                                        // Guardar sesión en memoria
                                         SessionManager.usuarioActual = usuarioCompleto
                                         isLoading = false
                                         Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
 
+                                        // Navegar al menú o a calibración
                                         navController.navigate(if (perfil != null) "menu" else "calibracion_menu") {
                                             popUpTo(0) { inclusive = true }
                                         }
@@ -283,6 +306,7 @@ fun ContentLoginView(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Navegación a registro
             Text(
                 text = "¿No tienes cuenta? Regístrate",
                 color = MaterialTheme.colorScheme.primary,
@@ -295,13 +319,19 @@ fun ContentLoginView(navController: NavHostController) {
     }
 }
 
-
+/**
+ * Preview para ver la pantalla de Login en diseño.
+ */
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewLoginScreen() {
     val navController = rememberNavController()
     Login(navController = navController)
 }
+
+/**
+ * Campo personalizado para la contraseña con botón para mostrar u ocultar el texto.
+ */
 @Composable
 fun PasswordField(
     value: String,

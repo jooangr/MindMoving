@@ -354,7 +354,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         } ?: PerfilCalibracion.EQUILIBRADO
     }
 
-    //TODO: joan esta es la más importante, guarda los datos en los objetos, debes aprovecharlos para mandarlos al server
+    //Aqui se guarda los datos en los objetos, antes de mandarlos al server
     fun guardarDatos() {
         val usuario = SessionManager.usuarioActual
 
