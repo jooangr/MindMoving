@@ -46,7 +46,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.CompassCalibration
+import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
@@ -237,7 +238,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             .height(50.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Visibility,
+                            imageVector = Icons.Default.CompassCalibration,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )
@@ -262,12 +263,12 @@ fun MainScreenMenu(navController: NavHostController) {
                         )
                     ) {
                         Icon(
-                            imageVector = Icons.Default.DirectionsCar,
+                            imageVector = Icons.Default.DeveloperMode,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Comando Coche")
+                        Text("Simulador de Comandos")
                     }
                 }
 

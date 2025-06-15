@@ -111,7 +111,7 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
                             Text("Esto define el nivel mínimo de atención requerido.")
                             Spacer(Modifier.height(8.dp))
                             Button(onClick = {
-                                objetivoAtencion = 40
+                                objetivoAtencion = 30
                                 mostrarDialogoDificultad = false
                             }) { Text("🟢 Fácil (≥ 30)") }
 

@@ -49,15 +49,17 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
     var juegoActivo by remember { mutableStateOf(false) }
     var progresoMeditacion by remember { mutableStateOf(0f) }
 
-    val objetivoMeditacion = 70
+    // Dificultad
+    var mostrarDialogoDificultad by remember { mutableStateOf(true) }
+    var objetivoMeditacion by remember { mutableStateOf(60) } // valor medio por defecto
     val puntosObjetivo = 20
 
-    // ⏳ Iniciar conexión y transmisión al iniciar Composable
+    // ⏳ Iniciar conexión al Composable
     LaunchedEffect(Unit) {
         neuroSkyManager.conectar()
     }
 
-    // 🎮 Lógica del juego basada en el valor de meditación
+    // Lógica del juego basada en el valor de meditación
     LaunchedEffect(eegData.meditation, juegoActivo) {
         Log.d(TAG, "🧘 Meditación actual: ${eegData.meditation}")
 
@@ -69,7 +71,6 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
         }
     }
 
-    // 🖼 UI
     Scaffold(
         topBar = {
             TopAppBar(
@@ -96,13 +97,12 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
                     ConnectionStatus.CONECTADO -> "🔌 Estado: Conectado"
                     ConnectionStatus.CONECTANDO -> "🔄 Estado: Conectando..."
                     ConnectionStatus.DESCONECTADO -> "❌ Estado: Desconectado"
-                    ConnectionStatus.ERROR ->" ❌ Estado: Desconectado"
+                    ConnectionStatus.ERROR -> "❌ Estado: Error"
                 },
                 color = when (connectionState) {
                     ConnectionStatus.CONECTADO -> Color.Green
                     ConnectionStatus.CONECTANDO -> Color.Yellow
-                    ConnectionStatus.DESCONECTADO -> Color.Red
-                    ConnectionStatus.ERROR -> Color.Red
+                    else -> Color.Red
                 },
                 style = MaterialTheme.typography.titleMedium
             )
@@ -153,7 +153,35 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
                     }
                 )
             }
-        }
 
+            // Selector de dificultad al inicio
+            if (mostrarDialogoDificultad) {
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = { Text("Selecciona dificultad") },
+                    text = {
+                        Column {
+                            Text("Define el nivel mínimo de meditación requerido para sumar puntos.")
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = {
+                                objetivoMeditacion = 30
+                                mostrarDialogoDificultad = false
+                            }) { Text("🟢 Fácil (≥ 30)") }
+
+                            Button(onClick = {
+                                objetivoMeditacion = 60
+                                mostrarDialogoDificultad = false
+                            }) { Text("🟠 Media (≥ 60)") }
+
+                            Button(onClick = {
+                                objetivoMeditacion = 80
+                                mostrarDialogoDificultad = false
+                            }) { Text("🔴 Difícil (≥ 80)") }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
+        }
     }
 }

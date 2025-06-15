@@ -247,14 +247,14 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                             context, Manifest.permission.BLUETOOTH_SCAN
                         ) == PackageManager.PERMISSION_GRANTED
 
-                        Log.d(TAG, "📋 Permisos - CONNECT: $hasBluetoothConnect, SCAN: $hasBluetoothScan")
+                        Log.d(TAG, " Permisos - CONNECT: $hasBluetoothConnect, SCAN: $hasBluetoothScan")
 
                         if (hasBluetoothConnect && hasBluetoothScan) {
                             if (!conectado && !intentandoConectar) {
                                 iniciarConexion()
                             }
                         } else {
-                            Log.w(TAG, "⚠️ Solicitando permisos de Bluetooth...")
+                            Log.w(TAG, " Solicitando permisos de Bluetooth...")
                             permissionLauncher.launch(
                                 arrayOf(
                                     Manifest.permission.BLUETOOTH_CONNECT,
@@ -265,10 +265,10 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                     }
                 }
                 Lifecycle.Event.ON_PAUSE -> {
-                    Log.d(TAG, "⏸️ ON_PAUSE")
+                    Log.d(TAG, " ON_PAUSE")
                 }
                 Lifecycle.Event.ON_DESTROY -> {
-                    Log.d(TAG, "💀 ON_DESTROY")
+                    Log.d(TAG, " ON_DESTROY")
                 }
                 else -> {}
             }
@@ -494,9 +494,12 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
                     if (signalLevel >= 150) {
                         Spacer(Modifier.height(8.dp))
-                        Text("⚠️ Mejora la colocación de la diadema",
-                            color = Color.Yellow)
+                        Text(
+                            "⚠️ Mejora la colocación de la diadema",
+                            color = Color(0xFFFF9800)
+                        )
                     }
+
                 }
             }
 
@@ -550,10 +553,10 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                             Column(Modifier.padding(16.dp)) {
                                 Text("📊 Resultados actuales:", color = MaterialTheme.colorScheme.primary)
                                 Text("Atención media: ${at.media}", color = MaterialTheme.colorScheme.primary)
-                                Text("Variabilidad de atención: ${at.variabilidad}", color = Color.Green)
-                                Text("Meditación media: ${med.media}", color = MaterialTheme.colorScheme.secondary)
-                                Text("Variabilidad de meditación: ${med.variabilidad}", color = Color.Blue)
-                                Text("Parpadeo promedio: ${blink.fuerzaPromedio}", color = MaterialTheme.colorScheme.tertiary)
+                                Text("Variabilidad de atención: ${at.variabilidad}", color = MaterialTheme.colorScheme.primary)
+                                Text("Meditación media: ${med.media}", color = MaterialTheme.colorScheme.primary)
+                                Text("Variabilidad de meditación: ${med.variabilidad}", color = MaterialTheme.colorScheme.primary)
+                                Text("Parpadeo promedio: ${blink.fuerzaPromedio}", color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
