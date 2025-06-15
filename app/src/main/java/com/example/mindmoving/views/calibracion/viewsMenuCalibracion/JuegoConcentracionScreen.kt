@@ -50,7 +50,11 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
     var puntos by remember { mutableStateOf(0) }
     var juegoActivo by remember { mutableStateOf(false) }
 
-    val objetivoAtencion = 70
+    var mostrarDialogoDificultad by remember { mutableStateOf(true) }
+    var objetivoAtencion by remember { mutableStateOf(60) } // valor por defecto medio
+
+
+ //   val objetivoAtencion = 70
     val radioMaximo = 300f
 
     // Conexión al iniciar
@@ -79,7 +83,7 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
         ) {
             Spacer(Modifier.height(24.dp))
 
-            // 🟢 Estado conexión
+            // Estado conexión
             Text(
                 text = when (connectionState) {
                     ConnectionStatus.CONECTADO -> "🔌 Estado: Conectado"
@@ -97,6 +101,35 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
             )
 
             Spacer(Modifier.height(16.dp))
+
+            if (mostrarDialogoDificultad) {
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = { Text("Selecciona dificultad") },
+                    text = {
+                        Column {
+                            Text("Esto define el nivel mínimo de atención requerido.")
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = {
+                                objetivoAtencion = 40
+                                mostrarDialogoDificultad = false
+                            }) { Text("🟢 Fácil (≥ 30)") }
+
+                            Button(onClick = {
+                                objetivoAtencion = 60
+                                mostrarDialogoDificultad = false
+                            }) { Text("🟠 Media (≥ 60)") }
+
+                            Button(onClick = {
+                                objetivoAtencion = 80
+                                mostrarDialogoDificultad = false
+                            }) { Text("🔴 Difícil (≥ 80)") }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
+
 
             // Atención actual
             Text("Atención actual: ${eegData.attention}", style = MaterialTheme.typography.titleMedium)
