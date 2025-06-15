@@ -178,6 +178,7 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
 
             Button(
                 onClick = {
+
                     coroutineScope.launch {
                         isLoading = true
                         val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)

@@ -142,6 +142,32 @@ fun RegisterContent(navController: NavHostController) {
                 onClick = {
                     coroutineScope.launch {
                         isLoading = true
+
+                        //  Validaciones
+                        if (username.trim().isEmpty() || email.trim().isEmpty() || password.trim().isEmpty()) {
+                            dialogMessage = "Completa todos los campos"
+                            showDialog = true
+                            isLoading = false
+                            return@launch
+                        }
+
+                        val usernameRegex = Regex("^[a-zA-Z0-9_.-]{3,}$")
+                        val passwordRegex = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$")
+
+                        if (!usernameRegex.matches(username)) {
+                            dialogMessage = "El usuario solo puede contener letras, números, puntos o guiones (mínimo 3 caracteres)."
+                            showDialog = true
+                            isLoading = false
+                            return@launch
+                        }
+
+                        if (password.length < 6 || !passwordRegex.matches(password)) {
+                            dialogMessage = "La contraseña debe tener al menos 6 caracteres, con al menos una letra y un número."
+                            showDialog = true
+                            isLoading = false
+                            return@launch
+                        }
+
                         try {
                             if (username.isBlank() || email.isBlank() || password.isBlank()) {
                                 dialogMessage = "Completa todos los campos"
