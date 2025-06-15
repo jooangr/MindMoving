@@ -10,7 +10,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.mindmoving.views.login.Login
 import com.example.mindmoving.views.menuPrincipal.MainScreenMenu
-import com.example.mindmoving.views.menuPrincipal.attention.*
 import com.example.mindmoving.views.calibracion.*
 import com.example.mindmoving.views.login.RegisterScreen
 
@@ -93,10 +92,6 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("juego_concentracion"){ JuegoConcentracionScreen(navController = navController) }
         composable("juego_meditacion"){ JuegoMeditacionScreen(navController = navController) }
 
-
-
-        //quitar luego esta de pruebas
-        composable("atencion") { AtencionPantalla(navController) }
 
         composable("comandos_diadema") {
             ComandosDiademaScreen(navController = navController)
