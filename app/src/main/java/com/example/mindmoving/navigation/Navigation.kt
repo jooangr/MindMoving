@@ -24,6 +24,7 @@ import com.example.mindmoving.views.calibracion.viewsMenuCalibracion.PerfilCalib
 import com.example.mindmoving.views.controlCoche.ComandosDiademaScreen
 import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
+import com.example.mindmoving.views.controlCoche.juego.SesionDiademaInterfazScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AjustesScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.AyudaScreen
 import com.example.mindmoving.views.menuDrawer.viewsMenuDrawer.HistorialSesionesScreen
@@ -96,6 +97,11 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("comandos_diadema") {
             ComandosDiademaScreen(navController = navController)
         }
+
+        //prueba juego
+        composable("sesion_diadema") { SesionDiademaInterfazScreen(navController = navController)
+        }
+
 
 
     }

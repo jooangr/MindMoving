@@ -1,6 +1,8 @@
 package com.example.mindmoving.views.login
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,7 +66,9 @@ import com.example.mindmoving.retrofit.models.user.Usuario
 import com.example.mindmoving.retrofit.models.user.ValoresEEG
 import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.ui.theme.AppTypography
+import com.example.mindmoving.utils.LocalThemeViewModel
 import com.example.mindmoving.utils.SessionManager
+import com.example.mindmoving.utils.ThemeViewModel
 import com.google.gson.Gson
 import retrofit2.Call
 import retrofit2.Callback
@@ -77,11 +81,12 @@ import retrofit2.Response
 
 @Composable
 fun Login(navController: NavHostController) {
-    // Aplica tema oscuro a esta pantalla
+    val themeViewModel = LocalThemeViewModel.current
     AppTheme(darkTheme = true) {
-        ContentLoginView(navController)
+        ContentLoginView(navController, themeViewModel)
     }
 }
+
 
 /**
  * Contenido de la vista de Login:
@@ -91,7 +96,7 @@ fun Login(navController: NavHostController) {
  *      Manejo de loading, errores, y guardado local
  */
 @Composable
-fun ContentLoginView(navController: NavHostController) {
+fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeViewModel) {
     var userdata by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -231,7 +236,14 @@ fun ContentLoginView(navController: NavHostController) {
                                     override fun onResponse(call: Call<ApiService.ThemeResponse>, response: Response<ApiService.ThemeResponse>) {
                                         val theme = if (response.isSuccessful) response.body()?.theme ?: "light" else "light"
                                         darkThemeState.value = theme == "dark"
+
                                         sharedPrefs.edit().putString("user_theme", theme).apply()
+
+                                        // Actualizar el ViewModel global del tema
+                                        Handler(Looper.getMainLooper()).post {
+                                            themeViewModel.setTheme(theme == "dark")
+
+                                        }
 
                                         // Crear objeto Usuario
                                         val usuarioCompleto = Usuario(
@@ -270,6 +282,7 @@ fun ContentLoginView(navController: NavHostController) {
                                         showDialog = true
                                     }
                                 })
+
                             } else {
                                 isLoading = false
                                 dialogMessage = "Usuario, correo o contraseña incorrectos"

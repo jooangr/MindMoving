@@ -28,25 +28,12 @@ interface ApiService {
     @POST("/api/login")
     suspend fun loginUser(@Body request: LoginRequest): Response<LoginResponse>
 
-    //Eliminar Usuario
+    // Eliminar Usuario
     @DELETE("users/{id}")
-    suspend fun eliminarUsuario(
-        @Path("id") userId: String,
-        @Query("password") password: String
+    suspend fun eliminarUsuario(@Path("id") userId: String, @Query("password") password: String
     ): Response<Void>
 
-    @PATCH("perfil/{id}/tipo")
-    suspend fun actualizarTipoPerfil(
-        @Path("id") userId: String,
-        @Body body: Map<String, String>
-    ): Response<PerfilCalibracionResponse>
-
-    @POST("perfil/perfil/{id}/predefinido")
-    suspend fun crearPerfilPredefinido(
-        @Path("id") id: String,
-        @Body body: Map<String, String>
-    ): Response<Any>
-
+    // Actualiza un perfil de calibración ya existente
     @POST("/api/perfil/save")
     suspend fun actualizarPerfil(@Body perfil: PerfilCalibracionRequest): Response<GenericResponse>
 
@@ -55,6 +42,7 @@ interface ApiService {
     @GET("/api/perfil/{usuarioId}")
     suspend fun getPerfil(@Path("usuarioId") usuarioId: String): Response<PerfilCalibracionResponse>
 
+    // Crea un nuevo perfil de calibración desde cero
     @POST("/api/perfil")
     suspend fun crearPerfil(@Body perfil: PerfilCalibracionRequest): Response<GenericResponse>
 
@@ -70,26 +58,30 @@ interface ApiService {
     @GET("/api/sesiones/{userId}")
     suspend fun getSesiones(@Path("userId") userId: String): Response<List<SesionEEGResponse>>
 
-    @POST("/api/verificar-password/{id}")//editarpefil y register
+    // Verifica la contraseña actual de un usuario (usado para editar datos sensibles)
+    @POST("/api/verificar-password/{id}")
     suspend fun verificarPasswordEditarPerfil(
         @Path("id") id: String,
         @Body request: VerificarPasswordRequest
     ): Response<GenericResponse>
 
+    // Actualiza los datos de un usuario (nombre, email y opcionalmente contraseña)
     @PATCH("/api/update-user/{userId}")
     suspend fun actualizarUsuario(
         @Path("userId") userId: String,
         @Body request: ActualizarUsuarioRequest
     ): Response<GenericResponse>
 
+    // Obtiene la información actual del usuario (nombre, email,...)
     @GET("/api/users/{id}")
     suspend fun getUsuario(@Path("id") id: String): Response<UsuarioResponse>
 
-    //theme
-    @GET("users/{id}/theme")
+    // Obtiene el tema actual configurado por el usuario (claro/oscuro)
+    @GET("/api/users/{id}/theme")
     fun getTheme(@Path("id") userId: String): Call<ThemeResponse>
 
-    @PUT("users/{id}/theme")
+    // Actualiza el tema preferido del usuario (claro/oscuro) en el backend
+    @PUT("/api/users/{id}/theme")
     fun updateTheme(@Path("id") userId: String, @Body body: ThemeRequest): Call<Void>
 
 

@@ -271,6 +271,13 @@ fun MainScreenMenu(navController: NavHostController) {
                     }
                 }
 
+                Button(onClick = {
+                    navController.navigate("sesion_diadema")
+                }) {
+                    Text("Iniciar Sesión Diadema")
+                }
+
+
                 Spacer(modifier = Modifier.height(31.dp))
 
                 // Resumen animado con las últimas sesiones registradas

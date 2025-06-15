@@ -2,6 +2,7 @@ package com.example.mindmoving.views.menuDrawer.viewsMenuDrawer
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -92,30 +93,42 @@ fun AjustesScreen(navController: NavHostController) {
                     darkMode = isChecked
                     themeViewModel.setTheme(isChecked)
 
-                    // Guardar preferencia en almacenamiento local
-                    sharedPreferences.edit()
-                        .putString("user_theme", if (isChecked) "dark" else "light")
-                        .apply()
+                    val theme = if (isChecked) "dark" else "light"
+                    Log.d("AJUSTES_SCREEN", "🔁 Tema seleccionado: $theme")
+
+                    // Guardar en almacenamiento local (solo en uno)
+                    sharedPreferences.edit().putString("user_theme", theme).apply()
 
                     // Enviar preferencia al backend si hay sesión
                     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                     val userId = prefs.getString("userId", null)
+
                     if (userId != null) {
                         val apiService = ApiClient.getApiService()
-                        val themeRequest = ApiService.ThemeRequest(
-                            if (isChecked) "dark" else "light"
-                        )
+                        val themeRequest = ApiService.ThemeRequest(theme)
+
+                        Log.d("AJUSTES_SCREEN", "📡 Enviando PUT a /users/$userId/theme")
+
                         apiService.updateTheme(userId, themeRequest).enqueue(object : Callback<Void> {
                             override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                                Log.d("AJUSTES", "Tema actualizado correctamente")
+                                if (response.isSuccessful) {
+                                    Log.d("THEME_UPDATE", "✅ Tema actualizado correctamente en backend: $theme")
+                                } else {
+                                    Log.e("THEME_UPDATE", "⚠️ Error del servidor al guardar el tema. Código: ${response.code()}")
+                                    Toast.makeText(context, "No se pudo guardar el tema en el servidor", Toast.LENGTH_SHORT).show()
+                                }
                             }
 
                             override fun onFailure(call: Call<Void>, t: Throwable) {
-                                Log.e("AJUSTES", "Error al actualizar tema", t)
+                                Log.e("THEME_UPDATE", "❌ Fallo de red: ${t.message}")
+                                Toast.makeText(context, "Error de conexión al guardar el tema", Toast.LENGTH_SHORT).show()
                             }
                         })
+                    } else {
+                        Log.w("AJUSTES_SCREEN", "❗ No se encontró userId para guardar el tema")
                     }
                 }
+
             )
 
             Spacer(modifier = Modifier.height(24.dp))
