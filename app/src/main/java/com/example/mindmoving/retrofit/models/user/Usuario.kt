@@ -1,4 +1,6 @@
-package com.example.mindmoving.retrofit.models
+package com.example.mindmoving.retrofit.models.user
+
+import com.google.gson.annotations.SerializedName
 
 // Datos relevantes del usuario para personalizar el control del RC según su perfil cognitivo
 
@@ -34,12 +36,16 @@ data class ValoresEEG(
 
 // Información relacionada con el parpadeo
 data class BlinkingData(
+    @SerializedName("maxPestaneos")
     val fuerzaPromedio: Int,
+    @SerializedName("tiempoVentana")
     val sensibilidad: Int // umbral ajustado para disparar comandos
 )
 
 // Capacidad de alternar entre estados mentales (clave para perfiles y comandos combinados)
 data class AlternanciaData(
+    @SerializedName("tiempoMeditacion")
     val tiempoCambioAMeditacion: Int, // en segundos
+    @SerializedName("tiempoAtencion")
     val tiempoCambioAAtencion: Int    // en segundos
 )

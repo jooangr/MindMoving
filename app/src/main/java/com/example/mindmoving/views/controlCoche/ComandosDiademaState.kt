@@ -1,7 +1,6 @@
 package com.example.mindmoving.views.controlCoche
 
-import com.example.mindmoving.retrofit.models.Usuario
-import com.example.mindmoving.views.controlCoche.Direction
+import com.example.mindmoving.retrofit.models.user.Usuario
 
 // Estado para representar la conexión con la diadema
 enum class ConnectionStatus {

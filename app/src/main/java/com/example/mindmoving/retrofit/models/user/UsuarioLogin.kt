@@ -1,4 +1,4 @@
-package com.example.mindmoving.retrofit.models
+package com.example.mindmoving.retrofit.models.user
 
 data class UsuarioLogin(
     val id: String,

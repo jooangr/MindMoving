@@ -3,10 +3,15 @@ package com.example.mindmoving.views.calibracion.viewsMenuCalibracion
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.content.pm.PackageManager
 import android.graphics.Rect
+import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -24,6 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavHostController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.example.mindmoving.neuroSkyService.NeuroSkyListener
@@ -31,65 +39,74 @@ import com.neurosky.thinkgear.TGDevice
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import androidx.compose.ui.platform.LocalLifecycleOwner
 
+import com.example.mindmoving.neuroSkyService.NeuroSkyManager
+import com.example.mindmoving.views.controlCoche.ConnectionStatus
+
+/**
+ * Pantalla de juego para entrenar el reconocimiento de parpadeos con la diadema NeuroSky.
+ */
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JuegoParpadeoScreen(navController: NavHostController) {
-    val colorPrimario = MaterialTheme.colorScheme.primary
-
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
+    val TAG = "JuegoParpadeo"
 
-    var conectado by remember { mutableStateOf(false) }
+    val neuroSkyManager = remember { NeuroSkyManager(context) }
+    val connectionState by neuroSkyManager.connectionState.collectAsState()
+    val eegData by neuroSkyManager.eegData.collectAsState()
+
     var contadorParpadeos by remember { mutableStateOf(0) }
-    var posicionPunto by remember { mutableStateOf(Offset(300f, 500f)) }
-
-    var tiempoRestante by remember { mutableStateOf(10) }
     var juegoActivo by remember { mutableStateOf(false) }
-    var mostrarDialogo by remember { mutableStateOf(false) }
     var juegoIniciado by remember { mutableStateOf(false) }
-
+    var tiempoRestante by remember { mutableStateOf(10) }
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var posicionPunto by remember { mutableStateOf(Offset(300f, 500f)) }
     val random = remember { Random(System.currentTimeMillis()) }
 
-    // NeuroSky setup
-    val neuroSky = remember {
-        val adapter = BluetoothAdapter.getDefaultAdapter()
-        if (adapter != null) {
-            CustomNeuroSky(adapter, object : NeuroSkyListener {
-                override fun onBlinkDetected(strength: Int) {
-                    if (juegoActivo && strength > 40) {
-                        contadorParpadeos++
-                        posicionPunto = Offset(
-                            random.nextFloat() * 800f,
-                            random.nextFloat() * 1500f
-                        )
-                    }
-                }
-
-                override fun onAttentionReceived(level: Int) {}
-                override fun onMeditationReceived(level: Int) {}
-                override fun onSignalPoor(signal: Int) {}
-                override fun onStateChanged(state: Int) {
-                    conectado = state == TGDevice.STATE_CONNECTED
-                }
-            })
-        } else null
-    }
-
-    // Conexión al iniciar
-    LaunchedEffect(Unit) {
-        val adapter = BluetoothAdapter.getDefaultAdapter()
-        val device = adapter?.bondedDevices?.firstOrNull { it.name.contains("MindWave", true) }
-        if (device != null && neuroSky != null) {
-            neuroSky.connectTo(device)
-            delay(3000)
-            if (conectado) neuroSky.start()
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val connectGranted = permissions[Manifest.permission.BLUETOOTH_CONNECT] == true
+        val scanGranted = permissions[Manifest.permission.BLUETOOTH_SCAN] == true
+        if (connectGranted && scanGranted) {
+            neuroSkyManager.conectar()
+        } else {
+            Toast.makeText(context, "Permisos Bluetooth necesarios", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Temporizador
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val hasConnect = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    val hasScan = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    if (hasConnect && hasScan) {
+                        neuroSkyManager.conectar()
+                    } else {
+                        permissionLauncher.launch(arrayOf(
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        ))
+                    }
+                } else {
+                    neuroSkyManager.conectar()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            neuroSkyManager.desconectar()
+        }
+    }
+
     LaunchedEffect(juegoActivo) {
         if (juegoActivo) {
             tiempoRestante = 10
@@ -99,6 +116,17 @@ fun JuegoParpadeoScreen(navController: NavHostController) {
             }
             juegoActivo = false
             mostrarDialogo = true
+        }
+    }
+
+    LaunchedEffect(eegData.blinkStrength) {
+        if (juegoActivo && eegData.blinkStrength > 40) {
+            Log.d(TAG, "👁️ Blink detectado: ${eegData.blinkStrength}")
+            contadorParpadeos++
+            posicionPunto = Offset(
+                random.nextFloat() * 800f,
+                random.nextFloat() * 1500f
+            )
         }
     }
 
@@ -120,6 +148,8 @@ fun JuegoParpadeoScreen(navController: NavHostController) {
                 .padding(padding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            val colorPrimario = MaterialTheme.colorScheme.primary
+
             Canvas(modifier = Modifier.fillMaxSize()) {
                 if (juegoActivo) {
                     drawCircle(
@@ -136,13 +166,18 @@ fun JuegoParpadeoScreen(navController: NavHostController) {
                     .padding(top = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Tiempo restante: $tiempoRestante s", style = MaterialTheme.typography.titleMedium)
-                Text("Parpadeos: $contadorParpadeos", style = MaterialTheme.typography.titleMedium)
+                Text("Estado: ${connectionState.name}", color = if (connectionState == ConnectionStatus.CONECTADO) Color.Green else Color.Red)
+                Text("Tiempo restante: $tiempoRestante s")
+                Text("Parpadeos: $contadorParpadeos")
             }
 
             if (!juegoIniciado) {
                 Button(
                     onClick = {
+                        if (connectionState != ConnectionStatus.CONECTADO) {
+                            Toast.makeText(context, "⚠️ Diadema no conectada", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
                         contadorParpadeos = 0
                         posicionPunto = Offset(300f, 500f)
                         juegoActivo = true
@@ -153,32 +188,32 @@ fun JuegoParpadeoScreen(navController: NavHostController) {
                     Text("🎮 Empezar Juego")
                 }
             }
-        }
 
-        if (mostrarDialogo) {
-            AlertDialog(
-                onDismissRequest = { },
-                title = { Text("⏱️ Juego terminado") },
-                text = { Text("Detectaste $contadorParpadeos parpadeos en 10 segundos.") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        contadorParpadeos = 0
-                        juegoActivo = false
-                        juegoIniciado = false
-                        mostrarDialogo = false
-                        posicionPunto = Offset(300f, 500f)
-                    }) {
-                        Text("🔁 Reiniciar")
+            if (mostrarDialogo) {
+                AlertDialog(
+                    onDismissRequest = { },
+                    title = { Text("⏱️ Juego terminado") },
+                    text = { Text("Detectaste $contadorParpadeos parpadeos en 10 segundos.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            contadorParpadeos = 0
+                            juegoActivo = false
+                            juegoIniciado = false
+                            mostrarDialogo = false
+                            posicionPunto = Offset(300f, 500f)
+                        }) {
+                            Text("🔁 Reiniciar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            navController.popBackStack()
+                        }) {
+                            Text("Salir")
+                        }
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        navController.popBackStack()
-                    }) {
-                        Text("Salir")
-                    }
-                }
-            )
+                )
+            }
         }
     }
 }

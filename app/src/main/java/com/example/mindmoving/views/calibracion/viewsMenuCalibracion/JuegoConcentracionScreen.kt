@@ -20,13 +20,20 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.example.mindmoving.neuroSkyService.NeuroSkyListener
+import com.example.mindmoving.neuroSkyService.NeuroSkyManager
+import com.example.mindmoving.views.controlCoche.ConnectionStatus
 import com.neurosky.thinkgear.TGDevice
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-
-@SuppressLint("MissingPermission")
+/**
+ * Función interativa de entrenamiento o juego enfocado en la concentración
+ *
+ *  Muestra un círculo cuyo tamaño depende del nivel de atención del usuario.
+ *  Si la atención supera un umbral (70), se ganan puntos.
+ *  Al alcanzar 30 puntos, se muestra un mensaje de éxito.
+ */@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JuegoConcentracionScreen(navController: NavHostController) {
@@ -34,47 +41,25 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var conectado by remember { mutableStateOf(false) }
-    var atencionActual by remember { mutableStateOf(0) }
+    // Usa el manager
+    val neuroSkyManager = remember { NeuroSkyManager(context) }
+    val connectionState by neuroSkyManager.connectionState.collectAsState()
+    val eegData by neuroSkyManager.eegData.collectAsState()
+
     var radioCirculo by remember { mutableStateOf(50f) }
     var puntos by remember { mutableStateOf(0) }
     var juegoActivo by remember { mutableStateOf(false) }
 
-    val objetivoAtencion = 70
+    var mostrarDialogoDificultad by remember { mutableStateOf(true) }
+    var objetivoAtencion by remember { mutableStateOf(60) } // valor por defecto medio
+
+
+ //   val objetivoAtencion = 70
     val radioMaximo = 300f
 
-    val neuroSky = remember {
-        val adapter = BluetoothAdapter.getDefaultAdapter()
-        if (adapter != null) {
-            CustomNeuroSky(adapter, object : NeuroSkyListener {
-                override fun onAttentionReceived(level: Int) {
-                    atencionActual = level
-                    if (juegoActivo) {
-                        radioCirculo = (level.coerceIn(0, 100) / 100f) * radioMaximo
-                        if (level >= objetivoAtencion) puntos++
-                    }
-                }
-
-                override fun onMeditationReceived(level: Int) {}
-                override fun onBlinkDetected(strength: Int) {}
-                override fun onSignalPoor(signal: Int) {}
-                override fun onStateChanged(state: Int) {
-                    conectado = state == TGDevice.STATE_CONNECTED
-                }
-            })
-        } else null
-    }
-
+    // Conexión al iniciar
     LaunchedEffect(Unit) {
-        val device = BluetoothAdapter.getDefaultAdapter()
-            ?.bondedDevices
-            ?.firstOrNull { it.name.contains("MindWave", true) }
-
-        if (device != null && neuroSky != null) {
-            neuroSky.connectTo(device)
-            delay(3000)
-            if (conectado) neuroSky.start()
-        }
+        neuroSkyManager.conectar()
     }
 
     Scaffold(
@@ -98,24 +83,82 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
         ) {
             Spacer(Modifier.height(24.dp))
 
-            // 🧠 Información del jugador
-            Text("Atención actual: $atencionActual", style = MaterialTheme.typography.titleMedium)
+            // Estado conexión
+            Text(
+                text = when (connectionState) {
+                    ConnectionStatus.CONECTADO -> "🔌 Estado: Conectado"
+                    ConnectionStatus.CONECTANDO -> "🔄 Estado: Conectando..."
+                    ConnectionStatus.DESCONECTADO -> "❌ Estado: Desconectado"
+                    ConnectionStatus.ERROR -> "❌ Estado: Desconectado"
+                },
+                color = when (connectionState) {
+                    ConnectionStatus.CONECTADO -> Color.Green
+                    ConnectionStatus.CONECTANDO -> Color.Yellow
+                    ConnectionStatus.DESCONECTADO -> Color.Red
+                    ConnectionStatus.ERROR -> Color.Red
+                },
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            if (mostrarDialogoDificultad) {
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = { Text("Selecciona dificultad") },
+                    text = {
+                        Column {
+                            Text("Esto define el nivel mínimo de atención requerido.")
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = {
+                                objetivoAtencion = 30
+                                mostrarDialogoDificultad = false
+                            }) { Text("🟢 Fácil (≥ 30)") }
+
+                            Button(onClick = {
+                                objetivoAtencion = 60
+                                mostrarDialogoDificultad = false
+                            }) { Text("🟠 Media (≥ 60)") }
+
+                            Button(onClick = {
+                                objetivoAtencion = 80
+                                mostrarDialogoDificultad = false
+                            }) { Text("🔴 Difícil (≥ 80)") }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
+
+
+            // Atención actual
+            Text("Atención actual: ${eegData.attention}", style = MaterialTheme.typography.titleMedium)
             Text("🎯 Objetivo: ≥ $objetivoAtencion", color = Color(0xFF00C853))
             Text("⭐ Puntos: $puntos", style = MaterialTheme.typography.titleMedium)
 
             Spacer(Modifier.height(32.dp))
 
-            // 🎮 Botón de inicio
+            // Botón para empezar
             if (!juegoActivo) {
                 Button(onClick = {
-                    juegoActivo = true
                     puntos = 0
+                    juegoActivo = true
                 }) {
                     Text("Empezar juego")
                 }
             }
 
-            // 🟢 Círculo dinámico
+            // Actualizar círculo si el juego está activo
+            LaunchedEffect(eegData.attention, juegoActivo) {
+                if (juegoActivo) {
+                    val nivel = eegData.attention
+                    radioCirculo = (nivel.coerceIn(0, 100) / 100f) * radioMaximo
+                    if (nivel >= objetivoAtencion) puntos++
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -131,11 +174,11 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
                 }
             }
 
-            // 🏁 Fin del juego si se llega al objetivo
+            // Resultado final
             if (juegoActivo && puntos >= 30) {
                 AlertDialog(
                     onDismissRequest = { juegoActivo = false },
-                    title = { Text("¡Concentración lograda!") },
+                    title = { Text("🎯 ¡Concentración lograda!") },
                     text = { Text("Has alcanzado $puntos puntos de concentración.") },
                     confirmButton = {
                         TextButton(onClick = {
@@ -151,3 +194,4 @@ fun JuegoConcentracionScreen(navController: NavHostController) {
         }
     }
 }
+

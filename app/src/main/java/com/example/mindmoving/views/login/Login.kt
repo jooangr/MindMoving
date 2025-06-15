@@ -1,6 +1,8 @@
 package com.example.mindmoving.views.login
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -57,29 +59,35 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.ApiService
-import com.example.mindmoving.retrofit.models.AlternanciaData
-import com.example.mindmoving.retrofit.models.BlinkingData
-import com.example.mindmoving.retrofit.models.LoginRequest
-import com.example.mindmoving.retrofit.models.Usuario
-import com.example.mindmoving.retrofit.models.ValoresEEG
+import com.example.mindmoving.retrofit.models.user.AlternanciaData
+import com.example.mindmoving.retrofit.models.user.BlinkingData
+import com.example.mindmoving.retrofit.models.login_register.LoginRequest
+import com.example.mindmoving.retrofit.models.user.Usuario
+import com.example.mindmoving.retrofit.models.user.ValoresEEG
 import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.ui.theme.AppTypography
+import com.example.mindmoving.utils.LocalThemeViewModel
 import com.example.mindmoving.utils.SessionManager
+import com.example.mindmoving.utils.ThemeViewModel
 import com.google.gson.Gson
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-
+/**
+ * Pantalla de Login que permite al usuario autenticarse con su email o nombre de usuario.
+ * Si el login es exitoso, guarda su información en SharedPreferences y lo redirige al menú principal o calibración.
+ */
 @Composable
 fun Login(navController: NavHostController) {
+    val themeViewModel = LocalThemeViewModel.current
     AppTheme(darkTheme = true) {
-        ContentLoginView(navController)
+        ContentLoginView(navController, themeViewModel)
     }
 }
 
 @Composable
-fun ContentLoginView(navController: NavHostController) {
+fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeViewModel) {
     var userdata by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -87,21 +95,18 @@ fun ContentLoginView(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
-    // Estados
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-
     val darkThemeState = remember { mutableStateOf(false) }
 
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
     )
 
-    // 👉 MOSTRAR DIALOGO DE CARGA SI isLoading = true
     if (isLoading) {
         AlertDialog(
-            onDismissRequest = { /* No cerrar al tocar fuera */ },
+            onDismissRequest = {},
             title = { Text("Iniciando sesión...", color = MaterialTheme.colorScheme.primary) },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -115,7 +120,6 @@ fun ContentLoginView(navController: NavHostController) {
         )
     }
 
-    // 👉 MOSTRAR DIALOGO DE ERROR
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -145,12 +149,7 @@ fun ContentLoginView(navController: NavHostController) {
                 contentDescription = "Logo",
                 modifier = Modifier.size(200.dp).padding(5.dp)
             )
-            Text(
-                text = "MindMoving",
-                color = Color.White,
-                fontSize = 40.sp,
-                style = AppTypography.titleMedium
-            )
+            Text("MindMoving", color = Color.White, fontSize = 40.sp, style = AppTypography.titleMedium)
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -180,16 +179,15 @@ fun ContentLoginView(navController: NavHostController) {
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        isLoading = true // EMPIEZA A CARGAR
+                        isLoading = true
+                        val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
                         try {
-                            Log.d("LOGIN_ATTEMPT", "Usuario: ${userdata}, Contraseña: ${password}")
-
                             val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
 
                             if (response.isSuccessful && response.body()?.userId != null) {
                                 val userId = response.body()!!.userId
-                                val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
                                 val now = System.currentTimeMillis()
                                 sharedPrefs.edit().putString("userId", userId)
                                     .putLong("lastLoginTime", now)
@@ -208,36 +206,40 @@ fun ContentLoginView(navController: NavHostController) {
                                 val perfilResponse = apiService.getPerfil(userId)
                                 val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
+                                val usuarioCompleto = Usuario(
+                                    id = userId,
+                                    username = userInfo.username,
+                                    email = userInfo.email,
+                                    password = "",
+                                    perfilCalibracion = perfil?.tipo ?: "",
+                                    valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
+                                    valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
+                                    blinking = perfil?.blinking ?: BlinkingData(0, 0),
+                                    alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
+                                )
+
+                                val tienePerfilValido = perfil?.tipo?.isNotBlank() == true
+
+                                sharedPrefs.edit()
+                                    .putString("perfil_tipo", perfil?.tipo ?: "")
+                                    .putString("perfil_completo", Gson().toJson(usuarioCompleto))
+                                    .apply()
+
+                                SessionManager.usuarioActual = usuarioCompleto
+                                isLoading = false
+                                Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
+
+                                navController.navigate(if (tienePerfilValido) "menu" else "calibracion_menu") {
+                                    popUpTo(0) { inclusive = true }
+                                }
+
                                 apiService.getTheme(userId).enqueue(object : Callback<ApiService.ThemeResponse> {
                                     override fun onResponse(call: Call<ApiService.ThemeResponse>, response: Response<ApiService.ThemeResponse>) {
                                         val theme = if (response.isSuccessful) response.body()?.theme ?: "light" else "light"
                                         darkThemeState.value = theme == "dark"
                                         sharedPrefs.edit().putString("user_theme", theme).apply()
-
-                                        val usuarioCompleto = Usuario(
-                                            id = userId,
-                                            username = userInfo.username,
-                                            email = userInfo.email,
-                                            password = "",
-                                            perfilCalibracion = perfil?.tipo ?: "",
-                                            valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
-                                            valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
-                                            blinking = perfil?.blinking ?: BlinkingData(0, 0),
-                                            alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
-                                        )
-
-                                        val perfilJson = Gson().toJson(usuarioCompleto)
-                                        sharedPrefs.edit()
-                                            .putString("perfil_tipo", perfil?.tipo)
-                                            .putString("perfil_completo", perfilJson)
-                                            .apply()
-
-                                        SessionManager.usuarioActual = usuarioCompleto
-                                        isLoading = false
-                                        Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
-
-                                        navController.navigate(if (perfil != null) "menu" else "calibracion_menu") {
-                                            popUpTo(0) { inclusive = true }
+                                        Handler(Looper.getMainLooper()).post {
+                                            themeViewModel.setTheme(theme == "dark")
                                         }
                                     }
 
@@ -272,12 +274,7 @@ fun ContentLoginView(navController: NavHostController) {
                         .clip(buttonShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Iniciar sesión",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = 20.sp,
-                        style = AppTypography.bodyMedium
-                    )
+                    Text("Iniciar sesión", color = MaterialTheme.colorScheme.onPrimary, fontSize = 20.sp, style = AppTypography.bodyMedium)
                 }
             }
 
@@ -295,13 +292,13 @@ fun ContentLoginView(navController: NavHostController) {
     }
 }
 
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewLoginScreen() {
     val navController = rememberNavController()
     Login(navController = navController)
 }
+
 @Composable
 fun PasswordField(
     value: String,

@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 
+/**
+ * View del inicio de la calibracion personalizada
+ */
 @Composable
 fun CalibracionInicioScreen(navController: NavHostController) {
     Box(

@@ -1,4 +1,7 @@
-package com.example.mindmoving.retrofit.models
+package com.example.mindmoving.retrofit.models.perfilCalibracion
+
+import com.example.mindmoving.retrofit.models.user.AlternanciaData
+import com.example.mindmoving.retrofit.models.user.ValoresEEG
 
 
 enum class PerfilCalibracion (

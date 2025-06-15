@@ -2,14 +2,12 @@ package com.example.mindmoving.views.controlCoche
 
 import android.app.Application
 import android.util.Log
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mindmoving.neuroSkyService.EEGData
 import com.example.mindmoving.neuroSkyService.NeuroSkyManager
-import com.example.mindmoving.retrofit.models.PerfilCalibracion
-import com.example.mindmoving.retrofit.models.SesionEEGRequest
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracion
+import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

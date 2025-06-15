@@ -13,6 +13,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,7 +27,7 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.RegisterRequest
+import com.example.mindmoving.retrofit.models.login_register.RegisterRequest
 import kotlinx.coroutines.launch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
@@ -36,17 +37,18 @@ import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.ui.theme.AppTypography
 
 
+// Pantalla principal de registro. Se fuerza el tema oscuro para mantener coherencia visual.
 @Composable
 fun RegisterScreen(navController: NavHostController) {
-    AppTheme(darkTheme = true) { // ← Forzamos el tema oscuro aquí
+    AppTheme(darkTheme = true) {
         RegisterContent(navController)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterContent(navController: NavHostController) {
 
+    // Estados para almacenar el input del usuario
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -54,40 +56,52 @@ fun RegisterContent(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
+    // Estados para el manejo del diálogo de error
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
+    // Degradado vertical como fondo
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
     )
 
-
-    if (showDialog) {
-        AppTheme(darkTheme = true) {
-            AlertDialog(
-                onDismissRequest = { showDialog = false },
-                title = {
-                    Text(
-                        "Error en el registro",
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                text = { Text(dialogMessage, color = MaterialTheme.colorScheme.onSurface)
-                },
-                confirmButton = {
-                    TextButton(onClick = { showDialog = false }) {
-                        Text("Aceptar", color = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        }
+    // Diálogo de carga (idéntico al del login)
+    if (isLoading) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Registrando cuenta...", color = MaterialTheme.colorScheme.primary) },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Por favor espera...", color = MaterialTheme.colorScheme.onSurface)
+                }
+            },
+            confirmButton = {},
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     }
 
+    // Diálogo de error
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Error en el registro", color = MaterialTheme.colorScheme.onSurface) },
+            text = { Text(dialogMessage, color = MaterialTheme.colorScheme.onSurface) },
+            confirmButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Aceptar", color = MaterialTheme.colorScheme.onSurface)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    // Contenedor principal de la interfaz de registro
     Box(
         modifier = Modifier.fillMaxSize().background(gradientBackground)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -95,6 +109,7 @@ fun RegisterContent(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Título
             Text(
                 text = "Crear cuenta",
                 color = Color.White,
@@ -102,45 +117,45 @@ fun RegisterContent(navController: NavHostController) {
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Campos de entrada
+            // Campo de nombre de usuario
             inputField(username, { username = it }, "Nombre de usuario",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             )
 
+            // Campo de email
             inputField(email, { email = it }, "Correo electrónico",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             )
 
+            // Campo de contraseña personalizado
             PasswordFieldR(
                 value = password,
                 onValueChange = { password = it },
                 placeholder = "Contraseña",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             )
-
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Botón para enviar el formulario de registro
             Button(
                 onClick = {
                     coroutineScope.launch {
+                        isLoading = true
                         try {
                             if (username.isBlank() || email.isBlank() || password.isBlank()) {
                                 dialogMessage = "Completa todos los campos"
                                 showDialog = true
+                                isLoading = false
                                 return@launch
                             }
 
                             val response = apiService.registerUser(
                                 RegisterRequest(username.trim(), email.trim(), password.trim())
                             )
+
                             if (response.isSuccessful) {
+                                isLoading = false
                                 navController.navigate("login") {
                                     popUpTo("register") { inclusive = true }
                                 }
@@ -152,16 +167,16 @@ fun RegisterContent(navController: NavHostController) {
                                     else -> "Ocurrió un error. Intenta nuevamente"
                                 }
                                 showDialog = true
+                                isLoading = false
                             }
                         } catch (e: Exception) {
                             dialogMessage = "Error de red: ${e.message}"
                             showDialog = true
+                            isLoading = false
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(40),
                 contentPadding = PaddingValues(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -171,7 +186,7 @@ fun RegisterContent(navController: NavHostController) {
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
-                            brush = Brush.horizontalGradient(
+                            Brush.horizontalGradient(
                                 colors = listOf(
                                     MaterialTheme.colorScheme.primary,
                                     MaterialTheme.colorScheme.secondary
@@ -181,9 +196,12 @@ fun RegisterContent(navController: NavHostController) {
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Registrarse", color = MaterialTheme.colorScheme.onPrimary,
+                    Text(
+                        "Registrarse",
+                        color = MaterialTheme.colorScheme.onPrimary,
                         style = AppTypography.bodyMedium,
-                        fontSize = 20.sp,)
+                        fontSize = 20.sp
+                    )
                 }
             }
 
@@ -205,6 +223,7 @@ fun RegisterContent(navController: NavHostController) {
 }
 
 
+// Vista previa en diseño (para editores tipo Android Studio)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewRegisterScreen() {
@@ -212,6 +231,7 @@ fun PreviewRegisterScreen() {
     RegisterScreen(navController = navController)
 }
 
+// Campo de contraseña reutilizable con visibilidad activable
 @Composable
 fun PasswordFieldR(
     value: String,
@@ -259,6 +279,7 @@ fun PasswordFieldR(
     )
 }
 
+// Campo de texto reutilizable para inputs como email y username
 @Composable
 fun inputField(
     value: String,
@@ -289,4 +310,3 @@ fun inputField(
         modifier = modifier
     )
 }
-

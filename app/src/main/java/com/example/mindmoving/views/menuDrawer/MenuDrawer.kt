@@ -30,7 +30,11 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.mindmoving.utils.SessionManager
 
 
-
+/**
+ * Es una función que es un layout principal reutilizable que proporciona una estructura con barra superior (TopAppBar)
+ * y un menú lateral de navegación (ModalNavigationDrawer). Permite navegar entre secciones clave de la app
+ * como el menú principal, historial, ajustes, ayuda y cerrar sesión.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainLayout(navController: NavHostController, content: @Composable (PaddingValues) -> Unit) {
@@ -67,13 +71,12 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     }
                 )
 
-
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Ajustes") },
                     label = { Text("Ajustes") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ajustes_screen") //ruta por crear
+                        navController.navigate("ajustes_screen")
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -83,7 +86,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Ayuda") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ayuda_screen") // puedes hacer una pantalla básica
+                        navController.navigate("ayuda_screen")
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -98,6 +101,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                 )
             }
 
+            // Diálogo de confirmación para cerrar sesión
             if (mostrarDialogoCerrarSesion) {
                 AlertDialog(
                     onDismissRequest = { mostrarDialogoCerrarSesion = false },
@@ -124,9 +128,6 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     }
                 )
             }
-
-
-
         }
     ) {
         Scaffold(
@@ -153,7 +154,6 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Menú usuario",
                                     tint = MaterialTheme.colorScheme.onSurface
-
                                 )
                             }
 
@@ -166,7 +166,6 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                     onClick = {
                                         expanded = false
                                         navController.navigate("editar_perfil")
-
                                     }
                                 )
                                 DropdownMenuItem(
@@ -181,7 +180,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                     onClick = {
                                         expanded = false
                                         navController.navigate("login") {
-                                            popUpTo(0) // limpia el backstack
+                                            popUpTo(0)
                                         }
                                     }
                                 )
@@ -194,9 +193,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                         navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                         actionIconContentColor = MaterialTheme.colorScheme.onSurface
                     )
-
                 )
-
             }
         ) { padding ->
             content(padding)

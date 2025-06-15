@@ -1,4 +1,7 @@
-package com.example.mindmoving.views.controlCoche
+package com.example.mindmoving.views.controlCoche.juego
+
+import com.example.mindmoving.views.controlCoche.ComandosDiademaViewModel
+import com.example.mindmoving.views.controlCoche.ConnectionStatus
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -60,6 +63,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -69,7 +75,7 @@ import com.example.mindmoving.utils.obtenerUmbralesParaPerfil
 
 
 @Composable
-fun ComandosDiademaScreen(
+fun SesionDiademaInterfazScreen(
     viewModel: ComandosDiademaViewModel = viewModel(),
     navController: NavController
 ) {
@@ -189,6 +195,7 @@ fun ComandosDiademaScreen(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .background(MaterialTheme.colorScheme.surfaceContainerLowest), // Color sutil del tema M3
 
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -219,6 +226,7 @@ fun ComandosDiademaScreen(
                     fuerzaParpadeo = uiState.fuerzaParpadeoActual,
                     umbrales = umbrales
                 )
+
 
             }
 
@@ -270,7 +278,7 @@ fun ComandosDiademaScreen(
 
                 Spacer(Modifier. height(20.dp))
 
-                ModernDpad(
+                com.example.mindmoving.views.controlCoche.ModernDpad(
                     modifier = Modifier.padding(bottom = 32.dp),
                     onDirectionClick = { direction ->
                         viewModel.onDpadClick(direction)
@@ -575,6 +583,37 @@ class ArcShape(private val sweepAngle: Float) : Shape {
         return Outline.Generic(path)
     }
 }
+
+@Composable
+fun CardJuegoObjetivo(
+    objetivo: String,
+    progreso: Int,
+    meta: Int = 10,
+    puntos: Int
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("🎯 Objetivo actual: ${objetivo.uppercase()}", style = MaterialTheme.typography.titleLarge)
+            Text("🏆 Puntos: $puntos", style = MaterialTheme.typography.titleMedium)
+            Text("Progreso: $progreso / $meta")
+            LinearProgressIndicator(
+                progress = progreso / meta.toFloat(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text("Mantente por encima del umbral para ganar puntos.")
+        }
+    }
+}
+
 
 
 @Preview(showBackground = true, showSystemUi = true)

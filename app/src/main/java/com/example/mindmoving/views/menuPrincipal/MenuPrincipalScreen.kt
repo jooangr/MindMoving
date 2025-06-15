@@ -46,7 +46,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.CompassCalibration
+import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
@@ -55,46 +56,41 @@ import com.example.mindmoving.graficas.MetricCard
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 import com.example.mindmoving.ui.theme.FadeInColumn
-import com.example.mindmoving.ui.theme.GradientEndDark
-import com.example.mindmoving.ui.theme.GradientEndLight
-import com.example.mindmoving.ui.theme.GradientStartDark
-import com.example.mindmoving.ui.theme.GradientStartLight
 import kotlinx.coroutines.delay
 
+/**
+ * Es la pantalla principal tras iniciar sesión.
+ *
+ * Presenta un menú visual y accesible que permite al usuario navegar hacia las opciones de calibración,
+ * control del coche mediante la diadema EEG y consultar un resumen reciente de
+ * métricas EEG (atención, relajación y pestañeo). También incluye lógica para cerrar sesión automáticamente
+ * si hay inactividad prolongada (más de 15 minutos) y mantiene actualizada la información del perfil desde
+ * SharedPreferences.
 
-@Composable
+ */@Composable
 fun MainScreenMenu(navController: NavHostController) {
-
-
-
-   /* val gradientBrush = Brush.verticalGradient(
-      //  colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
-        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
-    )*/
 
     val isDark = isSystemInDarkTheme()
     val backgroundColor = if (isDark) Color(0xFF121212) else Color(0xFFF2F3FC)
 
-
-
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 🧠 Observer que guarda y valida la sesión al salir y volver
+    // Observador del ciclo de vida: guarda la hora de salida y cierra sesión si hubo inactividad prolongada
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    // Salida de la app: guardar hora
+                    // Al salir de la app se guarda la hora
                     prefs.edit().putLong("lastPausedTime", System.currentTimeMillis()).apply()
                 }
                 Lifecycle.Event.ON_START -> {
-                    // Entrada a la app: comprobar inactividad
+                    // Al volver a entrar se comprueba el tiempo de inactividad
                     val lastPaused = prefs.getLong("lastPausedTime", 0L)
                     val now = System.currentTimeMillis()
-                    val inactivityLimit = 1 * 60 * 15000 // cambiado a 15 minutos
+                    val inactivityLimit = 1 * 60 * 15000 // 15 minutos
 
                     if ((now - lastPaused) > inactivityLimit) {
                         prefs.edit().clear().apply()
@@ -115,6 +111,7 @@ fun MainScreenMenu(navController: NavHostController) {
         }
     }
 
+    // Contenedor de la vista con MainLayout y barra superior
     MainLayout(navController = navController) { padding ->
         Box(
             modifier = Modifier
@@ -135,6 +132,7 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // Tarjeta de bienvenida
                 Card(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -174,36 +172,61 @@ fun MainScreenMenu(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Estado para guardar y mostrar el perfil actual
+                val perfilTipoState = remember { mutableStateOf<String?>(null) }
 
-                val perfilTipo = remember {
+                // Carga inicial del perfil desde SharedPreferences
+                LaunchedEffect(Unit) {
                     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                    prefs.getString("perfil_tipo", null)
+                    perfilTipoState.value = prefs.getString("perfil_tipo", null)
+                }
+
+                // Observador de ciclo de vida para actualizar el perfil al volver del background
+                val lifecycleOwner = LocalLifecycleOwner.current
+
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                            perfilTipoState.value = prefs.getString("perfil_tipo", null)
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Texto del perfil configurado o advertencia si no hay ninguno
                 Text(
-                    text = if (perfilTipo != null) "Perfil actual: $perfilTipo" else "⚠️ No tienes perfil configurado",
+                    text = if (perfilTipoState.value != null)
+                        "Perfil actual: ${perfilTipoState.value}"
+                    else
+                        "⚠️ No tienes perfil configurado",
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Estados para controlar la visibilidad animada
+                // Controla si mostrar las animaciones y los botones
                 var showContent by remember { mutableStateOf(false) }
 
                 LaunchedEffect(Unit) {
-                    delay(200) // Pequeño retraso para que se note la animación
+                    delay(200)
                     showContent = true
                 }
 
+                // Botones principales con entrada animada
                 FadeInColumn(
                     modifier = Modifier.fillMaxWidth(),
                     delayMillis = 300
                 ) {
+                    // Botón para calibración mental
                     Button(
                         onClick = { navController.navigate("calibracion_menu") },
-                       // colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -215,7 +238,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             .height(50.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Visibility,
+                            imageVector = Icons.Default.CompassCalibration,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )
@@ -223,44 +246,42 @@ fun MainScreenMenu(navController: NavHostController) {
                         Text("Opciones de Calibracion")
                     }
 
-                        Button(
-                            onClick = {
-                                val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                    // Botón para comandos con el coche RC
+                    Button(
+                        onClick = {
+                            val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                            navController.navigate("comandos_diadema")
+                        },
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp, vertical = 8.dp)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeveloperMode,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Simulador de Comandos")
+                    }
+                }
 
-                                //Para cuando tengamos lo de omar descomentar lo de teienperfil ya que si tiene perfil podre acceder a lo del coche
-                                //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
-
-                                // if (tienePerfil) {
-                                navController.navigate("comandos_diadema")
-                                // } else {
-                                //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
-                                // }
-                            },
-                            shape = RoundedCornerShape(24.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 32.dp, vertical = 8.dp)
-                                .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DirectionsCar,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Comando Coche")
-                        }
-
+                Button(onClick = {
+                    navController.navigate("sesion_diadema")
+                }) {
+                    Text("Iniciar Sesión Diadema")
                 }
 
 
                 Spacer(modifier = Modifier.height(31.dp))
 
+                // Resumen animado con las últimas sesiones registradas
                 AnimatedVisibility(
                     visible = showContent,
                     enter = fadeIn(),
@@ -272,69 +293,9 @@ fun MainScreenMenu(navController: NavHostController) {
                             .padding(8.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        /*
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                "Gráficas recientes",
-                                style = MaterialTheme.typography.titleMedium,
-                                //color = Color(0xFF3F51B5)
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-                            val sesiones = remember { mutableStateListOf<SesionEEGResponse>() }
-
-                            LaunchedEffect(Unit) {
-                                val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                                val userId = prefs.getString("userId", null)
-
-                                if (userId != null) {
-                                    try {
-                                        val response = ApiClient.getApiService().getSesiones(userId)
-                                        if (response.isSuccessful) {
-                                            val todas = response.body() ?: emptyList()
-                                            sesiones.clear()
-                                            sesiones.addAll(todas.takeLast(5)) // Últimas 5
-                                        }
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, "Error cargando sesiones", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            }
-
-                            val atencionData = sesiones.map { it.valorMedioAtencion }
-                            val relajacionData = sesiones.map { it.valorMedioRelajacion }
-                            val pestaneoData = sesiones.map { it.valorMedioPestaneo }
-
-
-                            SimpleBarChart(
-                                title = "Nivel de Atención",
-                                values = atencionData,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            SimpleBarChart(
-                                title = "Nivel de Relajación",
-                                values = relajacionData,
-                                color = MaterialTheme.colorScheme.tertiary
-                            )
-
-                            SimpleBarChart(
-                                title = "Nivel de Parpadeo",
-                                values = pestaneoData,
-                                color = MaterialTheme.colorScheme.error
-                            )
-
-                            SimpleLineChartPlano(
-                                title = "Evolución Atención",
-                                values = atencionData,
-                                lineColor = MaterialTheme.colorScheme.primary
-                            )
-
-                        }*/
-
                         val sesiones = remember { mutableStateListOf<SesionEEGResponse>() }
 
+                        // Cargar las últimas 5 sesiones del usuario
                         LaunchedEffect(Unit) {
                             val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                             val userId = prefs.getString("userId", null)
@@ -345,7 +306,7 @@ fun MainScreenMenu(navController: NavHostController) {
                                     if (response.isSuccessful) {
                                         val todas = response.body() ?: emptyList()
                                         sesiones.clear()
-                                        sesiones.addAll(todas.takeLast(5)) // Últimas 5 sesiones
+                                        sesiones.addAll(todas.takeLast(5))
                                     }
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "Error cargando sesiones", Toast.LENGTH_SHORT).show()
@@ -363,6 +324,7 @@ fun MainScreenMenu(navController: NavHostController) {
 
                             Spacer(modifier = Modifier.height(12.dp))
 
+                            // Comparación de las dos últimas sesiones
                             if (sesiones.size >= 2) {
                                 val ultimas = sesiones.takeLast(2)
                                 val atencion = ultimas.map { it.valorMedioAtencion }
@@ -392,26 +354,51 @@ fun MainScreenMenu(navController: NavHostController) {
                                     change = pestaneo[1] - pestaneo[0],
                                     color = MaterialTheme.colorScheme.error
                                 )
+                            } else if (sesiones.size == 1) {
+                                val sesion = sesiones.first()
+
+                                MetricCard(
+                                    title = "Atención",
+                                    icon = "🧠",
+                                    value = sesion.valorMedioAtencion,
+                                    change = 0f,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                MetricCard(
+                                    title = "Relajación",
+                                    icon = "🧘",
+                                    value = sesion.valorMedioRelajacion,
+                                    change = 0f,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+
+                                MetricCard(
+                                    title = "Pestañeo",
+                                    icon = "👁️",
+                                    value = sesion.valorMedioPestaneo,
+                                    change = 0f,
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             } else {
                                 Text(
-                                    "No hay suficientes sesiones registradas para comparar.",
+                                    "No hay sesiones registradas todavía.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                        }
 
+                        }
                     }
                 }
-
             }
         }
     }
 }
+
 @Composable
 @Preview(showBackground = true, showSystemUi = true)
 fun PreviewMenu() {
-    // Importante: este require tener 'androidx.navigation:navigation-compose' en tu proyecto
     val navController = rememberNavController()
     MainScreenMenu(navController)
 }

@@ -21,15 +21,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.ActualizarUsuarioRequest
-import com.example.mindmoving.retrofit.models.UsuarioResponse
-import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.example.mindmoving.retrofit.models.user.ActualizarUsuarioRequest
+import com.example.mindmoving.retrofit.models.user.UsuarioResponse
+import com.example.mindmoving.retrofit.models.verificarPassword.VerificarPasswordRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {
 
@@ -40,22 +36,27 @@ fun EditarPerfilScreen(navController: NavHostController) {
     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     val userId = prefs.getString("userId", null)
 
+    // Campos editables del usuario
     var usernameNuevo by remember { mutableStateOf("") }
     var emailNuevo by remember { mutableStateOf("") }
     var passwordNueva by remember { mutableStateOf("") }
     var mostrarPassword by remember { mutableStateOf(false) }
     var passwordEditable by remember { mutableStateOf(false) }
 
+    // Diálogo para verificar contraseña actual
     var passwordActualDialog by remember { mutableStateOf("") }
     var showPasswordCheckDialog by remember { mutableStateOf(false) }
 
+    // Diálogo para confirmar nueva contraseña
     var passwordConfirmarDialog by remember { mutableStateOf("") }
     var showConfirmPasswordDialog by remember { mutableStateOf(false) }
 
+    // Información del usuario actual y mensajes
     var userActual by remember { mutableStateOf<UsuarioResponse?>(null) }
     var showMessageDialog by remember { mutableStateOf(false) }
     var messageText by remember { mutableStateOf("") }
 
+    // Color de fondo según tema
     val isDark = isSystemInDarkTheme()
     val backgroundColor = if (isDark) Color(0xFF121212) else Color(0xFFF2F3FC)
 
@@ -64,6 +65,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
     var showPasswordDeleteDialog by remember { mutableStateOf(false) }
     var passwordEliminarCuenta by remember { mutableStateOf("") }
 
+    // Obtener datos del usuario al cargar la pantalla
     LaunchedEffect(Unit) {
         userId?.let {
             val response = apiService.getUsuario(it)
@@ -76,12 +78,14 @@ fun EditarPerfilScreen(navController: NavHostController) {
         }
     }
 
+    // Etiqueta personalizada para mostrar el username actual
     val usernameLabel = if (userActual != null) {
         "Nuevo username (Actual: ${userActual!!.username})"
     } else {
         "Nuevo username"
     }
 
+    // Contenido principal de la pantalla
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -91,10 +95,13 @@ fun EditarPerfilScreen(navController: NavHostController) {
         verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.height(32.dp))
+
+        // Título
         Text("Editar Perfil", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Botón para volver al menú
         IconButton(
             onClick = { navController.navigate("menu") },
             modifier = Modifier.align(Alignment.Start)
@@ -108,6 +115,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(35.dp))
 
+        // Campo de username
         OutlinedTextField(
             value = usernameNuevo,
             onValueChange = { usernameNuevo = it },
@@ -117,6 +125,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Campo de email
         OutlinedTextField(
             value = emailNuevo,
             onValueChange = { emailNuevo = it },
@@ -126,6 +135,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Campo de nueva contraseña (deshabilitado por defecto)
         OutlinedTextField(
             value = passwordNueva,
             onValueChange = { passwordNueva = it },
@@ -151,6 +161,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Botón para guardar cambios
         Button(onClick = {
             if (passwordNueva.isNotBlank()) {
                 showConfirmPasswordDialog = true
@@ -179,10 +190,10 @@ fun EditarPerfilScreen(navController: NavHostController) {
         }) {
             Text("Guardar cambios")
         }
+
         Spacer(modifier = Modifier.height(24.dp))
 
-
-        // Botón "Eliminar cuenta"
+        // Botón para eliminar cuenta
         Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = { showConfirmDeleteDialog = true },
@@ -190,12 +201,9 @@ fun EditarPerfilScreen(navController: NavHostController) {
         ) {
             Text("Eliminar cuenta", color = Color.White)
         }
-
-
     }
 
-
-
+    // Diálogo para verificar contraseña actual
     if (showPasswordCheckDialog) {
         AlertDialog(
             onDismissRequest = { showPasswordCheckDialog = false },
@@ -243,6 +251,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
         )
     }
 
+    // Diálogo para confirmar la nueva contraseña
     if (showConfirmPasswordDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmPasswordDialog = false },
@@ -296,6 +305,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
         )
     }
 
+    // Diálogo informativo
     if (showMessageDialog) {
         AlertDialog(
             onDismissRequest = { showMessageDialog = false },
@@ -309,8 +319,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
         )
     }
 
-    //eliminado de cuenta
-    // Confirmar intención de borrar
+    // Diálogo de confirmación de eliminación
     if (showConfirmDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDeleteDialog = false },
@@ -332,7 +341,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
         )
     }
 
-// Verificar contraseña
+    // Diálogo para ingresar contraseña antes de eliminar cuenta
     if (showPasswordDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showPasswordDeleteDialog = false },
@@ -359,9 +368,8 @@ fun EditarPerfilScreen(navController: NavHostController) {
                                 messageText = "Usuario eliminado correctamente"
                                 showMessageDialog = true
 
-                                //  Navegar después de un pequeño delay (opcional)
                                 coroutineScope.launch {
-                                    delay(1500)  // Mostrar el mensaje un momento
+                                    delay(1500)
                                     val prefsEditor = prefs.edit()
                                     prefsEditor.clear().apply()
                                     navController.navigate("login") {
@@ -390,9 +398,7 @@ fun EditarPerfilScreen(navController: NavHostController) {
             }
         )
     }
-
-
-
 }
+
 
 

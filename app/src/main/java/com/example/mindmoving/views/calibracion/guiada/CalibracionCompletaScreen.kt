@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -32,16 +31,17 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.example.mindmoving.neuroSkyService.NeuroSkyListener
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.*
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracion
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracionRequest
+import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGRequest
+import com.example.mindmoving.retrofit.models.user.BlinkingData
+import com.example.mindmoving.retrofit.models.user.Usuario
+import com.example.mindmoving.retrofit.models.user.ValoresEEG
 import com.example.mindmoving.utils.SessionManager
-import com.example.mindmoving.utils.SessionManager.usuarioActual
 import com.google.gson.Gson
 import com.neurosky.thinkgear.TGDevice
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -247,14 +247,14 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                             context, Manifest.permission.BLUETOOTH_SCAN
                         ) == PackageManager.PERMISSION_GRANTED
 
-                        Log.d(TAG, "📋 Permisos - CONNECT: $hasBluetoothConnect, SCAN: $hasBluetoothScan")
+                        Log.d(TAG, " Permisos - CONNECT: $hasBluetoothConnect, SCAN: $hasBluetoothScan")
 
                         if (hasBluetoothConnect && hasBluetoothScan) {
                             if (!conectado && !intentandoConectar) {
                                 iniciarConexion()
                             }
                         } else {
-                            Log.w(TAG, "⚠️ Solicitando permisos de Bluetooth...")
+                            Log.w(TAG, " Solicitando permisos de Bluetooth...")
                             permissionLauncher.launch(
                                 arrayOf(
                                     Manifest.permission.BLUETOOTH_CONNECT,
@@ -265,10 +265,10 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                     }
                 }
                 Lifecycle.Event.ON_PAUSE -> {
-                    Log.d(TAG, "⏸️ ON_PAUSE")
+                    Log.d(TAG, " ON_PAUSE")
                 }
                 Lifecycle.Event.ON_DESTROY -> {
-                    Log.d(TAG, "💀 ON_DESTROY")
+                    Log.d(TAG, " ON_DESTROY")
                 }
                 else -> {}
             }
@@ -318,7 +318,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         return ValoresEEG(media, max, min, variabilidad)
     }
 
-    //TODO: joan para que veas como se crea la sesion, ya que tendrás que mandarla al server asegurando que coincida formato
+
     fun crearSesionEEG(): SesionEEGRequest {
         val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val perfilJson = prefs.getString("perfil_completo", null)
@@ -354,7 +354,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         } ?: PerfilCalibracion.EQUILIBRADO
     }
 
-    //TODO: joan esta es la más importante, guarda los datos en los objetos, debes aprovecharlos para mandarlos al server
+    //Aqui se guarda los datos en los objetos, antes de mandarlos al server
     fun guardarDatos() {
         val usuario = SessionManager.usuarioActual
 
@@ -382,6 +382,11 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         perfilAsignadoNombre = perfilSeleccionado.nombre
         mostrarPerfilAsignado = true
 
+        // Guardar tipo de perfil en SharedPreferences
+        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("perfil_tipo", perfilSeleccionado.nombre).apply()
+
+
 
 
 
@@ -399,7 +404,6 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         )
 
         SessionManager.usuarioActual = usuarioCompleto
-
 
         // Crear sesión EEG
         sesionEEGGenerada = crearSesionEEG()
@@ -490,9 +494,12 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
                     if (signalLevel >= 150) {
                         Spacer(Modifier.height(8.dp))
-                        Text("⚠️ Mejora la colocación de la diadema",
-                            color = Color.Yellow)
+                        Text(
+                            "⚠️ Mejora la colocación de la diadema",
+                            color = Color(0xFFFF9800)
+                        )
                     }
+
                 }
             }
 
@@ -546,10 +553,10 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                             Column(Modifier.padding(16.dp)) {
                                 Text("📊 Resultados actuales:", color = MaterialTheme.colorScheme.primary)
                                 Text("Atención media: ${at.media}", color = MaterialTheme.colorScheme.primary)
-                                Text("Variabilidad de atención: ${at.variabilidad}", color = Color.Green)
-                                Text("Meditación media: ${med.media}", color = MaterialTheme.colorScheme.secondary)
-                                Text("Variabilidad de meditación: ${med.variabilidad}", color = Color.Blue)
-                                Text("Parpadeo promedio: ${blink.fuerzaPromedio}", color = MaterialTheme.colorScheme.tertiary)
+                                Text("Variabilidad de atención: ${at.variabilidad}", color = MaterialTheme.colorScheme.primary)
+                                Text("Meditación media: ${med.media}", color = MaterialTheme.colorScheme.primary)
+                                Text("Variabilidad de meditación: ${med.variabilidad}", color = MaterialTheme.colorScheme.primary)
+                                Text("Parpadeo promedio: ${blink.fuerzaPromedio}", color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
