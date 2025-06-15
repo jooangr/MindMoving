@@ -97,7 +97,31 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
     private fun cargarUsuarioYVerificarPerfil() {
         viewModelScope.launch {
             val usuarioConPerfil = repository.getUsuarioConPerfil()
-            _uiState.update { it.copy(usuario = usuarioConPerfil) }
+
+
+            // --- CÁLCULO DE UMBRALES PARA LA UI ---
+            // Obtenemos el perfil o el de por defecto, igual que en procesarEEG
+            val perfil = PerfilCalibracion.values().find { it.nombre == usuarioConPerfil?.perfilCalibracion }
+                ?: PerfilCalibracion.EQUILIBRADO
+
+            // Calculamos los umbrales numéricos
+            val umbralAtencionUI = (perfil.valoresAtencion.media * 1.10).toInt()
+            val umbralMeditacionUI = (perfil.valoresMeditacion.media * 1.10).toInt()
+
+            // Creamos el objeto para el State
+            val nuevosUmbrales = UmbralesUI(
+                atencion = umbralAtencionUI,
+                meditacion = umbralMeditacionUI
+                // Los de parpadeo se quedan con su texto por defecto
+            )
+
+            // Actualizamos el estado con el usuario Y los umbrales calculados
+            _uiState.update {
+                it.copy(
+                    usuario = usuarioConPerfil,
+                    umbrales = nuevosUmbrales
+                )
+            }
 
             if (usuarioConPerfil == null || usuarioConPerfil.perfilCalibracion.isNullOrBlank() || usuarioConPerfil.perfilCalibracion.equals("ninguno", ignoreCase = true)) {
                 _uiState.update { it.copy(necesitaCalibracion = true, perfilVerificado = true) }
@@ -247,65 +271,131 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
     }
 */
 
+    // --> AÑADIDO: Nuevas propiedades para la lógica de control
+    private var ultimoComandoMovimiento: Direction? = null
+    private var ultimoTiempoParpadeo: Long = 0L
+    private val INTERVALO_DOBLE_PARPADEO = 1500 // 1.5 segundos
+
     private fun procesarEEG(datos: EEGData) {
         if (!uiState.value.sesionActiva) return
 
+        // Recopilación de datos
         atencionRecogida.add(datos.attention)
         meditacionRecogida.add(datos.meditation)
         if (datos.blinkStrength > 0) {
             parpadeosRecogidos.add(datos.blinkStrength)
         }
 
-        val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
+        val perfilUsuario = PerfilCalibracion.values()
+            .find { it.nombre == uiState.value.usuario?.perfilCalibracion }
             ?: PerfilCalibracion.EQUILIBRADO
 
-        // --> CAMBIO 1: Hacemos el multiplicador más bajo para pruebas (1.10 = 10% por encima)
+        // Definición de Umbrales
+        // CAMBIO 1: Hacemos el multiplicador más bajo para pruebas (1.10 = 10% por encima)
         val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
         val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
-
-        val umbralParpadeoSuave_Min = 20
-        val umbralParpadeoSuave_Max = 60
+        //val umbralParpadeoSuave_Min = 20
+        //val umbralParpadeoSuave_Max = 60
+        val umbralParpadeoNormal = 20
         val umbralParpadeoFuerte = 75
 
         var comandoGenerado: Direction? = null
 
-        // --> CAMBIO 2: Añadimos LOGS para ver los valores en tiempo real
-        Log.d("EEG_Debug", "Datos -> Atención: ${datos.attention} (Umbral: $umbralAtencion) | Meditación: ${datos.meditation} (Umbral: $umbralMeditacion) | Parpadeo: ${datos.blinkStrength}")
+        // --- Inicialización de variables para este tick ---
+        var comandoMovimientoActual: Direction? = null
+        var comandoDireccionActual: Direction? = null
+        val ahora = System.currentTimeMillis()
 
-        when {
-            datos.blinkStrength > umbralParpadeoFuerte -> {
-                comandoGenerado = Direction.CENTER
-            }
-            datos.attention > umbralAtencion -> {
-                comandoGenerado = Direction.UP
-            }
-            datos.meditation > umbralMeditacion -> {
-                comandoGenerado = Direction.DOWN
-            }
-            datos.blinkStrength in umbralParpadeoSuave_Min..umbralParpadeoSuave_Max -> {
-                comandoGenerado = Direction.RIGHT
+        // --- LÓGICA DE GRUPOS SEPARADOS ---
+
+        // ** GRUPO 1: Lógica de Dirección (Izquierda/Derecha) **
+        if (datos.blinkStrength >= umbralParpadeoNormal) {
+            // ¿Es un doble parpadeo?
+            if (ahora - ultimoTiempoParpadeo < INTERVALO_DOBLE_PARPADEO) {
+                comandoDireccionActual = Direction.LEFT
+                // Reseteamos el tiempo para evitar un tercer parpadeo active otra vez LEFT
+                ultimoTiempoParpadeo = 0L
+            } else {
+                // Es un parpadeo único, activamos RIGHT
+                comandoDireccionActual = Direction.RIGHT
+                // Guardamos el tiempo de este parpadeo para detectar un posible segundo parpadeo
+                ultimoTiempoParpadeo = ahora
             }
         }
 
-        if (comandoGenerado != null) {
-            // --> CAMBIO 3: Log para confirmar que un comando se ha generado
-            Log.i("EEG_Debug", "¡COMANDO GENERADO: $comandoGenerado!")
+        // ** GRUPO 2: Lógica de Movimiento (Arriba/Abajo/Centro) con Inercia **
+        val esDobleParpadeoFuerte =
+            datos.blinkStrength > umbralParpadeoFuerte && (ahora - ultimoTiempoParpadeo < INTERVALO_DOBLE_PARPADEO)
 
-            // Tu lógica para actualizar el estado se queda igual
-            if (uiState.value.comandoActivado != comandoGenerado) {
-                _uiState.update { it.copy(comandoActivado = comandoGenerado) }
+        // 1. Prioridad Máxima: Freno de Mano
+        if (esDobleParpadeoFuerte) {
+            comandoMovimientoActual = Direction.CENTER
+        } else {
+            // 2. Evaluar candidatos de movimiento (si no estamos frenando)
+            val candidatos = mutableListOf<Direction>()
+            if (datos.attention > umbralAtencion) candidatos.add(Direction.UP)
+            if (datos.meditation > umbralMeditacion) candidatos.add(Direction.DOWN)
 
+            // 3. Aplicar regla de inercia
+            if (ultimoComandoMovimiento in candidatos) {
+                comandoMovimientoActual = ultimoComandoMovimiento // Mantener comando anterior
+            } else if (candidatos.isNotEmpty()) {
+                comandoMovimientoActual =
+                    candidatos.first() // Cambiar a un nuevo comando (prioridad a UP si ambos se cumplen)
+            } else {
+                comandoMovimientoActual = null // El coche se detiene
+            }
+        }
+
+
+        // --> CAMBIO 2: Añadimos LOGS para ver los valores en tiempo real
+        Log.d(
+            "EEG_Debug",
+            "Datos -> Atención: ${datos.attention} (Umbral: $umbralAtencion) | Meditación: ${datos.meditation} (Umbral: $umbralMeditacion) | Parpadeo: ${datos.blinkStrength}"
+        )
+
+        // Actualizamos la memoria del último comando de movimiento
+        ultimoComandoMovimiento = comandoMovimientoActual
+
+        // --- ACTUALIZACIÓN DEL ESTADO DE LA UI ---
+
+        // Solo actualizamos si ha habido algún cambio
+        if (comandoMovimientoActual != uiState.value.comandoMovimientoActivado || comandoDireccionActual != uiState.value.comandoDireccionActivado) {
+
+            Log.i(
+                "EEG_Control",
+                "Movimiento: $comandoMovimientoActual, Dirección: $comandoDireccionActual"
+            )
+
+            _uiState.update {
+                it.copy(
+                    comandoMovimientoActivado = comandoMovimientoActual,
+                    comandoDireccionActivado = comandoDireccionActual
+                )
+            }
+
+            // Registramos los comandos ejecutados
+            comandoMovimientoActual?.let {
                 if (comandosEjecutadosStr.isNotEmpty()) {
                     comandosEjecutadosStr += ","
                 }
-                comandosEjecutadosStr += comandoGenerado.name
+                comandosEjecutadosStr += it.name
+            }
+            comandoDireccionActual?.let {
+                if (comandosEjecutadosStr.isNotEmpty()) {
+                    comandosEjecutadosStr += ","
+                }
+                comandosEjecutadosStr += it.name
+            }
 
-                viewModelScope.launch {
-                    // --> CAMBIO 4: Reducimos el delay para que la respuesta sea más rápida en pruebas
-                    delay(500)
-                    if (uiState.value.comandoActivado == comandoGenerado) {
-                        _uiState.update { it.copy(comandoActivado = null) }
-                    }
+            // Reseteo visual después de un tiempo (para que no se quede el botón "presionado")
+            viewModelScope.launch {
+                delay(500)
+                _uiState.update {
+                    it.copy(
+                        comandoMovimientoActivado = null,
+                        comandoDireccionActivado = null
+                    )
                 }
             }
         }
@@ -342,4 +432,5 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             _uiState.update { it.copy(mensajeUsuario = null) }
         }
     }
+
 }
