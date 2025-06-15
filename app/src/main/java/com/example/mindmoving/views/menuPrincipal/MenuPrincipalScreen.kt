@@ -353,13 +353,40 @@ fun MainScreenMenu(navController: NavHostController) {
                                     change = pestaneo[1] - pestaneo[0],
                                     color = MaterialTheme.colorScheme.error
                                 )
+                            } else if (sesiones.size == 1) {
+                                val sesion = sesiones.first()
+
+                                MetricCard(
+                                    title = "Atención",
+                                    icon = "🧠",
+                                    value = sesion.valorMedioAtencion,
+                                    change = 0f,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                MetricCard(
+                                    title = "Relajación",
+                                    icon = "🧘",
+                                    value = sesion.valorMedioRelajacion,
+                                    change = 0f,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+
+                                MetricCard(
+                                    title = "Pestañeo",
+                                    icon = "👁️",
+                                    value = sesion.valorMedioPestaneo,
+                                    change = 0f,
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             } else {
                                 Text(
-                                    "No hay suficientes sesiones registradas para comparar.",
+                                    "No hay sesiones registradas todavía.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+
                         }
                     }
                 }
