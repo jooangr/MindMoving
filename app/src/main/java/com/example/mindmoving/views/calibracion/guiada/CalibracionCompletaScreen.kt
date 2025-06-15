@@ -405,7 +405,6 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
         SessionManager.usuarioActual = usuarioCompleto
 
-//TODO TENGO Q VER SI ESTO SE GUARDA O ALGO POR Q CREO RECORDAR Q NO APARECIA PARAPDEO Y ALTERNENCIA
         // Crear sesión EEG
         sesionEEGGenerada = crearSesionEEG()
 

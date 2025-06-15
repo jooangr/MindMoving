@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.example.mindmoving.neuroSkyService.NeuroSkyListener
+import com.example.mindmoving.neuroSkyService.NeuroSkyManager
+import com.example.mindmoving.views.controlCoche.ConnectionStatus
 import com.neurosky.thinkgear.TGDevice
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,12 +36,15 @@ import kotlinx.coroutines.launch
 @SuppressLint("MissingPermission")
 @Composable
 fun JuegoMeditacionScreen(navController: NavHostController) {
-    val colorPrimario = MaterialTheme.colorScheme.primary
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val TAG = "JuegoMeditacion"
 
-    var conectado by remember { mutableStateOf(false) }
-    var meditacionActual by remember { mutableStateOf(0) }
+    val neuroSkyManager = remember { NeuroSkyManager(context) }
+
+    val connectionState by neuroSkyManager.connectionState.collectAsState()
+    val eegData by neuroSkyManager.eegData.collectAsState()
+
     var puntos by remember { mutableStateOf(0) }
     var juegoActivo by remember { mutableStateOf(false) }
     var progresoMeditacion by remember { mutableStateOf(0f) }
@@ -47,39 +52,24 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
     val objetivoMeditacion = 70
     val puntosObjetivo = 20
 
-    val neuroSky = remember {
-        val adapter = BluetoothAdapter.getDefaultAdapter()
-        if (adapter != null) {
-            CustomNeuroSky(adapter, object : NeuroSkyListener {
-                override fun onAttentionReceived(level: Int) {}
-                override fun onBlinkDetected(strength: Int) {}
-                override fun onSignalPoor(signal: Int) {}
-                override fun onMeditationReceived(level: Int) {
-                    meditacionActual = level
-                    if (juegoActivo) {
-                        progresoMeditacion = level / 100f
-                        if (level >= objetivoMeditacion) puntos++
-                    }
-                }
-
-                override fun onStateChanged(state: Int) {
-                    conectado = state == TGDevice.STATE_CONNECTED
-                }
-            })
-        } else null
+    // ⏳ Iniciar conexión y transmisión al iniciar Composable
+    LaunchedEffect(Unit) {
+        neuroSkyManager.conectar()
     }
 
-    LaunchedEffect(Unit) {
-        val device = BluetoothAdapter.getDefaultAdapter()
-            ?.bondedDevices?.firstOrNull { it.name.contains("MindWave", true) }
+    // 🎮 Lógica del juego basada en el valor de meditación
+    LaunchedEffect(eegData.meditation, juegoActivo) {
+        Log.d(TAG, "🧘 Meditación actual: ${eegData.meditation}")
 
-        if (device != null && neuroSky != null) {
-            neuroSky.connectTo(device)
-            delay(3000)
-            if (conectado) neuroSky.start()
+        if (juegoActivo) {
+            progresoMeditacion = eegData.meditation / 100f
+            if (eegData.meditation >= objetivoMeditacion) {
+                puntos++
+            }
         }
     }
 
+    // 🖼 UI
     Scaffold(
         topBar = {
             TopAppBar(
@@ -101,7 +91,25 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
         ) {
             Spacer(Modifier.height(24.dp))
 
-            Text("Meditación actual: $meditacionActual", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = when (connectionState) {
+                    ConnectionStatus.CONECTADO -> "🔌 Estado: Conectado"
+                    ConnectionStatus.CONECTANDO -> "🔄 Estado: Conectando..."
+                    ConnectionStatus.DESCONECTADO -> "❌ Estado: Desconectado"
+                    ConnectionStatus.ERROR ->" ❌ Estado: Desconectado"
+                },
+                color = when (connectionState) {
+                    ConnectionStatus.CONECTADO -> Color.Green
+                    ConnectionStatus.CONECTANDO -> Color.Yellow
+                    ConnectionStatus.DESCONECTADO -> Color.Red
+                    ConnectionStatus.ERROR -> Color.Red
+                },
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Text("🧘 Meditación: ${eegData.meditation}", style = MaterialTheme.typography.titleMedium)
             Text("🎯 Objetivo: ≥ $objetivoMeditacion", color = Color(0xFF00C853))
             Text("⭐ Puntos: $puntos", style = MaterialTheme.typography.titleMedium)
 
@@ -118,13 +126,12 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(32.dp))
 
-            // 🧘 Visualización zen: barra de progreso
             LinearProgressIndicator(
                 progress = progresoMeditacion,
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .height(16.dp),
-                color = colorPrimario,
+                color = MaterialTheme.colorScheme.primary,
                 trackColor = Color.LightGray
             )
 
@@ -133,7 +140,7 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
             if (juegoActivo && puntos >= puntosObjetivo) {
                 AlertDialog(
                     onDismissRequest = { juegoActivo = false },
-                    title = { Text("¡Relajación alcanzada!") },
+                    title = { Text("🎉 ¡Relajación alcanzada!") },
                     text = { Text("Has acumulado $puntos puntos de meditación profunda.") },
                     confirmButton = {
                         TextButton(onClick = {
@@ -147,5 +154,6 @@ fun JuegoMeditacionScreen(navController: NavHostController) {
                 )
             }
         }
+
     }
 }
