@@ -66,17 +66,23 @@ import androidx.navigation.NavController
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBarDefaults
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComandosDiademaScreen(
     viewModel: ComandosDiademaViewModel = viewModel(),
     navController: NavController
 ) {
 
-    // 2. Recoge el estado
+    //Recoge el estado
     val uiState by viewModel.uiState.collectAsState()
 
     // LÓGICA DEL DIÁLOGO DE AVISO
@@ -154,11 +160,26 @@ fun ComandosDiademaScreen(
     }
 
 
-    // --> CAMBIO 3: MODIFICACIÓN DEL SCAFFOLD
     // Añadimos el `snackbarHost` al Scaffold para que sepa dónde mostrar los Snackbars.
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Control EEG") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent // Para que se integre con el fondo
+                )
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -228,16 +249,16 @@ fun ComandosDiademaScreen(
                         .height(48.dp), // Altura fija para el área del botón
                     contentAlignment = Alignment.Center
                 ) {
-                    // --> CAMBIO: Lógica condicional para los botones
+                    //Lógica condicional para los botones
                     when (uiState.estadoConexion) {
                         ConnectionStatus.CONECTADO -> {
                             // Si está CONECTADO, mostramos el botón de la sesión
                             Button(
                                 onClick = { viewModel.onBotonSesionClick() },
                                 // Se deshabilita si la sesión ya está activa para evitar doble clic
-                                enabled = !uiState.sesionActiva
+                                enabled = true
                             ) {
-                                Text(if (uiState.sesionActiva) "Sesión en Curso..." else "Comenzar Sesión")
+                                Text(if (uiState.sesionActiva) "Detener Sesión" else "Comenzar Sesión")
                             }
                         }
 

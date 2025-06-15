@@ -199,83 +199,24 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-
-    /*
-    private fun procesarEEG(datos: EEGData) {
-
-        // --> AÑADIDO: Recopilación de datos en cada tick
-        atencionRecogida.add(datos.attention)
-        meditacionRecogida.add(datos.meditation)
-        if (datos.blinkStrength > 0) {
-            parpadeosRecogidos.add(datos.blinkStrength)
-        }
-
-        val usuario = uiState.value.usuario ?: return
-        // 1. Obtener el perfil de calibración o usar uno por defecto.
-        val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
-            ?: PerfilCalibracion.EQUILIBRADO // Si no hay perfil, usamos 'EQUILIBRADO' como predeterminado.
-
-        // 2. Calcular los umbrales dinámicos.
-        // Un comando se activa si el valor actual supera la media de calibración en un 0%.
-        // Puedes ajustar este multiplicador (1.25) para hacer el juego más fácil o difícil.
-        val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.20).toInt()
-        val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.20).toInt()
-
-        // Para los parpadeos, usamos rangos más fijos como razonamos.
-        val umbralParpadeoSuave_Min = 20
-        val umbralParpadeoSuave_Max = 60
-        val umbralParpadeoFuerte = 75
-
-        // 3. Determinar qué comando se activa (usando una estructura `when` para exclusividad).
-        var comandoGenerado: Direction? = null
-
-        when {
-            // Prioridad 1: Parpadeo Fuerte
-            datos.blinkStrength > umbralParpadeoFuerte -> {
-                comandoGenerado = Direction.CENTER // Asignamos el parpadeo fuerte al botón central
-            }
-            // Prioridad 2: Atención
-            datos.attention > umbralAtencion -> {
-                comandoGenerado = Direction.UP
-            }
-            // Prioridad 3: Meditación
-            datos.meditation > umbralMeditacion -> {
-                comandoGenerado = Direction.DOWN
-            }
-            // Prioridad 4: Parpadeo Suave
-            datos.blinkStrength in umbralParpadeoSuave_Min..umbralParpadeoSuave_Max -> {
-                comandoGenerado = Direction.RIGHT
-            }
-        }
-
-        // 4. Actualizar el estado para que la UI reaccione.
-        // Esta lógica ya la tenías y es correcta: activa el comando y lo desactiva tras 1000ms.
-        if (comandoGenerado != null) {
-            if (uiState.value.comandoActivado != comandoGenerado) {
-                _uiState.update { it.copy(comandoActivado = comandoGenerado) }
-
-                // Registramos el comando ejecutado (lógica que ya tenías)
-                if (comandosEjecutadosStr.isNotEmpty()) {
-                    comandosEjecutadosStr += ","
-                }
-                comandosEjecutadosStr += comandoGenerado.name
-
-                viewModelScope.launch {
-                    delay(1000) // Duración de la "presión" visual del botón
-                    if (uiState.value.comandoActivado == comandoGenerado) {
-                        _uiState.update { it.copy(comandoActivado = null) }
-                    }
-                }
-            }
-        }
-    }
-*/
-
     // --> AÑADIDO: Nuevas propiedades para la lógica de control
     private var ultimoComandoMovimiento: Direction? = null
     private var ultimoTiempoParpadeo: Long = 0L
     private val INTERVALO_DOBLE_PARPADEO = 1500 // 1.5 segundos
 
+
+    // Umbral para parpadeos
+    private val UMBRAL_PARPADEO_NORMAL = 45
+    private val UMBRAL_PARPADEO_FUERTE = 80
+    private val INTERVALO_MIN_DOBLE_PARPADEO = 200L // 0.2 segundos
+    private val INTERVALO_MAX_DOBLE_PARPADEO = 1500L // 1.5 segundos
+    private var ultimoTiempoParpadeoNormal: Long = 0L
+
+
+    /**
+     * FUNCIÓN PARA PROCESAR LOS DATOS EEG RECIBIDOS
+     * Contiene toda la lógica del proceso de datos para activar los botones según los principios establecidos.
+     */
     private fun procesarEEG(datos: EEGData) {
         if (!uiState.value.sesionActiva) return
 
@@ -286,119 +227,119 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             parpadeosRecogidos.add(datos.blinkStrength)
         }
 
-        val perfilUsuario = PerfilCalibracion.values()
-            .find { it.nombre == uiState.value.usuario?.perfilCalibracion }
+        // --- Definición de Umbrales ---
+        val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
             ?: PerfilCalibracion.EQUILIBRADO
-
-        // Definición de Umbrales
-        // CAMBIO 1: Hacemos el multiplicador más bajo para pruebas (1.10 = 10% por encima)
         val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
         val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
-        //val umbralParpadeoSuave_Min = 20
-        //val umbralParpadeoSuave_Max = 60
-        val umbralParpadeoNormal = 20
-        val umbralParpadeoFuerte = 75
+
 
         var comandoGenerado: Direction? = null
 
         // --- Inicialización de variables para este tick ---
-        var comandoMovimientoActual: Direction? = null
-        var comandoDireccionActual: Direction? = null
+        var comandoMovimiento: Direction? = null
+        var comandoDireccion: Direction? = null
         val ahora = System.currentTimeMillis()
 
-        // --- LÓGICA DE GRUPOS SEPARADOS ---
 
-        // ** GRUPO 1: Lógica de Dirección (Izquierda/Derecha) **
-        if (datos.blinkStrength >= umbralParpadeoNormal) {
-            // ¿Es un doble parpadeo?
-            if (ahora - ultimoTiempoParpadeo < INTERVALO_DOBLE_PARPADEO) {
-                comandoDireccionActual = Direction.LEFT
-                // Reseteamos el tiempo para evitar un tercer parpadeo active otra vez LEFT
-                ultimoTiempoParpadeo = 0L
-            } else {
-                // Es un parpadeo único, activamos RIGHT
-                comandoDireccionActual = Direction.RIGHT
-                // Guardamos el tiempo de este parpadeo para detectar un posible segundo parpadeo
-                ultimoTiempoParpadeo = ahora
-            }
-        }
+        // --- LÓGICA DE PRIORIDADES Y GRUPOS ---
 
-        // ** GRUPO 2: Lógica de Movimiento (Arriba/Abajo/Centro) con Inercia **
-        val esDobleParpadeoFuerte =
-            datos.blinkStrength > umbralParpadeoFuerte && (ahora - ultimoTiempoParpadeo < INTERVALO_DOBLE_PARPADEO)
+        // ** PRIORIDAD MÁXIMA: Freno de Mano (CENTER) **
+        // Condición: Dos parpadeos fuertes en el intervalo de tiempo correcto.
+        val esDobleParpadeoFuerte = datos.blinkStrength > UMBRAL_PARPADEO_FUERTE &&
+                (ahora - ultimoTiempoParpadeoNormal > INTERVALO_MIN_DOBLE_PARPADEO) &&
+                (ahora - ultimoTiempoParpadeoNormal < INTERVALO_MAX_DOBLE_PARPADEO)
 
-        // 1. Prioridad Máxima: Freno de Mano
         if (esDobleParpadeoFuerte) {
-            comandoMovimientoActual = Direction.CENTER
-        } else {
-            // 2. Evaluar candidatos de movimiento (si no estamos frenando)
-            val candidatos = mutableListOf<Direction>()
-            if (datos.attention > umbralAtencion) candidatos.add(Direction.UP)
-            if (datos.meditation > umbralMeditacion) candidatos.add(Direction.DOWN)
+            comandoMovimiento = Direction.CENTER
+            // Reseteamos el tiempo para que esta acción sea un pulso único
+            ultimoTiempoParpadeoNormal = 0L
 
-            // 3. Aplicar regla de inercia
-            if (ultimoComandoMovimiento in candidatos) {
-                comandoMovimientoActual = ultimoComandoMovimiento // Mantener comando anterior
-            } else if (candidatos.isNotEmpty()) {
-                comandoMovimientoActual =
-                    candidatos.first() // Cambiar a un nuevo comando (prioridad a UP si ambos se cumplen)
-            } else {
-                comandoMovimientoActual = null // El coche se detiene
+        } else {
+            // ** Si no estamos frenando, evaluamos los otros comandos **
+
+            // ** GRUPO A: Dirección (Izquierda/Derecha) - Lógica de Pulsos **
+            if (datos.blinkStrength in UMBRAL_PARPADEO_NORMAL until UMBRAL_PARPADEO_FUERTE) {
+                val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
+
+                // Condición para DOBLE PARPADEO (LEFT)
+                if (tiempoDesdeUltimoParpadeo in (INTERVALO_MIN_DOBLE_PARPADEO + 1) until INTERVALO_MAX_DOBLE_PARPADEO) {
+                    comandoDireccion = Direction.LEFT
+                    ultimoTiempoParpadeoNormal = 0L // Reseteamos para que no se active en cadena
+                }
+                // Condición para PARPADEO ÚNICO (RIGHT) - con debounce
+                else if (tiempoDesdeUltimoParpadeo > INTERVALO_MAX_DOBLE_PARPADEO) {
+                    comandoDireccion = Direction.RIGHT
+                    ultimoTiempoParpadeoNormal = ahora // Guardamos el tiempo para un posible segundo parpadeo
+                }
+            }
+
+            // ** GRUPO B: Movimiento (Arriba/Abajo) - Lógica Sostenida **
+            when {
+                datos.attention > umbralAtencion -> comandoMovimiento = Direction.UP
+                datos.meditation > umbralMeditacion -> comandoMovimiento = Direction.DOWN
+                else -> comandoMovimiento = null // Se desactiva si no se cumple ninguna condición
             }
         }
 
 
-        // --> CAMBIO 2: Añadimos LOGS para ver los valores en tiempo real
+
+        //Añadimos LOGS para ver los valores en tiempo real
         Log.d(
             "EEG_Debug",
             "Datos -> Atención: ${datos.attention} (Umbral: $umbralAtencion) | Meditación: ${datos.meditation} (Umbral: $umbralMeditacion) | Parpadeo: ${datos.blinkStrength}"
         )
 
         // Actualizamos la memoria del último comando de movimiento
-        ultimoComandoMovimiento = comandoMovimientoActual
+        //ultimoComandoMovimiento = comandoMovimientoActual
 
         // --- ACTUALIZACIÓN DEL ESTADO DE LA UI ---
 
-        // Solo actualizamos si ha habido algún cambio
-        if (comandoMovimientoActual != uiState.value.comandoMovimientoActivado || comandoDireccionActual != uiState.value.comandoDireccionActivado) {
+        // Modelo de activación mixto:
+        // Los comandos de parpadeo (dirección/centro) son pulsos.
+        // Los comandos de estado mental (movimiento) son sostenidos.
 
-            Log.i(
-                "EEG_Control",
-                "Movimiento: $comandoMovimientoActual, Dirección: $comandoDireccionActual"
-            )
+        // 1. Actualizar estado de movimiento sostenido
+        if (comandoMovimiento != uiState.value.comandoMovimientoActivado) {
+            _uiState.update { it.copy(comandoMovimientoActivado = comandoMovimiento) }
+            comandoMovimiento?.let { registrarComando(it) }
+        }
 
-            _uiState.update {
-                it.copy(
-                    comandoMovimientoActivado = comandoMovimientoActual,
-                    comandoDireccionActivado = comandoDireccionActual
-                )
-            }
+        // 2. Actualizar estado de dirección con un pulso
+        if (comandoDireccion != null) {
+            _uiState.update { it.copy(comandoDireccionActivado = comandoDireccion) }
+            registrarComando(comandoDireccion)
 
-            // Registramos los comandos ejecutados
-            comandoMovimientoActual?.let {
-                if (comandosEjecutadosStr.isNotEmpty()) {
-                    comandosEjecutadosStr += ","
-                }
-                comandosEjecutadosStr += it.name
-            }
-            comandoDireccionActual?.let {
-                if (comandosEjecutadosStr.isNotEmpty()) {
-                    comandosEjecutadosStr += ","
-                }
-                comandosEjecutadosStr += it.name
-            }
-
-            // Reseteo visual después de un tiempo (para que no se quede el botón "presionado")
+            // Lanzamos un reseteo visual solo para el comando de dirección
             viewModelScope.launch {
-                delay(500)
-                _uiState.update {
-                    it.copy(
-                        comandoMovimientoActivado = null,
-                        comandoDireccionActivado = null
-                    )
+                delay(300) // Un pulso visual corto para los giros
+                if (uiState.value.comandoDireccionActivado == comandoDireccion) {
+                    _uiState.update { it.copy(comandoDireccionActivado = null) }
                 }
             }
         }
+
+        // El Freno de Mano (CENTER) también es un pulso
+        if (comandoMovimiento == Direction.CENTER) {
+            viewModelScope.launch {
+                delay(500) // Un pulso visual un poco más largo para el freno
+                if (uiState.value.comandoMovimientoActivado == Direction.CENTER) {
+                    _uiState.update { it.copy(comandoMovimientoActivado = null) }
+                }
+            }
+
+        }
+        // Reseteo visual después de un tiempo (para que no se quede el botón "presionado")
+        viewModelScope.launch {
+            delay(500)
+            _uiState.update {
+                it.copy(
+                    comandoMovimientoActivado = null,
+                    comandoDireccionActivado = null
+                )
+            }
+        }
+
     }
 
 
@@ -431,6 +372,21 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             delay(3000)
             _uiState.update { it.copy(mensajeUsuario = null) }
         }
+    }
+
+    //Lógica de registro de comandos, estrído del método principal para limpiar código.
+    private fun registrarComando(direccion: Direction) {
+        if (comandosEjecutadosStr.isNotEmpty()) {
+            comandosEjecutadosStr += ","
+        }
+        comandosEjecutadosStr += direccion.name
+    }
+
+    //Limpieza de recursos cuando el ViewModel es destruido
+    override fun onCleared() {
+        super.onCleared()
+        Log.i("ViewModel", "ViewModel destruido. Desconectando diadema...")
+        neuroSkyManager.desconectar()
     }
 
 }

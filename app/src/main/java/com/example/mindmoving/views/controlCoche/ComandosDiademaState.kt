@@ -21,7 +21,7 @@ data class ComandosDiademaState(
 
     // --- Estado de la Sesión de Juego ---
     val sesionActiva: Boolean = false,
-    val tiempoRestanteSeg: Int = 120, // 2 minutos
+    val tiempoRestanteSeg: Int = 60, // 1 minuto
 
     // --- Datos EEG en Tiempo Real ---
     val atencionActual: Int = 0,
