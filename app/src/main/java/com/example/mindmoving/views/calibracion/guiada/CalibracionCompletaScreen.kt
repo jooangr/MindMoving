@@ -382,6 +382,11 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         perfilAsignadoNombre = perfilSeleccionado.nombre
         mostrarPerfilAsignado = true
 
+        // Guardar tipo de perfil en SharedPreferences
+        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("perfil_tipo", perfilSeleccionado.nombre).apply()
+
+
 
 
 
