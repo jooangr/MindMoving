@@ -202,7 +202,7 @@ fun MainScreenMenu(navController: NavHostController) {
                     delayMillis = 300
                 ) {
                     Button(
-                        onClick = { navController.navigate("menu_calibracion") },
+                        onClick = { navController.navigate("calibracion_menu") },
                        // colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,

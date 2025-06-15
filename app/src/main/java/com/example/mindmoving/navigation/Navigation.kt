@@ -18,6 +18,10 @@ import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import com.example.mindmoving.views.calibracion.guiada.CalibracionCompletaScreen
 import com.example.mindmoving.views.calibracion.guiada.CalibracionInicioScreen
+import com.example.mindmoving.views.calibracion.viewsMenuCalibracion.JuegoConcentracionScreen
+import com.example.mindmoving.views.calibracion.viewsMenuCalibracion.JuegoMeditacionScreen
+import com.example.mindmoving.views.calibracion.viewsMenuCalibracion.JuegoParpadeoScreen
+import com.example.mindmoving.views.calibracion.viewsMenuCalibracion.PerfilCalibracionScreen
 import com.example.mindmoving.views.controlCoche.ComandosDiademaScreen
 import com.example.mindmoving.views.menuDrawer.viewMenuDerecha.EditarPerfilScreen
 import com.example.mindmoving.views.controlCoche.ControlCocheScreen
@@ -84,8 +88,10 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         //CalibracionGuiada
         composable("calibracion_inicio") {CalibracionInicioScreen(navController = navController)}
         composable("fase_calibracion") {CalibracionCompletaScreen(navController = navController)}
-        composable("perfil_calibracion") { PerfilCalibracionScreen(navController = navController)
-        }
+        composable("perfil_calibracion") { PerfilCalibracionScreen(navController = navController) }
+        composable("juego_parpadeo"){ JuegoParpadeoScreen(navController = navController) }
+        composable("juego_concentracion"){ JuegoConcentracionScreen(navController = navController) }
+        composable("juego_meditacion"){ JuegoMeditacionScreen(navController = navController) }
 
 
 

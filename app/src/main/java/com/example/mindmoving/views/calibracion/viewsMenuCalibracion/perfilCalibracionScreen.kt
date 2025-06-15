@@ -1,4 +1,4 @@
-package com.example.mindmoving.views.calibracion
+package com.example.mindmoving.views.calibracion.viewsMenuCalibracion
 
 import android.content.Context
 import android.widget.Toast
