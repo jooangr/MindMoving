@@ -78,7 +78,6 @@ import retrofit2.Response
  * Pantalla de Login que permite al usuario autenticarse con su email o nombre de usuario.
  * Si el login es exitoso, guarda su información en SharedPreferences y lo redirige al menú principal o calibración.
  */
-
 @Composable
 fun Login(navController: NavHostController) {
     val themeViewModel = LocalThemeViewModel.current
@@ -87,14 +86,6 @@ fun Login(navController: NavHostController) {
     }
 }
 
-
-/**
- * Contenido de la vista de Login:
- *      Formulario con usuario y contraseña
- *      Botón para iniciar sesión
- *      Lógica de validación contra API
- *      Manejo de loading, errores, y guardado local
- */
 @Composable
 fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeViewModel) {
     var userdata by remember { mutableStateOf("") }
@@ -104,7 +95,6 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
     val coroutineScope = rememberCoroutineScope()
     val apiService = ApiClient.getApiService()
 
-    // Estados para loading, errores y tema
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -114,10 +104,9 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
         colors = listOf(Color(0xFF0A0A23), Color(0xFF1A1A40))
     )
 
-    // Diálogo de carga
     if (isLoading) {
         AlertDialog(
-            onDismissRequest = { /* no se puede cerrar */ },
+            onDismissRequest = {},
             title = { Text("Iniciando sesión...", color = MaterialTheme.colorScheme.primary) },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -131,7 +120,6 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
         )
     }
 
-    //  Diálogo de error
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -146,7 +134,6 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
         )
     }
 
-    // UI principal
     Box(
         modifier = Modifier.fillMaxSize().background(gradientBackground)
     ) {
@@ -157,22 +144,15 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
         ) {
             Spacer(modifier = Modifier.height(70.dp))
 
-            // Logo + título
             Image(
                 painter = painterResource(id = R.drawable.logo_mindmoving_sinfondo),
                 contentDescription = "Logo",
                 modifier = Modifier.size(200.dp).padding(5.dp)
             )
-            Text(
-                text = "MindMoving",
-                color = Color.White,
-                fontSize = 40.sp,
-                style = AppTypography.titleMedium
-            )
+            Text("MindMoving", color = Color.White, fontSize = 40.sp, style = AppTypography.titleMedium)
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Campo usuario
             OutlinedTextField(
                 value = userdata,
                 onValueChange = { userdata = it },
@@ -182,7 +162,6 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
                 singleLine = true
             )
 
-            // Campo contraseña
             PasswordField(
                 value = password,
                 onValueChange = { password = it },
@@ -192,7 +171,6 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Botón de login con validación contra API
             val buttonShape = RoundedCornerShape(40)
             val gradientBrush = Brush.horizontalGradient(
                 colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
@@ -202,23 +180,20 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
                 onClick = {
                     coroutineScope.launch {
                         isLoading = true
+                        val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
                         try {
-                            Log.d("LOGIN_ATTEMPT", "Usuario: $userdata, Contraseña: $password")
                             val response = apiService.loginUser(LoginRequest(userdata.trim(), password.trim()))
 
                             if (response.isSuccessful && response.body()?.userId != null) {
                                 val userId = response.body()!!.userId
 
-                                // Guardar en SharedPreferences
-                                val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
                                 val now = System.currentTimeMillis()
                                 sharedPrefs.edit().putString("userId", userId)
                                     .putLong("lastLoginTime", now)
                                     .putLong("lastPausedTime", now)
                                     .apply()
 
-                                // Obtener datos del usuario
                                 val userInfoResponse = apiService.getUsuario(userId)
                                 if (!userInfoResponse.isSuccessful || userInfoResponse.body() == null) {
                                     isLoading = false
@@ -231,48 +206,40 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
                                 val perfilResponse = apiService.getPerfil(userId)
                                 val perfil = if (perfilResponse.isSuccessful) perfilResponse.body() else null
 
-                                // Obtener tema preferido
+                                val usuarioCompleto = Usuario(
+                                    id = userId,
+                                    username = userInfo.username,
+                                    email = userInfo.email,
+                                    password = "",
+                                    perfilCalibracion = perfil?.tipo ?: "",
+                                    valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
+                                    valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
+                                    blinking = perfil?.blinking ?: BlinkingData(0, 0),
+                                    alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
+                                )
+
+                                val tienePerfilValido = perfil?.tipo?.isNotBlank() == true
+
+                                sharedPrefs.edit()
+                                    .putString("perfil_tipo", perfil?.tipo ?: "")
+                                    .putString("perfil_completo", Gson().toJson(usuarioCompleto))
+                                    .apply()
+
+                                SessionManager.usuarioActual = usuarioCompleto
+                                isLoading = false
+                                Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
+
+                                navController.navigate(if (tienePerfilValido) "menu" else "calibracion_menu") {
+                                    popUpTo(0) { inclusive = true }
+                                }
+
                                 apiService.getTheme(userId).enqueue(object : Callback<ApiService.ThemeResponse> {
                                     override fun onResponse(call: Call<ApiService.ThemeResponse>, response: Response<ApiService.ThemeResponse>) {
                                         val theme = if (response.isSuccessful) response.body()?.theme ?: "light" else "light"
                                         darkThemeState.value = theme == "dark"
-
                                         sharedPrefs.edit().putString("user_theme", theme).apply()
-
-                                        // Actualizar el ViewModel global del tema
                                         Handler(Looper.getMainLooper()).post {
                                             themeViewModel.setTheme(theme == "dark")
-
-                                        }
-
-                                        // Crear objeto Usuario
-                                        val usuarioCompleto = Usuario(
-                                            id = userId,
-                                            username = userInfo.username,
-                                            email = userInfo.email,
-                                            password = "",
-                                            perfilCalibracion = perfil?.tipo ?: "",
-                                            valoresAtencion = perfil?.valoresAtencion ?: ValoresEEG(0, 0, 0, 0f),
-                                            valoresMeditacion = perfil?.valoresMeditacion ?: ValoresEEG(0, 0, 0, 0f),
-                                            blinking = perfil?.blinking ?: BlinkingData(0, 0),
-                                            alternancia = perfil?.alternancia ?: AlternanciaData(0, 0)
-                                        )
-
-                                        // Guardar perfil serializado
-                                        val perfilJson = Gson().toJson(usuarioCompleto)
-                                        sharedPrefs.edit()
-                                            .putString("perfil_tipo", perfil?.tipo)
-                                            .putString("perfil_completo", perfilJson)
-                                            .apply()
-
-                                        // Guardar sesión en memoria
-                                        SessionManager.usuarioActual = usuarioCompleto
-                                        isLoading = false
-                                        Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
-
-                                        // Navegar al menú o a calibración
-                                        navController.navigate(if (perfil != null) "menu" else "calibracion_menu") {
-                                            popUpTo(0) { inclusive = true }
                                         }
                                     }
 
@@ -282,7 +249,6 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
                                         showDialog = true
                                     }
                                 })
-
                             } else {
                                 isLoading = false
                                 dialogMessage = "Usuario, correo o contraseña incorrectos"
@@ -308,18 +274,12 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
                         .clip(buttonShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Iniciar sesión",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = 20.sp,
-                        style = AppTypography.bodyMedium
-                    )
+                    Text("Iniciar sesión", color = MaterialTheme.colorScheme.onPrimary, fontSize = 20.sp, style = AppTypography.bodyMedium)
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Navegación a registro
             Text(
                 text = "¿No tienes cuenta? Regístrate",
                 color = MaterialTheme.colorScheme.primary,
@@ -332,9 +292,6 @@ fun ContentLoginView(navController: NavHostController, themeViewModel: ThemeView
     }
 }
 
-/**
- * Preview para ver la pantalla de Login en diseño.
- */
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewLoginScreen() {
@@ -342,9 +299,6 @@ fun PreviewLoginScreen() {
     Login(navController = navController)
 }
 
-/**
- * Campo personalizado para la contraseña con botón para mostrar u ocultar el texto.
- */
 @Composable
 fun PasswordField(
     value: String,
