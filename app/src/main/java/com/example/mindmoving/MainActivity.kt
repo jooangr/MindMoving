@@ -23,12 +23,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Accede a las preferencias compartidas (almacenamiento local simple)
         val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
 
+        // Intenta restaurar el usuario guardado en memoria desde JSON (si existe)
         val perfilJson = prefs.getString("perfil_completo", null)
         if (!perfilJson.isNullOrBlank()) {
             try {
                 val usuario = Gson().fromJson(perfilJson, Usuario::class.java)
+
+                // Guarda el usuario como el actual en SessionManager (singleton global)
                 SessionManager.usuarioActual = usuario
                 Log.d("INIT", "️Usuario restaurado: ${usuario.id}")
             } catch (e: Exception) {
@@ -43,7 +47,7 @@ class MainActivity : ComponentActivity() {
             ProvideThemeViewModel {
                 val themeViewModel = LocalThemeViewModel.current
 
-                // Leer el tema desde prefs y aplicarlo al ViewModel solo al inicio
+                // Efecto de una sola vez para leer el tema guardado en SharedPrefs
                 LaunchedEffect(Unit) {
                     val savedTheme = prefs.getString("user_theme", "light")
                     val isDark = savedTheme == "dark"

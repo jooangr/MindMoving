@@ -13,6 +13,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.runtime.*
@@ -429,7 +431,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             blinking = datosBlink
         )
 
-        scope.launch {
+        /*scope.launch {
             try {
                 val response = ApiClient.getApiService().crearPerfil(perfilRequest)
                 if (response.isSuccessful) {
@@ -440,7 +442,37 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
             } catch (e: Exception) {
                 snackbarHostState.showSnackbar("⚠️ Error red al crear perfil: ${e.localizedMessage}")
             }
+        }*/
+        scope.launch {
+            try {
+                val response = ApiClient.getApiService().crearPerfil(perfilRequest)
+
+                if (response.isSuccessful) {
+                    snackbarHostState.showSnackbar("✅ Perfil creado correctamente: ${perfilSeleccionado.nombre}")
+                } else {
+                    Log.e(TAG, "❌ Error al crear perfil: ${response.code()}")
+
+                    // Si da error 500, intentamos actualizar en lugar de crear
+                    if (response.code() == 500 || response.code() == 409 || response.code() == 400) {
+                        val updateResponse = ApiClient.getApiService().actualizarPerfil(perfilRequest)
+
+                        if (updateResponse.isSuccessful) {
+                            snackbarHostState.showSnackbar("🔄 Perfil actualizado correctamente")
+                        } else {
+                            snackbarHostState.showSnackbar("❌ Error al actualizar perfil: ${updateResponse.code()}")
+                            Log.e(TAG, "❌ Detalles update: ${updateResponse.errorBody()?.string()}")
+                        }
+                    } else {
+                        snackbarHostState.showSnackbar("❌ Error desconocido: ${response.code()}")
+                    }
+                }
+            } catch (e: Exception) {
+                snackbarHostState.showSnackbar("⚠️ Error red al crear/actualizar perfil: ${e.localizedMessage}")
+                Log.e(TAG, "❌ Excepción: ${e.message}")
+            }
         }
+
+
 
     }
 
@@ -544,6 +576,23 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
                     datosListos = false
                     sesionEEGGenerada = null
                 }) { Text("🔄 Repetir calibración") }
+
+                Spacer(Modifier.height(8.dp))
+
+                Button(
+                    onClick = {
+                        navController.navigate("menu") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(8.dp)
+                ) {
+                    Icon(Icons.Default.Home, contentDescription = "Inicio")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Ir al menú principal")
+                }
             }
 
             resultadoAtencion?.let { at ->
