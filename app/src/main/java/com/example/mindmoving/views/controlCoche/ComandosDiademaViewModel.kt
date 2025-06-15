@@ -173,7 +173,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             _uiState.update {
                 it.copy(
                     sesionActiva = true,
-                    tiempoRestanteSeg = 120
+                    tiempoRestanteSeg = 60
                 )
             }
             while (uiState.value.tiempoRestanteSeg > 0) {
@@ -189,12 +189,11 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         sesionJob?.cancel()
         sesionJob = null
 
-        // En lugar de guardar directamente, ahora actualizamos el estado
-        // para que la UI muestre el diálogo de confirmación.
+        // Actualiza el estado para que la UI muestre el diálogo de confirmación.
         _uiState.update {
             it.copy(
                 sesionActiva = false,
-                mostrarDialogoGuardar = true // <-- ¡LA CLAVE DEL CAMBIO!
+                mostrarDialogoGuardar = true
             )
         }
     }
