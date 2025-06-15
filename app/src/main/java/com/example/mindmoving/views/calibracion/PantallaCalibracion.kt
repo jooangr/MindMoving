@@ -92,7 +92,7 @@ fun PantallaCalibracion(navController: NavHostController) {
                 modifier = Modifier.padding(top = 12.dp)
             ) {
                 Text(
-                    "Hacer luego",
+                    "Ir al menú principal",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyLarge
                 )

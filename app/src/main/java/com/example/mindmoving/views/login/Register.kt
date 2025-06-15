@@ -26,7 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.RegisterRequest
+import com.example.mindmoving.retrofit.models.login_register.RegisterRequest
 import kotlinx.coroutines.launch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color

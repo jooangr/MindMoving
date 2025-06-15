@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+// Componente reutilizable para mostrar un gráfico de barras simples (en desuso).
 @Composable
 fun SimpleBarChart(
     title: String,
@@ -56,6 +57,7 @@ fun SimpleBarChart(
     }
 }
 
+// Componente para un gráfico de línea simple, plano (sin ejes).
 @Composable
 fun SimpleLineChartPlano(
     title: String,
@@ -91,11 +93,13 @@ fun SimpleLineChartPlano(
             val canvasWidth = size.width
             val pointSpacing = canvasWidth / (values.size - 1).coerceAtLeast(1)
 
+            // Convertimos valores en coordenadas (x, y)
             val points = values.mapIndexed { index, value ->
                 val scaledY = canvasHeight - ((value - minValue) / (maxValue - minValue) * canvasHeight)
                 Offset(index * pointSpacing, scaledY)
             }
 
+            // Dibuja líneas entre los puntos
             for (i in 0 until points.size - 1) {
                 drawLine(
                     color = lineColor,
@@ -142,12 +146,23 @@ fun MetricCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Columna izquierda: Icono + título
             Text("$icon $title", style = MaterialTheme.typography.titleMedium)
+
+            // Columna derecha: Valor actual y diferencia
             Column(horizontalAlignment = Alignment.End) {
                 Text("${"%.1f".format(value)}", style = MaterialTheme.typography.headlineSmall)
+
+                // Indicador de cambio con flecha ↑ / ↓
                 Text(
-                    text = if (change >= 0) "↑ ${"%.1f".format(change)}" else "↓ ${"%.1f".format(-change)}",
-                    color = if (change >= 0) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    text = if (change >= 0)
+                        "↑ ${"%.1f".format(change)}"
+                    else
+                        "↓ ${"%.1f".format(-change)}",
+                    color = if (change >= 0)
+                        Color(0xFF4CAF50) // verde para mejora
+                    else
+                        Color(0xFFF44336), // rojo para descenso
                     style = MaterialTheme.typography.bodySmall
                 )
             }

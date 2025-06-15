@@ -1,9 +1,17 @@
 package com.example.mindmoving.utils
 
-import com.example.mindmoving.retrofit.models.PerfilCalibracion
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracion
 
-data class Umbrales(val atencion: Int, val meditacion: Int, val parpadeo: Int = 40)
+// Clase de datos para representar los umbrales mínimos requeridos para atención, meditación y parpadeo.
+data class Umbrales(
+    val atencion: Int,
+    val meditacion: Int,
+    val parpadeo: Int = 40
+)
 
+/**
+ * Función para obtener los umbrales minimo de activación para control de coche
+ */
 fun obtenerUmbralesParaPerfil(perfil: String?): Umbrales {
     val perfilEncontrado = PerfilCalibracion.values().find { it.nombre == perfil }
 

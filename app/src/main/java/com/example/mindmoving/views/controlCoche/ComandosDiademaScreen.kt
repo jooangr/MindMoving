@@ -1,5 +1,6 @@
 package com.example.mindmoving.views.controlCoche
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -59,6 +60,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.mindmoving.utils.Umbrales
 import com.example.mindmoving.utils.obtenerUmbralesParaPerfil
 
@@ -72,6 +77,31 @@ fun ComandosDiademaScreen(
     // 2. Recoge el estado
     val uiState by viewModel.uiState.collectAsState()
     val umbrales = obtenerUmbralesParaPerfil(uiState.usuario?.perfilCalibracion)
+    val context = LocalContext.current
+
+    //Logica para actualizar el perfil se lo cambia en la sesión
+    val perfilTipoState = remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        perfilTipoState.value = prefs.getString("perfil_tipo", null)
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                perfilTipoState.value = prefs.getString("perfil_tipo", null)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+
 
 
     // LÓGICA DEL DIÁLOGO DE AVISO
@@ -174,8 +204,8 @@ fun ComandosDiademaScreen(
             ) {
                 CardDatosUsuario(
                     nombreUsuario = uiState.usuario?.username ?: "Cargando...",
-                    perfilCalibracion = uiState.usuario?.perfilCalibracion ?: "N/A",
-                    // TODO: Para el número de sesiones, necesitarías una llamada a la API
+                    perfilCalibracion = perfilTipoState.value ?: "No asignado",
+                    // TODO: Para el número de sesiones, se necesitará una llamada a la API
                     // que las cuente, o tener ese dato en el objeto Usuario.
                     // Por ahora lo dejamos en 0.
                     nSesiones = 0
@@ -545,6 +575,7 @@ class ArcShape(private val sweepAngle: Float) : Shape {
         return Outline.Generic(path)
     }
 }
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

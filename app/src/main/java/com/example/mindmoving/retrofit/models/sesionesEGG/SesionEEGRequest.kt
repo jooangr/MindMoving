@@ -1,4 +1,4 @@
-package com.example.mindmoving.retrofit.models
+package com.example.mindmoving.retrofit.models.sesionesEGG
 
 data class SesionEEGRequest(
     val usuarioId: String,

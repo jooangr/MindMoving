@@ -10,7 +10,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.navigation.NavGraph
-import com.example.mindmoving.retrofit.models.Usuario
+import com.example.mindmoving.retrofit.models.user.Usuario
 import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.utils.LocalThemeViewModel
 import com.example.mindmoving.utils.ProvideThemeViewModel

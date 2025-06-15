@@ -21,14 +21,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.ActualizarUsuarioRequest
-import com.example.mindmoving.retrofit.models.UsuarioResponse
-import com.example.mindmoving.retrofit.models.VerificarPasswordRequest
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.example.mindmoving.retrofit.models.user.ActualizarUsuarioRequest
+import com.example.mindmoving.retrofit.models.user.UsuarioResponse
+import com.example.mindmoving.retrofit.models.verificarPassword.VerificarPasswordRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun EditarPerfilScreen(navController: NavHostController) {

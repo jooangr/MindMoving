@@ -2,8 +2,8 @@ package com.example.mindmoving.views.controlCoche
 
 import android.util.Log
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.SesionEEGRequest
-import com.example.mindmoving.retrofit.models.Usuario
+import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGRequest
+import com.example.mindmoving.retrofit.models.user.Usuario
 import com.example.mindmoving.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

@@ -11,6 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.ApiService
@@ -18,7 +21,6 @@ import com.example.mindmoving.utils.LocalThemeViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,10 +34,25 @@ fun AjustesScreen(navController: NavHostController) {
 
     // Perfil guardado tras la calibración
     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-    val perfilRealUsuario = prefs.getString("perfil_tipo", null) ?: "No asignado"
+    val perfilTipoState = remember { mutableStateOf<String?>(null) }
 
-    var perfilPredeterminado by remember {
-        mutableStateOf(sharedPreferences.getString("perfil_predeterminado", perfilRealUsuario))
+// Cargar inmediatamente
+    LaunchedEffect(Unit) {
+        perfilTipoState.value = prefs.getString("perfil_tipo", null)
+    }
+
+// Escuchar si el usuario regresa a esta pantalla
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                perfilTipoState.value = prefs.getString("perfil_tipo", null)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     var showSnackbar by remember { mutableStateOf(false) }
@@ -100,7 +117,7 @@ fun AjustesScreen(navController: NavHostController) {
             // Perfil del user
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Perfil calibrado: $perfilRealUsuario",
+                text = "Perfil calibrado: ${perfilTipoState.value ?: "No asignado"}",
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyLarge
             )

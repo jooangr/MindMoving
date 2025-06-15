@@ -55,27 +55,14 @@ import com.example.mindmoving.graficas.MetricCard
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 import com.example.mindmoving.ui.theme.FadeInColumn
-import com.example.mindmoving.ui.theme.GradientEndDark
-import com.example.mindmoving.ui.theme.GradientEndLight
-import com.example.mindmoving.ui.theme.GradientStartDark
-import com.example.mindmoving.ui.theme.GradientStartLight
 import kotlinx.coroutines.delay
 
 
 @Composable
 fun MainScreenMenu(navController: NavHostController) {
 
-
-
-   /* val gradientBrush = Brush.verticalGradient(
-      //  colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
-        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
-    )*/
-
     val isDark = isSystemInDarkTheme()
     val backgroundColor = if (isDark) Color(0xFF121212) else Color(0xFFF2F3FC)
-
-
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -175,19 +162,43 @@ fun MainScreenMenu(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(16.dp))
 
 
-                val perfilTipo = remember {
+                val perfilTipoState = remember { mutableStateOf<String?>(null) }
+
+// 1. Cargar el valor inmediatamente al entrar a la pantalla
+                LaunchedEffect(Unit) {
                     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                    prefs.getString("perfil_tipo", null)
+                    perfilTipoState.value = prefs.getString("perfil_tipo", null)
+                }
+
+// 2. Observar si vuelve del background y actualizar el perfil visible
+                val lifecycleOwner = LocalLifecycleOwner.current
+
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                            perfilTipoState.value = prefs.getString("perfil_tipo", null)
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = if (perfilTipo != null) "Perfil actual: $perfilTipo" else "⚠️ No tienes perfil configurado",
+                    text = if (perfilTipoState.value != null)
+                        "Perfil actual: ${perfilTipoState.value}"
+                    else
+                        "⚠️ No tienes perfil configurado",
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
 
                 // Estados para controlar la visibilidad animada
                 var showContent by remember { mutableStateOf(false) }
@@ -272,67 +283,6 @@ fun MainScreenMenu(navController: NavHostController) {
                             .padding(8.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        /*
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                "Gráficas recientes",
-                                style = MaterialTheme.typography.titleMedium,
-                                //color = Color(0xFF3F51B5)
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-                            val sesiones = remember { mutableStateListOf<SesionEEGResponse>() }
-
-                            LaunchedEffect(Unit) {
-                                val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-                                val userId = prefs.getString("userId", null)
-
-                                if (userId != null) {
-                                    try {
-                                        val response = ApiClient.getApiService().getSesiones(userId)
-                                        if (response.isSuccessful) {
-                                            val todas = response.body() ?: emptyList()
-                                            sesiones.clear()
-                                            sesiones.addAll(todas.takeLast(5)) // Últimas 5
-                                        }
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, "Error cargando sesiones", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            }
-
-                            val atencionData = sesiones.map { it.valorMedioAtencion }
-                            val relajacionData = sesiones.map { it.valorMedioRelajacion }
-                            val pestaneoData = sesiones.map { it.valorMedioPestaneo }
-
-
-                            SimpleBarChart(
-                                title = "Nivel de Atención",
-                                values = atencionData,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            SimpleBarChart(
-                                title = "Nivel de Relajación",
-                                values = relajacionData,
-                                color = MaterialTheme.colorScheme.tertiary
-                            )
-
-                            SimpleBarChart(
-                                title = "Nivel de Parpadeo",
-                                values = pestaneoData,
-                                color = MaterialTheme.colorScheme.error
-                            )
-
-                            SimpleLineChartPlano(
-                                title = "Evolución Atención",
-                                values = atencionData,
-                                lineColor = MaterialTheme.colorScheme.primary
-                            )
-
-                        }*/
-
                         val sesiones = remember { mutableStateListOf<SesionEEGResponse>() }
 
                         LaunchedEffect(Unit) {

@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -32,16 +31,17 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.neuroSkyService.CustomNeuroSky
 import com.example.mindmoving.neuroSkyService.NeuroSkyListener
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.*
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracion
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracionRequest
+import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGRequest
+import com.example.mindmoving.retrofit.models.user.BlinkingData
+import com.example.mindmoving.retrofit.models.user.Usuario
+import com.example.mindmoving.retrofit.models.user.ValoresEEG
 import com.example.mindmoving.utils.SessionManager
-import com.example.mindmoving.utils.SessionManager.usuarioActual
 import com.google.gson.Gson
 import com.neurosky.thinkgear.TGDevice
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -318,7 +318,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
         return ValoresEEG(media, max, min, variabilidad)
     }
 
-    //TODO: joan para que veas como se crea la sesion, ya que tendrás que mandarla al server asegurando que coincida formato
+
     fun crearSesionEEG(): SesionEEGRequest {
         val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val perfilJson = prefs.getString("perfil_completo", null)
@@ -400,7 +400,7 @@ fun CalibracionCompletaScreen(navController: NavHostController) {
 
         SessionManager.usuarioActual = usuarioCompleto
 
-
+//TODO TENGO Q VER SI ESTO SE GUARDA O ALGO POR Q CREO RECORDAR Q NO APARECIA PARAPDEO Y ALTERNENCIA
         // Crear sesión EEG
         sesionEEGGenerada = crearSesionEEG()
 

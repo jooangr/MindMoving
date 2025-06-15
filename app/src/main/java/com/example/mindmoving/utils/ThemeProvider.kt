@@ -8,6 +8,9 @@ val LocalThemeViewModel = compositionLocalOf<ThemeViewModel> {
     error("ThemeViewModel not provided")
 }
 
+/**
+ * Permite inyectar y acceder al ThemeViewModel desde cualquier Composable de forma limpia y sin necesidad de pasarlo como parámetro.
+ */
 @Composable
 fun ProvideThemeViewModel(content: @Composable () -> Unit) {
     val themeViewModel: ThemeViewModel = viewModel()

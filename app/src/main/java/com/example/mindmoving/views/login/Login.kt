@@ -57,11 +57,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.ApiService
-import com.example.mindmoving.retrofit.models.AlternanciaData
-import com.example.mindmoving.retrofit.models.BlinkingData
-import com.example.mindmoving.retrofit.models.LoginRequest
-import com.example.mindmoving.retrofit.models.Usuario
-import com.example.mindmoving.retrofit.models.ValoresEEG
+import com.example.mindmoving.retrofit.models.user.AlternanciaData
+import com.example.mindmoving.retrofit.models.user.BlinkingData
+import com.example.mindmoving.retrofit.models.login_register.LoginRequest
+import com.example.mindmoving.retrofit.models.user.Usuario
+import com.example.mindmoving.retrofit.models.user.ValoresEEG
 import com.example.mindmoving.ui.theme.AppTheme
 import com.example.mindmoving.ui.theme.AppTypography
 import com.example.mindmoving.utils.SessionManager

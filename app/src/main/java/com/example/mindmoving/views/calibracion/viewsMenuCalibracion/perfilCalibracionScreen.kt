@@ -13,7 +13,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
-import com.example.mindmoving.retrofit.models.PerfilCalibracionResponse
+import com.example.mindmoving.retrofit.models.user.BlinkingData
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracion
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracionRequest
+import com.example.mindmoving.retrofit.models.perfilCalibracion.PerfilCalibracionResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,6 +27,9 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
     val sharedPrefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     val usuarioId = sharedPrefs.getString("userId", null)
 
+
+
+
     var perfil by remember { mutableStateOf<PerfilCalibracionResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -33,6 +39,7 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
             try {
                 val response = withContext(Dispatchers.IO) {
                     ApiClient.getApiService().getPerfil(usuarioId)
+
                 }
                 if (response.isSuccessful) {
                     perfil = response.body()
@@ -116,15 +123,31 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
                     Button(onClick = {
                         coroutineScope.launch {
                             try {
-                                val response = ApiClient.getApiService().crearPerfilPredefinido(
-                                    id = usuarioId ?: "",
-                                    body = mapOf("tipo" to perfilSeleccionado)
-                                )
+                                Toast.makeText(context, "Preparando request...", Toast.LENGTH_SHORT).show()
 
-                                if (response.isSuccessful) {
-                                    navController.navigate("perfil_calibracion") // o recarga pantalla
+
+                                val perfilEnum = PerfilCalibracion.values().firstOrNull { it.nombre == perfilSeleccionado }
+
+                                if (perfilEnum != null) {
+                                    val request = PerfilCalibracionRequest(
+                                        usuarioId = usuarioId ?: "",
+                                        tipo = perfilEnum.nombre,
+                                        valoresAtencion = perfilEnum.valoresAtencion,
+                                        valoresMeditacion = perfilEnum.valoresMeditacion,
+                                        alternancia = perfilEnum.alternancia,
+                                        blinking = BlinkingData(30, 60) // puedes ajustar si lo metes luego en el enum
+                                    )
+
+                                    val response = ApiClient.getApiService().crearPerfil(request)
+
+                                    if (response.isSuccessful) {
+                                        Toast.makeText(context, "Perfil asignado correctamente", Toast.LENGTH_SHORT).show()
+                                        navController.navigate("perfil_calibracion") // recarga o vuelve
+                                    } else {
+                                        Toast.makeText(context, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
+                                    }
                                 } else {
-                                    Toast.makeText(context, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Perfil no encontrado", Toast.LENGTH_SHORT).show()
                                 }
                             } catch (e: Exception) {
                                 Toast.makeText(context, "Excepción: ${e.message}", Toast.LENGTH_LONG).show()
@@ -133,6 +156,8 @@ fun PerfilCalibracionScreen(navController: NavHostController) {
                     }) {
                         Text("Asignar perfil predefinido")
                     }
+
+
 
                     Spacer(modifier = Modifier.height(12.dp))
                     TextButton(onClick = { navController.popBackStack() }) {
@@ -197,17 +222,41 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
                         onClick = {
                             expanded = false
                             seleccionNueva = opcion
+                            val perfilEnum = PerfilCalibracion.values().firstOrNull { it.nombre == opcion }
                             scope.launch {
                                 try {
-                                    val res = ApiClient.getApiService().actualizarTipoPerfil(
-                                        userId = perfil.usuarioId,
-                                        body = mapOf("tipo" to opcion)
+                                    val request = PerfilCalibracionRequest(
+                                        usuarioId = perfil.usuarioId,
+                                        tipo = perfilEnum?.nombre ?: opcion,
+                                        valoresAtencion = perfilEnum?.valoresAtencion ?: perfil.valoresAtencion!!,
+                                        valoresMeditacion = perfilEnum?.valoresMeditacion ?: perfil.valoresMeditacion!!,
+                                        alternancia = perfilEnum?.alternancia ?: perfil.alternancia!!,
+                                        blinking = BlinkingData(30, 60) // ajusta si quieres usar del enum
                                     )
+
+                                    val res = ApiClient.getApiService().actualizarPerfil(request)
+
                                     if (res.isSuccessful) {
+                                        // Obtener perfil actualizado del backend
+                                        val perfilActualizado = ApiClient.getApiService().getPerfil(perfil.usuarioId)
+                                        if (perfilActualizado.isSuccessful) {
+                                            val tipo = perfilActualizado.body()?.tipo
+
+                                            // 💾 Guardar en SharedPreferences
+                                            val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                                            prefs.edit().putString("perfil_tipo", tipo).apply()
+                                        }
+
+                                        navController.navigate("perfil_calibracion") {
+                                            popUpTo("perfil_calibracion") { inclusive = true }
+                                        }
+
                                         Toast.makeText(context, "Perfil actualizado", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, "Error al actualizar", Toast.LENGTH_SHORT).show()
                                     }
+                                    else {
+                                        Toast.makeText(context, "Error al actualizar: ${res.code()}", Toast.LENGTH_SHORT).show()
+                                    }
+
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "Fallo: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
@@ -216,6 +265,7 @@ fun PerfilContent(perfil: PerfilCalibracionResponse, navController: NavHostContr
                     )
                 }
             }
+
         }
 
 
