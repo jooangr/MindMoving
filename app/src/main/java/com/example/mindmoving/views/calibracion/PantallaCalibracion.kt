@@ -67,16 +67,16 @@ fun PantallaCalibracion(navController: NavHostController) {
                 navController.navigate("calibracion_inicio")
             }
 
-            CalibracionButton("Ajustar atención") {
-                navController.navigate("ajustar_atencion")
+            CalibracionButton("Juego Atención") {
+                navController.navigate("juego_concentracion")
             }
 
-            CalibracionButton("Ajustar meditación") {
-                navController.navigate("ajustar_meditacion")
+            CalibracionButton("Juego Meditación") {
+                navController.navigate("juego_meditacion")
             }
 
-            CalibracionButton("Calibrar pestañeo") {
-                navController.navigate("calibracion_pestaneo")
+            CalibracionButton("Juego Pestañeo") {
+                navController.navigate("juego_parpadeo")
             }
 
             CalibracionButton("Simulador de comandos") {

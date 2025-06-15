@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.mindmoving.graficas.SimpleLineChartPlano
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 
@@ -26,7 +27,6 @@ import com.example.mindmoving.retrofit.models.sesionesEGG.SesionEEGResponse
 fun HistorialSesionesScreen(navController: NavHostController) {
 
     val gradientBrush = Brush.verticalGradient(
-        //colors = listOf(Color(0xFF3F51B5), Color(0xFF2196F3))
         colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
     )
     val context = LocalContext.current
@@ -75,9 +75,39 @@ fun HistorialSesionesScreen(navController: NavHostController) {
                 Text("No hay sesiones registradas", Modifier.align(Alignment.Center))
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // 📊 Card con gráficas generales
+                    item {
+                        val atencionData = sesiones.map { it.valorMedioAtencion }
+                        val relajacionData = sesiones.map { it.valorMedioRelajacion }
+                        val pestaneoData = sesiones.map { it.valorMedioPestaneo }
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(6.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    "Resumen general",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                SimpleLineChartPlano("Atención", atencionData, lineColor = MaterialTheme.colorScheme.primary)
+                                SimpleLineChartPlano("Relajación", relajacionData, lineColor = MaterialTheme.colorScheme.tertiary)
+                                SimpleLineChartPlano("Pestañeos", pestaneoData, lineColor = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+
+                    // 🔁 Lista de sesiones
                     items(sesiones) { sesion ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -93,6 +123,7 @@ fun HistorialSesionesScreen(navController: NavHostController) {
                         }
                     }
                 }
+
             }
         }
     }

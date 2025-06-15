@@ -202,7 +202,7 @@ fun MainScreenMenu(navController: NavHostController) {
                     delayMillis = 300
                 ) {
                     Button(
-                        onClick = { navController.navigate("atencion") },
+                        onClick = { navController.navigate("calibracion_menu") },
                        // colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -220,7 +220,7 @@ fun MainScreenMenu(navController: NavHostController) {
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Comprobar nivel de Atención")
+                        Text("Opciones de Calibracion")
                     }
 
                         Button(
@@ -248,12 +248,12 @@ fun MainScreenMenu(navController: NavHostController) {
 
                         ) {
                             Icon(
-                                imageVector = Icons.Default.DirectionsCar, // necesitas importarlo
+                                imageVector = Icons.Default.DirectionsCar,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("Controlar Coche (En desarrollo)")
+                            Text("Comando Coche")
                         }
 
                 }
@@ -357,7 +357,8 @@ fun MainScreenMenu(navController: NavHostController) {
                             Text(
                                 "Resumen de métricas recientes",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -401,8 +402,6 @@ fun MainScreenMenu(navController: NavHostController) {
                         }
 
                     }
-
-                    //probar a poner graficas
                 }
 
             }

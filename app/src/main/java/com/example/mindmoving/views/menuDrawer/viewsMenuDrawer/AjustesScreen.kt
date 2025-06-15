@@ -1,23 +1,16 @@
 package com.example.mindmoving.views.menuDrawer.viewsMenuDrawer
 
-import android.app.Activity
-import androidx.compose.ui.Alignment
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.mindmoving.retrofit.ApiClient
 import com.example.mindmoving.retrofit.ApiService
@@ -37,9 +30,14 @@ fun AjustesScreen(navController: NavHostController) {
     val themeViewModel = LocalThemeViewModel.current
     var darkMode by remember { mutableStateOf(themeViewModel.isDarkTheme.value) }
 
+    // Perfil guardado tras la calibración
+    val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+    val perfilRealUsuario = prefs.getString("perfil_tipo", null) ?: "No asignado"
+
     var perfilPredeterminado by remember {
-        mutableStateOf(sharedPreferences.getString("perfil_predeterminado", "EQUILIBRADO") ?: "EQUILIBRADO")
+        mutableStateOf(sharedPreferences.getString("perfil_predeterminado", perfilRealUsuario))
     }
+
     var showSnackbar by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -99,44 +97,17 @@ fun AjustesScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 🎯 Perfil predeterminado
-            Text("Perfil predeterminado", color = textColor)
-            DropdownMenuPerfil(
-                selectedOption = perfilPredeterminado,
-                onOptionSelected = {
-                    perfilPredeterminado = it
-                    sharedPreferences.edit().putString("perfil_predeterminado", it).apply()
-                    showSnackbar = true
-                }
+            // Perfil del user
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Perfil calibrado: $perfilRealUsuario",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyLarge
             )
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 🗑️ Botón restablecer datos
-            Button(
-                onClick = {
-                    sharedPreferences.edit().clear().apply()
-                    showSnackbar = true
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Restablecer datos")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 🔐 Botón cerrar sesión
-            Button(
-                onClick = {
-                    sharedPreferences.edit().clear().apply()
-                    navController.navigate("login") {
-                        popUpTo("main") { inclusive = true }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Cerrar sesión")
-            }
 
             // 🍞 Snackbar
             if (showSnackbar) {
@@ -149,25 +120,3 @@ fun AjustesScreen(navController: NavHostController) {
     }
 }
 
-@Composable
-fun DropdownMenuPerfil(selectedOption: String, onOptionSelected: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    val opciones = listOf("ATENTO", "MEDITATIVO", "EQUILIBRADO")
-
-    Column {
-        TextButton(onClick = { expanded = true }) {
-            Text(text = selectedOption)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            opciones.forEach { opcion ->
-                DropdownMenuItem(
-                    text = { Text(opcion) },
-                    onClick = {
-                        onOptionSelected(opcion)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}

@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import com.example.mindmoving.utils.Umbrales
+import com.example.mindmoving.utils.obtenerUmbralesParaPerfil
 
 
 @Composable
@@ -69,6 +71,8 @@ fun ComandosDiademaScreen(
 
     // 2. Recoge el estado
     val uiState by viewModel.uiState.collectAsState()
+    val umbrales = obtenerUmbralesParaPerfil(uiState.usuario?.perfilCalibracion)
+
 
     // LÓGICA DEL DIÁLOGO DE AVISO
     // Se mostrará solo cuando el perfil se haya verificado y se determine que se necesita calibración.
@@ -182,8 +186,10 @@ fun ComandosDiademaScreen(
                     calidadSeñal = getSignalQualityDescription(uiState.calidadSeñal),
                     atencion = uiState.atencionActual,
                     meditacion = uiState.meditacionActual,
-                    fuerzaParpadeo = uiState.fuerzaParpadeoActual
+                    fuerzaParpadeo = uiState.fuerzaParpadeoActual,
+                    umbrales = umbrales
                 )
+
             }
 
             Column(
@@ -281,11 +287,15 @@ fun CardDatosUsuario(nombreUsuario: String,
 }
 
 @Composable
-fun CardEstadoReal(estadoConexion: String,
-                   calidadSeñal: String,
-                   atencion: Int,
-                   meditacion: Int,
-                   fuerzaParpadeo: Int)
+fun CardEstadoReal(
+    estadoConexion: String,
+    calidadSeñal: String,
+    atencion: Int,
+    meditacion: Int,
+    fuerzaParpadeo: Int,
+    umbrales: Umbrales
+)
+
 {
 
     val connectionColor = when (estadoConexion) {
@@ -318,9 +328,10 @@ fun CardEstadoReal(estadoConexion: String,
             InfoRow(label = "Conexión", value = estadoConexion.toString(), valueColor = connectionColor)
             Text("Calidad de Señal: $calidadSeñal")
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Atención: $atencion")
-            Text("Meditación: $meditacion")
-            Text("Parpadeo: $fuerzaParpadeo")
+            Text("Atención: $atencion / ${umbrales.atencion}")
+            Text("Meditación: $meditacion / ${umbrales.meditacion}")
+            Text("Parpadeo: $fuerzaParpadeo / ${umbrales.parpadeo}")
+
         }
     }
 

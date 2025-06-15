@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -60,7 +61,8 @@ fun SimpleLineChartPlano(
     title: String,
     values: List<Float>,
     modifier: Modifier = Modifier,
-    lineColor: Color = MaterialTheme.colorScheme.primary
+    lineColor: Color = MaterialTheme.colorScheme.primary,
+    height: Dp = 80.dp
 ) {
     val maxValue = values.maxOrNull() ?: 1f
     val minValue = values.minOrNull() ?: 0f
@@ -82,7 +84,7 @@ fun SimpleLineChartPlano(
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(height)
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.13f))
         ) {
             val canvasHeight = size.height
@@ -153,72 +155,4 @@ fun MetricCard(
     }
 }
 
-@Composable
-fun LineChartWithLabels(
-    values: List<Float>,
-    labels: List<String>,
-    modifier: Modifier = Modifier,
-    lineColor: Color = MaterialTheme.colorScheme.primary
-) {
-    val maxValue = values.maxOrNull() ?: 1f
-    val minValue = values.minOrNull() ?: 0f
-    val steps = 4
-
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .padding(horizontal = 8.dp)
-    ) {
-        val chartHeight = size.height
-        val chartWidth = size.width
-        val stepX = chartWidth / (values.size - 1).coerceAtLeast(1)
-        val stepY = chartHeight / steps
-
-        val points = values.mapIndexed { index, value ->
-            val y = chartHeight - ((value - minValue) / (maxValue - minValue) * chartHeight)
-            Offset(index * stepX, y)
-        }
-
-        // Líneas horizontales
-        for (i in 0..steps) {
-            val y = i * stepY
-            drawLine(
-                color = Color.LightGray,
-                start = Offset(0f, y),
-                end = Offset(chartWidth, y),
-                strokeWidth = 1f
-            )
-        }
-
-        // Línea del gráfico
-        for (i in 0 until points.size - 1) {
-            drawLine(
-                color = lineColor,
-                start = points[i],
-                end = points[i + 1],
-                strokeWidth = 4f
-            )
-        }
-
-        // Puntos
-        points.forEach {
-            drawCircle(lineColor, radius = 6f, center = it)
-        }
-
-        // Etiquetas en eje X
-        labels.forEachIndexed { i, label ->
-            drawContext.canvas.nativeCanvas.drawText(
-                label,
-                i * stepX,
-                chartHeight + 30f,
-                android.graphics.Paint().apply {
-                    color = android.graphics.Color.GRAY
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    textSize = 30f
-                }
-            )
-        }
-    }
-}
 
