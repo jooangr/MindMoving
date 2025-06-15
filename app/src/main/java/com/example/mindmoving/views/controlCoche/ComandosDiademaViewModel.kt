@@ -205,7 +205,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
 
 
     // Umbral para parpadeos
-    private val UMBRAL_PARPADEO_NORMAL = 45
+    private val UMBRAL_PARPADEO_NORMAL = 55
     private val UMBRAL_PARPADEO_FUERTE = 80
     private val INTERVALO_MIN_DOBLE_PARPADEO = 200L // 0.2 segundos
     private val INTERVALO_MAX_DOBLE_PARPADEO = 1500L // 1.5 segundos
@@ -229,11 +229,10 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         // --- Definición de Umbrales ---
         val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
             ?: PerfilCalibracion.EQUILIBRADO
-        val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
-        val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
+        val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1).toInt()
+        val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1).toInt()
 
 
-        var comandoGenerado: Direction? = null
 
         // --- Inicialización de variables para este tick ---
         var comandoMovimiento: Direction? = null
@@ -298,46 +297,43 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         // Los comandos de parpadeo (dirección/centro) son pulsos.
         // Los comandos de estado mental (movimiento) son sostenidos.
 
-        // 1. Actualizar estado de movimiento sostenido
-        if (comandoMovimiento != uiState.value.comandoMovimientoActivado) {
-            _uiState.update { it.copy(comandoMovimientoActivado = comandoMovimiento) }
-            comandoMovimiento?.let { registrarComando(it) }
+        // 1. Actualiza el estado de movimiento SOSTENIDO (UP/DOWN/null)
+        // Se actualiza en cada tick con el valor actual. No hay 'delay'.
+        _uiState.update { it.copy(comandoMovimientoActivado = comandoMovimiento) }
+
+        // Si hubo un comando de movimiento este tick (y no es el freno), lo registramos.
+        if (comandoMovimiento != null && comandoMovimiento != Direction.CENTER) {
+            registrarComando(comandoMovimiento)
         }
 
-        // 2. Actualizar estado de dirección con un pulso
+        // 2. Si se detectó un comando de PULSO (Dirección o Freno), se activa y se lanza su propio temporizador de reseteo.
         if (comandoDireccion != null) {
+            // Activamos el comando de dirección
             _uiState.update { it.copy(comandoDireccionActivado = comandoDireccion) }
             registrarComando(comandoDireccion)
 
-            // Lanzamos un reseteo visual solo para el comando de dirección
+            // Lanzamos un reseteo visual "auto-destructivo" SOLO para la dirección
             viewModelScope.launch {
-                delay(300) // Un pulso visual corto para los giros
+                delay(700) // Pulso corto para giros
                 if (uiState.value.comandoDireccionActivado == comandoDireccion) {
                     _uiState.update { it.copy(comandoDireccionActivado = null) }
                 }
             }
         }
 
-        // El Freno de Mano (CENTER) también es un pulso
         if (comandoMovimiento == Direction.CENTER) {
+            // El Freno de Mano también es un pulso
+            registrarComando(Direction.CENTER)
+
+            // Lanzamos un reseteo visual "auto-destructivo" SOLO para el freno
             viewModelScope.launch {
-                delay(500) // Un pulso visual un poco más largo para el freno
+                delay(1100) // Pulso un poco más largo para el freno
                 if (uiState.value.comandoMovimientoActivado == Direction.CENTER) {
                     _uiState.update { it.copy(comandoMovimientoActivado = null) }
                 }
             }
+        }
 
-        }
-        // Reseteo visual después de un tiempo (para que no se quede el botón "presionado")
-        viewModelScope.launch {
-            delay(500)
-            _uiState.update {
-                it.copy(
-                    comandoMovimientoActivado = null,
-                    comandoDireccionActivado = null
-                )
-            }
-        }
 
     }
 
@@ -350,7 +346,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             return
         }
 
-        val duracionReal = 120 - uiState.value.tiempoRestanteSeg
+        val duracionReal = 60 - uiState.value.tiempoRestanteSeg
         val sesionRequest = SesionEEGRequest(
             usuarioId = usuario.id,
             fechaHora = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(Date()),

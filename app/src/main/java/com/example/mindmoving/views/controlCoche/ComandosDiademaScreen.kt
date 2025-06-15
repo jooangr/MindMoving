@@ -379,9 +379,10 @@ fun CardEstadoReal(estadoConexion: String,
                 valueColor = signalColor
             )
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Atención: $atencion")
-            Text("Meditación: $meditacion")
-            Text("Parpadeo: $fuerzaParpadeo")
+            InfoRow(label = "Atención:", value = "$atencion")
+            InfoRow(label = "Meditación:", value = "$meditacion")
+            InfoRow(label = "Parpadeo:", value = "$fuerzaParpadeo")
+
         }
     }
 
