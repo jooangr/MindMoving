@@ -69,7 +69,8 @@ import kotlinx.coroutines.delay
  * si hay inactividad prolongada (más de 15 minutos) y mantiene actualizada la información del perfil desde
  * SharedPreferences.
 
- */@Composable
+ */
+@Composable
 fun MainScreenMenu(navController: NavHostController) {
 
     val isDark = isSystemInDarkTheme()

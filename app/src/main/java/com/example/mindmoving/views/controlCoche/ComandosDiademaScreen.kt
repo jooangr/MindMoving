@@ -2,6 +2,8 @@ package com.example.mindmoving.views.controlCoche
 
 import androidx.compose.animation.AnimatedVisibility
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -79,7 +81,10 @@ import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.TopAppBarDefaults
+import android.Manifest
+import android.util.Log
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -231,6 +236,11 @@ fun ComandosDiademaScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp) // Espacio uniforme
                 ){
 
+                    // Mostramos la card del juego si estamos en ese modo
+                    AnimatedVisibility(visible = uiState.estadoJuego != null) {
+                        uiState.estadoJuego?.let { CardModoJuego(it) }
+                    }
+
                     CardDatosUsuario(
                         nombreUsuario = uiState.usuario?.username ?: "Cargando...",
                         perfilCalibracion = perfilTipoState.value ?: "No asignado",
@@ -281,38 +291,57 @@ fun ComandosDiademaScreen(
                         .height(48.dp), // Altura fija para el área del botón
                     contentAlignment = Alignment.Center
                 ) {
-                    //Lógica condicional para los botones
-                    when (uiState.estadoConexion) {
-                        ConnectionStatus.CONECTADO -> {
-                            // Si está CONECTADO, mostramos el botón de la sesión
-                            Button(
-                                onClick = { viewModel.onBotonSesionClick() },
-                                // Se deshabilita si la sesión ya está activa para evitar doble clic
-                                enabled = true
-                            ) {
-                                Text(if (uiState.sesionActiva) "Detener Sesión" else "Comenzar Sesión")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .height(48.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Si una sesión (de cualquier tipo) está activa...
+                        if (uiState.sesionActiva) {
+                            // Si es una sesión de juego, el botón detiene el juego
+                            if (uiState.estadoJuego != null) {
+                                Button(onClick = { viewModel.onJugarClick() }) {
+                                    Text("Detener Juego")
+                                }
+                            } else {
+                                // Si es una sesión libre, el botón detiene la sesión libre
+                                Button(onClick = { viewModel.onBotonSesionClick() }) {
+                                    Text("Detener Sesión")
+                                }
                             }
-                        }
+                        } else {
+                            // Si NINGUNA sesión está activa, mostramos las opciones para empezar
 
-                        ConnectionStatus.CONECTANDO -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text(
-                                    "Conectando...",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        else -> { // DESCONECTADO o ERROR
-                            // Si está DESCONECTADO, mostramos el botón para conectar
-                            Button(onClick = { viewModel.onConectarDiademaClick() }) {
-                                Text("Conectar Diadema")
+                            when (uiState.estadoConexion) {
+                                ConnectionStatus.CONECTADO -> {
+                                    // Si estamos conectados, mostramos ambas opciones: Jugar o Modo Libre
+                                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                        Button(onClick = { viewModel.onJugarClick() }) {
+                                            Text("Jugar")
+                                        }
+                                        Button(onClick = { viewModel.onBotonSesionClick() }) {
+                                            Text("Modo Libre")
+                                        }
+                                    }
+                                }
+                                ConnectionStatus.CONECTANDO -> {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                        Spacer(modifier = Modifier.size(8.dp))
+                                        Text("Conectando...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                else -> { // DESCONECTADO
+                                    Button(onClick = { viewModel.onConectarDiademaClick() }) {
+                                        Text("Conectar Diadema")
+                                    }
+                                }
                             }
                         }
                     }
-
                 }
 
                 Spacer(Modifier. height(20.dp))
@@ -374,9 +403,7 @@ fun CardEstadoReal(
     meditacion: Int,
     fuerzaParpadeo: Int,
     umbrales: Umbrales
-)
-
-{
+){
 
     val connectionColor = when (estadoConexion) {
         ConnectionStatus.CONECTADO.name -> Color(0xFF4CAF50) // Verde
@@ -448,6 +475,48 @@ fun CardInstrucciones(umbrales: UmbralesUI) {
             InfoRow(label = "Izquierda (Giro)", value = umbrales.parpadeoDoble)
             InfoRow(label = "Derecha (Giro)", value = umbrales.parpadeoSimple)
             InfoRow(label = "Centro (Freno)", value = umbrales.freno)
+        }
+    }
+}
+
+@Composable
+fun CardModoJuego(estadoJuego: ComandosDiademaViewModel.EstadoJuegoUI) {
+    // --> CORRECCIÓN: Llamamos a ElevatedCard con los parámetros correctos.
+    // Como no es clickable, no necesita el parámetro 'onClick'.
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Título de la Card
+            Text(
+                "Nivel ${estadoJuego.nivel}: ${estadoJuego.instruccion}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Barra de Progreso
+            LinearProgressIndicator(
+                // --> CORRECCIÓN IMPORTANTE: El progreso debe pasarse como una lambda `{}`
+                progress = {
+                    (estadoJuego.puntuacionActual.toFloat() / estadoJuego.puntuacionObjetivo.toFloat())
+                        .coerceIn(0f, 1f) // coerceIn asegura que el valor esté entre 0 y 1
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Texto de la puntuación
+            Text(
+                text = "${estadoJuego.puntuacionActual} / ${estadoJuego.puntuacionObjetivo}",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = 4.dp)
+            )
         }
     }
 }
