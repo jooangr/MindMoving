@@ -44,7 +44,10 @@ data class ComandosDiademaState(
     val mostrarDialogoGuardar: Boolean = false,
 
     // Propiedad para los umbrales
-    val umbrales: UmbralesUI = UmbralesUI()
+    val umbrales: UmbralesUI = UmbralesUI(),
+
+    // --> AÑADIDO: Guardará el estado del juego. Será `null` si estamos en "Modo Libre".
+    val estadoJuego: ComandosDiademaViewModel.EstadoJuegoUI? = null
 )
 
 // --> AÑADIDO: Una data class para contener los umbrales que se mostrarán en la UI

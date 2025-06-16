@@ -167,11 +167,13 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         parpadeosRecogidos.clear()
         comandosEjecutadosStr = ""
 
+        iniciarTemporizadorDeSesion()
+
         sesionJob = viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     sesionActiva = true,
-                    tiempoRestanteSeg = 120
+                    tiempoRestanteSeg = 60
                 )
             }
             while (uiState.value.tiempoRestanteSeg > 0) {
@@ -211,6 +213,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
     private var ultimoTiempoParpadeoNormal: Long = 0L
 
 
+    /*
     /**
      * FUNCIÓN PARA PROCESAR LOS DATOS EEG RECIBIDOS
      * Contiene toda la lógica del proceso de datos para activar los botones según los principios establecidos.
@@ -327,6 +330,12 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             }
 
         }
+
+        // Si estamos en modo juego, procesamos su lógica
+        if (uiState.value.estadoJuego != null) {
+            procesarLogicaJuego(comandoMovimiento, comandoDireccion)
+        }
+
         // Reseteo visual después de un tiempo (para que no se quede el botón "presionado")
         viewModelScope.launch {
             delay(500)
@@ -340,6 +349,120 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
 
     }
 
+     */
+
+
+    private fun procesarEEG(datos: EEGData) {
+        if (!uiState.value.sesionActiva) return
+
+        // Recopilación de datos (sin cambios)
+        atencionRecogida.add(datos.attention)
+        meditacionRecogida.add(datos.meditation)
+        if (datos.blinkStrength > 0) {
+            parpadeosRecogidos.add(datos.blinkStrength)
+        }
+
+        // --- Definición de Umbrales (sin cambios) ---
+        val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
+            ?: PerfilCalibracion.EQUILIBRADO
+        val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
+        val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
+
+        // --- Variables para este tick ---
+        var comandoMovimiento: Direction? = null
+        var comandoDireccion: Direction? = null
+        val ahora = System.currentTimeMillis()
+
+        // --- LÓGICA DE PRIORIDADES Y GRUPOS (sin cambios en la detección) ---
+        val esDobleParpadeoFuerte = datos.blinkStrength > UMBRAL_PARPADEO_FUERTE &&
+                (ahora - ultimoTiempoParpadeoNormal > INTERVALO_MIN_DOBLE_PARPADEO) &&
+                (ahora - ultimoTiempoParpadeoNormal < INTERVALO_MAX_DOBLE_PARPADEO)
+
+        if (esDobleParpadeoFuerte) {
+            comandoMovimiento = Direction.CENTER
+            ultimoTiempoParpadeoNormal = 0L
+        } else {
+            if (datos.blinkStrength in UMBRAL_PARPADEO_NORMAL until UMBRAL_PARPADEO_FUERTE) {
+                val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
+                if (tiempoDesdeUltimoParpadeo in (INTERVALO_MIN_DOBLE_PARPADEO + 1) until INTERVALO_MAX_DOBLE_PARPADEO) {
+                    comandoDireccion = Direction.LEFT
+                    ultimoTiempoParpadeoNormal = 0L
+                } else if (tiempoDesdeUltimoParpadeo > INTERVALO_MAX_DOBLE_PARPADEO) {
+                    comandoDireccion = Direction.RIGHT
+                    ultimoTiempoParpadeoNormal = ahora
+                }
+            }
+
+            // ** GRUPO B: Movimiento (Arriba/Abajo) - Lógica Sostenida MEJORADA **
+            val atencionActiva = datos.attention > umbralAtencion
+            val meditacionActiva = datos.meditation > umbralMeditacion
+
+            // Creamos la lista de candidatos
+            val candidatos = mutableListOf<Direction>()
+            if (atencionActiva) candidatos.add(Direction.UP)
+            if (meditacionActiva) candidatos.add(Direction.DOWN)
+
+            // Aplicamos la nueva lógica de decisión
+            if (ultimoComandoMovimiento in candidatos) {
+                // 1. Regla de Inercia: Si podemos mantener el comando anterior, lo hacemos.
+                comandoMovimiento = ultimoComandoMovimiento
+            } else {
+                // 2. Si no hay inercia, decidimos qué nuevo comando activar
+                when {
+                    // 2a. Prioridad a la Atención: Si la atención está activa (sola o con meditación), elegimos UP.
+                    atencionActiva -> comandoMovimiento = Direction.UP
+                    // 2b. Si solo la meditación está activa, elegimos DOWN.
+                    meditacionActiva -> comandoMovimiento = Direction.DOWN
+                    // 2c. Si ninguna está activa, no hay movimiento.
+                    else -> comandoMovimiento = null
+                }
+            }
+        }
+
+        // --> CORRECCIÓN 3: Se actualiza la memoria de inercia
+        ultimoComandoMovimiento = comandoMovimiento
+
+        // --- ACTUALIZACIÓN DEL ESTADO DE LA UI ---
+
+        // 1. Actualiza el estado de movimiento SOSTENIDO (UP/DOWN/null)
+        if (comandoMovimiento != uiState.value.comandoMovimientoActivado) {
+            _uiState.update { it.copy(comandoMovimientoActivado = comandoMovimiento) }
+        }
+
+        // Si hubo un comando de movimiento este tick (y no es el freno), lo registramos.
+        if (comandoMovimiento != null && comandoMovimiento != Direction.CENTER) {
+            registrarComando(comandoMovimiento)
+        }
+
+        // 2. Si se detectó un comando de PULSO (Dirección o Freno), se activa y se lanza su propio temporizador de reseteo.
+        if (comandoDireccion != null) {
+            _uiState.update { it.copy(comandoDireccionActivado = comandoDireccion) }
+            registrarComando(comandoDireccion)
+
+            viewModelScope.launch {
+                delay(1000)
+                if (uiState.value.comandoDireccionActivado == comandoDireccion) {
+                    _uiState.update { it.copy(comandoDireccionActivado = null) }
+                }
+            }
+        }
+
+        if (comandoMovimiento == Direction.CENTER) {
+            registrarComando(Direction.CENTER)
+
+            viewModelScope.launch {
+                delay(1000)
+                if (uiState.value.comandoMovimientoActivado == Direction.CENTER) {
+                    _uiState.update { it.copy(comandoMovimientoActivado = null) }
+                }
+            }
+        }
+
+        // Si estamos en modo juego, procesamos su lógica
+        if (uiState.value.estadoJuego != null) {
+            procesarLogicaJuego(comandoMovimiento, comandoDireccion)
+        }
+    }
 
     // --> COMPLETADO: Función final para guardar los datos
     private fun guardarResultadosDeSesion() {
@@ -349,7 +472,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             return
         }
 
-        val duracionReal = 120 - uiState.value.tiempoRestanteSeg
+        val duracionReal = 60 - uiState.value.tiempoRestanteSeg
         val sesionRequest = SesionEEGRequest(
             usuarioId = usuario.id,
             fechaHora = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(Date()),
@@ -386,5 +509,177 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         Log.i("ViewModel", "ViewModel destruido. Desconectando diadema...")
         neuroSkyManager.desconectar()
     }
+
+
+    //****************** Lógica sobre sesión de juego ****************
+
+    // Define los tipos de órdenes que existen
+    enum class TipoComando {
+        ATENCION, RELAJACION, GIRO_DERECHA, GIRO_IZQUIERDA, FRENO, ATENCION_Y_GIRO_IZQ, ATENCION_Y_DER, MEDITACION_Y_IZQ, MEDITACION_Y_DER
+    }
+
+    // Define cómo se puntúa cada orden
+    enum class TipoPuntuacion {
+        POR_ACTIVACION, // Ganas puntos cada vez que activas el comando
+        POR_TIEMPO      // Ganas puntos por cada segundo que mantienes el comando
+    }
+
+    // La estructura de cada nivel/orden del juego
+    data class OrdenJuego(
+        val nivel: Int,
+        val instruccion: String,
+        val comandoObjetivo: TipoComando,
+        val puntuacionObjetivo: Int,
+        val tipoPuntuacion: TipoPuntuacion
+    )
+
+    // Una clase para guardar el estado actual del juego en la UI
+    data class EstadoJuegoUI(
+        val nivel: Int = 1,
+        val instruccion: String = "",
+        val puntuacionActual: Int = 0,
+        val puntuacionObjetivo: Int = 1000
+    )
+
+    // --- ESTRUCTURA DEL JUEGO ---
+    private val ordenesDelJuego = listOf(
+        OrdenJuego(1, "¡Mantén la concentración!", TipoComando.ATENCION, 1000, TipoPuntuacion.POR_TIEMPO),
+        OrdenJuego(2, "¡Gira a la derecha 10 veces!", TipoComando.GIRO_DERECHA, 10, TipoPuntuacion.POR_ACTIVACION),
+        OrdenJuego(3, "¡Ahora relájate!", TipoComando.RELAJACION, 1000, TipoPuntuacion.POR_TIEMPO),
+        OrdenJuego(4, "¡Gira a la izquierda 10 veces!", TipoComando.GIRO_IZQUIERDA, 10, TipoPuntuacion.POR_ACTIVACION),
+        OrdenJuego(5, "¡Acelera mientras giras a la izquierda!", TipoComando.ATENCION_Y_GIRO_IZQ, 10, TipoPuntuacion.POR_ACTIVACION),
+        OrdenJuego(6, "¡Frena en seco 5 veces!", TipoComando.FRENO, 5, TipoPuntuacion.POR_ACTIVACION)
+    )
+
+    // --- ESTADO INTERNO DEL JUEGO ---
+    private var nivelActual = 0
+    private var puntuacionActualJuego = 0
+    private var tiempoSostenidoInicio = 0L
+
+
+    // --- NUEVOS EVENTOS DESDE LA UI ---
+    fun onJugarClick() {
+        if (uiState.value.estadoJuego != null) { // Si ya está en modo juego, lo detiene
+            detenerModoJuego()
+        } else { // Si no, lo inicia
+            iniciarModoJuego()
+        }
+    }
+
+    // --- LÓGICA DE MODO JUEGO ---
+    private fun iniciarModoJuego() {
+        if (uiState.value.estadoConexion != ConnectionStatus.CONECTADO) {
+            _uiState.update { it.copy(mensajeUsuario = "Conecta la diadema para jugar") }
+            return
+        }
+        _uiState.update { it.copy(sesionActiva = true) }
+
+        nivelActual = 0
+        puntuacionActualJuego = 0
+
+        iniciarTemporizadorDeSesion()
+
+        siguienteOrden()
+    }
+
+    private fun detenerModoJuego() {
+        _uiState.update { it.copy(sesionActiva = false, estadoJuego = null) }
+    }
+
+    private fun siguienteOrden() {
+        if (nivelActual >= ordenesDelJuego.size) {
+            _uiState.update { it.copy(estadoJuego = null, mensajeUsuario = "¡Felicidades, has completado el juego!") }
+            return
+        }
+        val ordenActual = ordenesDelJuego[nivelActual]
+        puntuacionActualJuego = 0
+        _uiState.update {
+            it.copy(
+                estadoJuego = EstadoJuegoUI(
+                    nivel = ordenActual.nivel,
+                    instruccion = ordenActual.instruccion,
+                    puntuacionActual = 0,
+                    puntuacionObjetivo = ordenActual.puntuacionObjetivo
+                )
+            )
+        }
+    }
+
+
+    private fun procesarLogicaJuego(movimiento: Direction?, direccion: Direction?) {
+        val ordenActual = ordenesDelJuego.getOrNull(nivelActual) ?: return
+        var comandoCorrectoDetectado = false
+
+        // Comprueba si los comandos actuales coinciden con el objetivo
+        when (ordenActual.comandoObjetivo) {
+            TipoComando.ATENCION -> if (movimiento == Direction.UP) comandoCorrectoDetectado = true
+            TipoComando.RELAJACION -> if (movimiento == Direction.DOWN) comandoCorrectoDetectado = true
+            TipoComando.GIRO_DERECHA -> if (direccion == Direction.RIGHT) comandoCorrectoDetectado = true
+            TipoComando.GIRO_IZQUIERDA -> if (direccion == Direction.LEFT) comandoCorrectoDetectado = true
+            TipoComando.FRENO -> if (movimiento == Direction.CENTER) comandoCorrectoDetectado = true
+            TipoComando.ATENCION_Y_GIRO_IZQ -> if (movimiento == Direction.UP && direccion == Direction.LEFT) comandoCorrectoDetectado = true
+            TipoComando.ATENCION_Y_DER -> if (movimiento == Direction.UP && direccion == Direction.RIGHT) comandoCorrectoDetectado = true
+            TipoComando.MEDITACION_Y_IZQ -> if (movimiento == Direction.DOWN && direccion == Direction.LEFT) comandoCorrectoDetectado = true
+            TipoComando.MEDITACION_Y_DER -> if (movimiento == Direction.DOWN && direccion == Direction.RIGHT) comandoCorrectoDetectado = true
+
+        }
+
+        // Actualiza la puntuación
+        if (comandoCorrectoDetectado) {
+            when (ordenActual.tipoPuntuacion) {
+                TipoPuntuacion.POR_ACTIVACION -> {
+                    // Solo puntuamos una vez por activación, no en cada tick.
+                    // Para ello, necesitamos asegurarnos de que el comando no estaba activo en el tick anterior.
+                    // Por ahora, asumimos que los comandos de pulso (giros) funcionan bien aquí.
+                    puntuacionActualJuego++
+                }
+                TipoPuntuacion.POR_TIEMPO -> {
+                    if (tiempoSostenidoInicio == 0L) {
+                        // Si es la primera vez que detectamos el comando, guardamos la hora
+                        tiempoSostenidoInicio = System.currentTimeMillis()
+                    }
+                    // Calculamos cuántos segundos completos han pasado
+                    val segundosSostenidos = (System.currentTimeMillis() - tiempoSostenidoInicio) / 1000
+                    // La puntuación es 100 por cada segundo completo
+                    puntuacionActualJuego = (segundosSostenidos * 100).toInt()
+                }
+            }
+        } else {
+            // Si el comando deja de ser correcto, resetea el contador de tiempo
+            tiempoSostenidoInicio = 0L
+        }
+
+        // Actualiza la UI y comprueba si se pasa de nivel
+        _uiState.update { it.copy(estadoJuego = it.estadoJuego?.copy(puntuacionActual = puntuacionActualJuego)) }
+        if (puntuacionActualJuego >= ordenActual.puntuacionObjetivo) {
+            nivelActual++
+            siguienteOrden()
+        }
+    }
+
+    private fun iniciarTemporizadorDeSesion() {
+        // Cancelamos cualquier temporizador anterior para evitar duplicados
+        sesionJob?.cancel()
+
+        // Iniciamos la nueva corrutina para el temporizador
+        sesionJob = viewModelScope.launch {
+            // Ponemos el estado de la sesión en activo y reiniciamos el tiempo
+            _uiState.update { it.copy(sesionActiva = true, tiempoRestanteSeg = 60) }
+
+            // Bucle del temporizador
+            while (uiState.value.tiempoRestanteSeg > 0) {
+                delay(1000)
+                _uiState.update { it.copy(tiempoRestanteSeg = it.tiempoRestanteSeg - 1) }
+            }
+
+            // Cuando el tiempo llega a 0, detenemos la sesión/juego
+            if (uiState.value.estadoJuego != null) {
+                detenerModoJuego()
+            } else {
+                detenerSesion()
+            }
+        }
+    }
+
 
 }

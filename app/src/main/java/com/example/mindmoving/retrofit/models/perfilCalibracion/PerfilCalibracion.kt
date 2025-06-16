@@ -12,7 +12,7 @@ enum class PerfilCalibracion (
 ) {
     EQUILIBRADO(
         nombre = "Equilibrado",
-        valoresAtencion = ValoresEEG(60, 85, 45, 10f),
+        valoresAtencion = ValoresEEG(60, 85, 40, 10f),
         valoresMeditacion = ValoresEEG(60, 80, 40, 10f),
         alternancia = AlternanciaData(7, 8)
     ),
