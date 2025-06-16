@@ -86,7 +86,7 @@ fun PantallaCalibracion(navController: NavHostController) {
             }
 
             CalibracionButton("Simulador de comandos", Icons.Default.DeveloperMode) {
-                navController.navigate("sesion_diadema")
+                navController.navigate("comandos_diadema")
             }
 
 
