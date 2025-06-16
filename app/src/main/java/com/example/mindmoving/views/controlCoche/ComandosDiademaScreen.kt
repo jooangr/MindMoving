@@ -1,5 +1,6 @@
 package com.example.mindmoving.views.controlCoche
 
+import androidx.compose.animation.AnimatedVisibility
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,10 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -66,15 +71,25 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.mindmoving.utils.Umbrales
 import com.example.mindmoving.utils.obtenerUmbralesParaPerfil
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Rule
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBarDefaults
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComandosDiademaScreen(
     viewModel: ComandosDiademaViewModel = viewModel(),
     navController: NavController
 ) {
 
-    // 2. Recoge el estado
+    //Recoge el estado
     val uiState by viewModel.uiState.collectAsState()
     val umbrales = obtenerUmbralesParaPerfil(uiState.usuario?.perfilCalibracion)
     val context = LocalContext.current
@@ -100,9 +115,6 @@ fun ComandosDiademaScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-
-
-
 
     // LÓGICA DEL DIÁLOGO DE AVISO
     // Se mostrará solo cuando el perfil se haya verificado y se determine que se necesita calibración.
@@ -179,46 +191,64 @@ fun ComandosDiademaScreen(
     }
 
 
-    // --> CAMBIO 3: MODIFICACIÓN DEL SCAFFOLD
     // Añadimos el `snackbarHost` al Scaffold para que sepa dónde mostrar los Snackbars.
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Control EEG") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent // Para que se integre con el fondo
+                )
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest), // Color sutil del tema M3
-
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             Column(
-
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .weight(1f) // Ocupa todo el espacio disponible, empujando los controles hacia abajo
+                    .verticalScroll(rememberScrollState()) // Hacemos que esta área sea deslizable
             ) {
-                CardDatosUsuario(
-                    nombreUsuario = uiState.usuario?.username ?: "Cargando...",
-                    perfilCalibracion = perfilTipoState.value ?: "No asignado",
-                    // TODO: Para el número de sesiones, se necesitará una llamada a la API
-                    // que las cuente, o tener ese dato en el objeto Usuario.
-                    // Por ahora lo dejamos en 0.
-                    nSesiones = 0
-                )
+                // Ponemos el contenido de las cards dentro de otra Column con padding
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp) // Espacio uniforme
+                ){
 
-                CardEstadoReal(
-                    estadoConexion = uiState.estadoConexion.name,
-                    calidadSeñal = getSignalQualityDescription(uiState.calidadSeñal),
-                    atencion = uiState.atencionActual,
-                    meditacion = uiState.meditacionActual,
-                    fuerzaParpadeo = uiState.fuerzaParpadeoActual,
-                    umbrales = umbrales
-                )
+                    CardDatosUsuario(
+                        nombreUsuario = uiState.usuario?.username ?: "Cargando...",
+                        perfilCalibracion = perfilTipoState.value ?: "No asignado",
+                        // TODO: Para el número de sesiones, necesitarías una llamada a la API
+                        // que las cuente, o tener ese dato en el objeto Usuario. Por ahora lo dejamos en 0.
+                        nSesiones = 0
+                    )
+
+                    CardEstadoReal(
+                        estadoConexion = uiState.estadoConexion.name,
+                        calidadSeñal = uiState.calidadSeñal,
+                        atencion = uiState.atencionActual,
+                        meditacion = uiState.meditacionActual,
+                        fuerzaParpadeo = uiState.fuerzaParpadeoActual,
+                        umbrales = umbrales
+                    )
+                    CardInstrucciones(umbrales = uiState.umbrales)
+                }
 
             }
 
@@ -226,6 +256,23 @@ fun ComandosDiademaScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                AnimatedVisibility(
+                    visible = uiState.sesionActiva,
+                    enter = fadeIn() + slideInVertically(),
+                    exit = fadeOut() + slideOutVertically()
+                ) {
+                    val minutos = uiState.tiempoRestanteSeg / 60
+                    val segundos = uiState.tiempoRestanteSeg % 60
+
+                    Text(
+                        text = String.format("%02d:%02d", minutos, segundos),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
                 // --> CAMBIO DE DISEÑO: Botones con un estilo más limpio y consistente
                 Box(
                     modifier = Modifier
@@ -234,16 +281,16 @@ fun ComandosDiademaScreen(
                         .height(48.dp), // Altura fija para el área del botón
                     contentAlignment = Alignment.Center
                 ) {
-                    // --> CAMBIO: Lógica condicional para los botones
+                    //Lógica condicional para los botones
                     when (uiState.estadoConexion) {
                         ConnectionStatus.CONECTADO -> {
                             // Si está CONECTADO, mostramos el botón de la sesión
                             Button(
                                 onClick = { viewModel.onBotonSesionClick() },
                                 // Se deshabilita si la sesión ya está activa para evitar doble clic
-                                enabled = !uiState.sesionActiva
+                                enabled = true
                             ) {
-                                Text(if (uiState.sesionActiva) "Sesión en Curso..." else "Comenzar Sesión")
+                                Text(if (uiState.sesionActiva) "Detener Sesión" else "Comenzar Sesión")
                             }
                         }
 
@@ -276,7 +323,8 @@ fun ComandosDiademaScreen(
                         viewModel.onDpadClick(direction)
                     },
                     // --> AÑADIDO: Pasamos el comando activo desde el state
-                    comandoActivado = uiState.comandoActivado
+                    comandoMovimientoActivado = uiState.comandoMovimientoActivado,
+                    comandoDireccionActivado = uiState.comandoDireccionActivado
                 )
             }
         }
@@ -298,7 +346,6 @@ fun CardDatosUsuario(nombreUsuario: String,
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            //Text("Usuario", style = MaterialTheme.typography.titleMedium)
             // Título de la Card con icono
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -311,7 +358,10 @@ fun CardDatosUsuario(nombreUsuario: String,
             }
             Spacer(modifier = Modifier.height(6.dp))
             Text("Nombre: $nombreUsuario")
-            Text("Perfil: $perfilCalibracion")
+            //TODO Si no tiene perfil de calibración mostrar un mensaje, que no se quede en blanco
+            if(perfilCalibracion.isNotEmpty()){
+                Text("Perfil: $perfilCalibracion")
+            }else Text("Perfil: Sin perfil asignado. Usando perfil predeterminado." )
         }
     }
 }
@@ -319,7 +369,7 @@ fun CardDatosUsuario(nombreUsuario: String,
 @Composable
 fun CardEstadoReal(
     estadoConexion: String,
-    calidadSeñal: String,
+    calidadSeñal: Int,
     atencion: Int,
     meditacion: Int,
     fuerzaParpadeo: Int,
@@ -333,6 +383,9 @@ fun CardEstadoReal(
         ConnectionStatus.CONECTANDO.name -> Color(0xFFFFC107) // Ambar
         else -> MaterialTheme.colorScheme.error // Rojo
     }
+
+    // Calculamos el color de la señal aquí
+    val signalColor = getSignalQualityColor(calidadSeñal)
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -361,10 +414,42 @@ fun CardEstadoReal(
             Text("Atención: $atencion / ${umbrales.atencion}")
             Text("Meditación: $meditacion / ${umbrales.meditacion}")
             Text("Parpadeo: $fuerzaParpadeo / ${umbrales.parpadeo}")
-
         }
     }
 
+}
+
+@Composable
+fun CardInstrucciones(umbrales: UmbralesUI) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Título de la Card
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.SportsEsports, // Un icono de "reglas" o "joystick"
+                    contentDescription = "Controles",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text("Controles EEG", style = MaterialTheme.typography.titleLarge)
+            }
+
+            // Usamos InfoRow para una visualización limpia
+            InfoRow(label = "Arriba (Acelerar)", value = "Atención > ${umbrales.atencion}")
+            InfoRow(label = "Abajo (Reversa)", value = "Meditación > ${umbrales.meditacion}")
+            InfoRow(label = "Izquierda (Giro)", value = umbrales.parpadeoDoble)
+            InfoRow(label = "Derecha (Giro)", value = umbrales.parpadeoSimple)
+            InfoRow(label = "Centro (Freno)", value = umbrales.freno)
+        }
+    }
 }
 
 /**
@@ -404,13 +489,25 @@ private fun getSignalQualityDescription(signal: Int): String {
     }
 }
 
+@Composable
+private fun getSignalQualityColor(signal: Int): Color {
+    return when {
+        signal == 0 -> Color(0xFF4CAF50) // Verde brillante
+        signal in 1..50 -> Color(0xFF8BC34A) // Verde lima
+        signal in 51..100 -> Color(0xFFFFC107) // Ámbar
+        signal in 101..150 -> Color(0xFFF4511E) // Naranja oscuro
+        else -> MaterialTheme.colorScheme.error // Rojo
+    }
+}
+
 //********************** Lógica Dpad **********************
 
 @Composable
 fun ModernDpad(
     modifier: Modifier = Modifier,
     onDirectionClick: (Direction) -> Unit,
-    comandoActivado: Direction?
+    comandoMovimientoActivado: Direction?,
+    comandoDireccionActivado: Direction?
 ) {
     Box(
         modifier = modifier.size(220.dp), // Tamaño total del D-Pad
@@ -419,28 +516,32 @@ fun ModernDpad(
         // --- Botones Direccionales ---
         DirectionalButton(
             onClick = { onDirectionClick(Direction.UP) },
-            isActivatedByEEG = comandoActivado == Direction.UP,
+            // El botón UP solo se activa por el comando de movimiento
+            isActivatedByEEG = comandoMovimientoActivado == Direction.UP,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Arriba",
             modifier = Modifier.align(Alignment.TopCenter)
         )
         DirectionalButton(
             onClick = { onDirectionClick(Direction.LEFT) },
-            isActivatedByEEG = comandoActivado == Direction.LEFT,
+            // El botón LEFT solo se activa por el comando de dirección
+            isActivatedByEEG = comandoDireccionActivado == Direction.LEFT,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Izquierda",
             modifier = Modifier.align(Alignment.CenterStart).rotate(-90f)
         )
         DirectionalButton(
             onClick = { onDirectionClick(Direction.RIGHT) },
-            isActivatedByEEG = comandoActivado == Direction.RIGHT,
+            // El botón RIGHT solo se activa por el comando de dirección
+            isActivatedByEEG = comandoDireccionActivado == Direction.RIGHT,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Derecha",
             modifier = Modifier.align(Alignment.CenterEnd).rotate(90f)
         )
         DirectionalButton(
             onClick = { onDirectionClick(Direction.DOWN) },
-            isActivatedByEEG = comandoActivado == Direction.DOWN,
+            // El botón DOWN solo se activa por el comando de movimiento
+            isActivatedByEEG = comandoMovimientoActivado == Direction.DOWN,
             icon = Icons.Default.KeyboardArrowUp,
             contentDescription = "Abajo",
             modifier = Modifier.align(Alignment.BottomCenter).rotate(180f)
@@ -448,7 +549,7 @@ fun ModernDpad(
 
         // --- Botón Central ---
         // --> AÑADIDO: Haremos que el botón central también reaccione
-        val isCenterActivated = comandoActivado == Direction.CENTER
+        val isCenterActivated = comandoMovimientoActivado == Direction.CENTER
         val centerScale by animateFloatAsState(if (isCenterActivated) 1.1f else 1.0f, label = "center_scale")
         val centerColor by animateColorAsState(
             if (isCenterActivated) MaterialTheme.colorScheme.primary
@@ -575,7 +676,6 @@ class ArcShape(private val sweepAngle: Float) : Shape {
         return Outline.Generic(path)
     }
 }
-
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

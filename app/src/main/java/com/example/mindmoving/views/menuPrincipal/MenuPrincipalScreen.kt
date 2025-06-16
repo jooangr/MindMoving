@@ -46,6 +46,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.CompassCalibration
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material3.CardDefaults
@@ -276,6 +278,41 @@ fun MainScreenMenu(navController: NavHostController) {
                     navController.navigate("sesion_diadema")
                 }) {
                     Text("Iniciar Sesión Diadema")
+
+
+                }
+
+                Button(
+                    onClick = {
+                        val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
+                        //Para cuando tengamos lo de omar descomentar lo de teienperfil ya que si tiene perfil podre acceder a lo del coche
+                        //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
+
+                        // if (tienePerfil) {
+                        navController.navigate("comandos_diadema")
+                        // } else {
+                        //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
+                        // }
+                    },
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 8.dp)
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+
+                    ) {
+                    Icon(
+                        imageVector = Icons.Default.SportsEsports, // necesitas importarlo
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Mando de Control")
                 }
 
 

@@ -212,7 +212,6 @@ fun SesionDiademaInterfazScreen(
                 CardDatosUsuario(
                     nombreUsuario = uiState.usuario?.username ?: "Cargando...",
                     perfilCalibracion = perfilTipoState.value ?: "No asignado",
-                    // TODO: Para el número de sesiones, se necesitará una llamada a la API
                     // que las cuente, o tener ese dato en el objeto Usuario.
                     // Por ahora lo dejamos en 0.
                     nSesiones = 0
@@ -284,7 +283,8 @@ fun SesionDiademaInterfazScreen(
                         viewModel.onDpadClick(direction)
                     },
                     // --> AÑADIDO: Pasamos el comando activo desde el state
-                    comandoActivado = uiState.comandoActivado
+                    comandoMovimientoActivado = uiState.comandoMovimientoActivado,
+                    comandoDireccionActivado = uiState.comandoDireccionActivado
                 )
             }
         }
