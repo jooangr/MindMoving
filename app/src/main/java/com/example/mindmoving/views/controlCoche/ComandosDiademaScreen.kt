@@ -81,7 +81,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBarDefaults
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComandosDiademaScreen(
@@ -89,13 +88,16 @@ fun ComandosDiademaScreen(
     navController: NavController
 ) {
 
-    //Recoge el estado
-    val uiState by viewModel.uiState.collectAsState()
-    val umbrales = obtenerUmbralesParaPerfil(uiState.usuario?.perfilCalibracion)
-    val context = LocalContext.current
-
     //Logica para actualizar el perfil se lo cambia en la sesión
     val perfilTipoState = remember { mutableStateOf<String?>(null) }
+
+    //Recoge el estado
+    val uiState by viewModel.uiState.collectAsState()
+    val umbrales = obtenerUmbralesParaPerfil(perfilTipoState.value)
+
+    val context = LocalContext.current
+
+
 
     LaunchedEffect(Unit) {
         val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
