@@ -273,27 +273,19 @@ fun MainScreenMenu(navController: NavHostController) {
                         Text("Simulador de Comandos")
                     }
                 }
-
-                Button(onClick = {
-                    navController.navigate("sesion_diadema")
-                }) {
-                    Text("Iniciar Sesión Diadema")
-
-
-                }
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
                     onClick = {
                         val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
-                        //Para cuando tengamos lo de omar descomentar lo de teienperfil ya que si tiene perfil podre acceder a lo del coche
-                        //   val tienePerfil = prefs.getString("perfil_tipo", null) != null
+                        val tienePerfil = prefs.getString("perfil_tipo", null) != null
 
-                        // if (tienePerfil) {
-                        navController.navigate("comandos_diadema")
-                        // } else {
-                        //     Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
-                        // }
+                        if (tienePerfil) {
+                        navController.navigate("control_coche")
+                        } else {
+                            Toast.makeText(context, "⚠️ Necesitas un perfil de calibración para usar esta función", Toast.LENGTH_LONG).show()
+                        }
                     },
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier
@@ -312,7 +304,7 @@ fun MainScreenMenu(navController: NavHostController) {
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("Mando de Control")
+                    Text("Control del Coche")
                 }
 
 

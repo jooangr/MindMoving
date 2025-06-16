@@ -74,7 +74,6 @@ import com.example.mindmoving.utils.obtenerUmbralesParaPerfil
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api

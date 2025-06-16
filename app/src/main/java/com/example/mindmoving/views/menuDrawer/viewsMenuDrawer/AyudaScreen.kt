@@ -94,6 +94,12 @@ fun AyudaScreen(navController: NavController) {
                         "- Relájate antes de iniciar una sesión.\n" +
                         "- Mantente quieto durante las pruebas."
             )
+
+            // Sección: Consejos de diadema
+            AyudaSection(
+                title = "Arreglar la diadema por luz roja",
+                description = "Si ves que la luz LED de la diadema está en rojo u observas que falla,¡tranquilidad!, cambia la pila (AAA), y verás que funciona correctamente. "
+            )
         }
     }
 }
