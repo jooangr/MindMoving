@@ -221,8 +221,8 @@ fun ControlCocheScreen(navController: NavHostController) {
                 title = { Text("Instrucciones de conexión") },
                 text = {
                     Text("1. Conéctate a la red WiFi proporcionado por el dispositivo. \n\n 2. Asegúrese de apagar los datos móviles. \n" +
-                            "\n 3. Si estás cerca de otras redes conocidas (como la de casa), considera “olvidarlas” temporalmente. \n" +
-                            "\n 4. Permita que la aplicación acceda a la red. ",)
+                            "\n 3. Si estás cerca de otras redes conocidas (como la de casa), considera “olvidarlas” temporalmente. \n"
+                    )
                 }
             )
         }
@@ -394,8 +394,9 @@ fun LockToLandscapeEffect() {
 
     DisposableEffect(Unit) {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+
         onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
 }

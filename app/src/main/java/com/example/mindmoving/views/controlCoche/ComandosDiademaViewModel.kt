@@ -358,9 +358,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         // Recopilación de datos (sin cambios)
         atencionRecogida.add(datos.attention)
         meditacionRecogida.add(datos.meditation)
-        if (datos.blinkStrength > 0) {
-            parpadeosRecogidos.add(datos.blinkStrength)
-        }
+        if (datos.blinkStrength > 0) parpadeosRecogidos.add(datos.blinkStrength)
 
         // --- Definición de Umbrales (sin cambios) ---
         val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
@@ -368,99 +366,126 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
         val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
 
-        // --- Variables para este tick ---
-        var comandoMovimiento: Direction? = null
-        var comandoDireccion: Direction? = null
+        // --- Decisión de Comandos (Lógica Refactorizada) ---
         val ahora = System.currentTimeMillis()
+        val comandoFreno = decidirComandoFreno(datos, ahora)
 
-        // --- LÓGICA DE PRIORIDADES Y GRUPOS (sin cambios en la detección) ---
-        val esDobleParpadeoFuerte = datos.blinkStrength > UMBRAL_PARPADEO_FUERTE &&
-                (ahora - ultimoTiempoParpadeoNormal > INTERVALO_MIN_DOBLE_PARPADEO) &&
-                (ahora - ultimoTiempoParpadeoNormal < INTERVALO_MAX_DOBLE_PARPADEO)
-
-        if (esDobleParpadeoFuerte) {
-            comandoMovimiento = Direction.CENTER
-            ultimoTiempoParpadeoNormal = 0L
+        // Si se activa el freno, tiene prioridad absoluta.
+        if (comandoFreno != null) {
+            actualizarComandoDePulso(comandoFreno, 500)
         } else {
-            if (datos.blinkStrength in UMBRAL_PARPADEO_NORMAL until UMBRAL_PARPADEO_FUERTE) {
-                val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
-                if (tiempoDesdeUltimoParpadeo in (INTERVALO_MIN_DOBLE_PARPADEO + 1) until INTERVALO_MAX_DOBLE_PARPADEO) {
-                    comandoDireccion = Direction.LEFT
-                    ultimoTiempoParpadeoNormal = 0L
-                } else if (tiempoDesdeUltimoParpadeo > INTERVALO_MAX_DOBLE_PARPADEO) {
-                    comandoDireccion = Direction.RIGHT
-                    ultimoTiempoParpadeoNormal = ahora
-                }
-            }
+            // Si no hay freno, evaluamos los otros comandos.
+            val comandoDireccion = decidirComandoDireccion(datos, ahora)
+            val comandoMovimientoSostenido = decidirComandoMovimientoSostenido(datos, umbralAtencion, umbralMeditacion)
 
-            // ** GRUPO B: Movimiento (Arriba/Abajo) - Lógica Sostenida MEJORADA **
-            val atencionActiva = datos.attention > umbralAtencion
-            val meditacionActiva = datos.meditation > umbralMeditacion
-
-            // Creamos la lista de candidatos
-            val candidatos = mutableListOf<Direction>()
-            if (atencionActiva) candidatos.add(Direction.UP)
-            if (meditacionActiva) candidatos.add(Direction.DOWN)
-
-            // Aplicamos la nueva lógica de decisión
-            if (ultimoComandoMovimiento in candidatos) {
-                // 1. Regla de Inercia: Si podemos mantener el comando anterior, lo hacemos.
-                comandoMovimiento = ultimoComandoMovimiento
-            } else {
-                // 2. Si no hay inercia, decidimos qué nuevo comando activar
-                when {
-                    // 2a. Prioridad a la Atención: Si la atención está activa (sola o con meditación), elegimos UP.
-                    atencionActiva -> comandoMovimiento = Direction.UP
-                    // 2b. Si solo la meditación está activa, elegimos DOWN.
-                    meditacionActiva -> comandoMovimiento = Direction.DOWN
-                    // 2c. Si ninguna está activa, no hay movimiento.
-                    else -> comandoMovimiento = null
-                }
-            }
+            // Actualizamos la UI con los resultados
+            actualizarComandos(comandoMovimientoSostenido, comandoDireccion)
         }
 
-        // --> CORRECCIÓN 3: Se actualiza la memoria de inercia
-        ultimoComandoMovimiento = comandoMovimiento
-
-        // --- ACTUALIZACIÓN DEL ESTADO DE LA UI ---
-
-        // 1. Actualiza el estado de movimiento SOSTENIDO (UP/DOWN/null)
-        if (comandoMovimiento != uiState.value.comandoMovimientoActivado) {
-            _uiState.update { it.copy(comandoMovimientoActivado = comandoMovimiento) }
-        }
-
-        // Si hubo un comando de movimiento este tick (y no es el freno), lo registramos.
-        if (comandoMovimiento != null && comandoMovimiento != Direction.CENTER) {
-            registrarComando(comandoMovimiento)
-        }
-
-        // 2. Si se detectó un comando de PULSO (Dirección o Freno), se activa y se lanza su propio temporizador de reseteo.
-        if (comandoDireccion != null) {
-            _uiState.update { it.copy(comandoDireccionActivado = comandoDireccion) }
-            registrarComando(comandoDireccion)
-
-            viewModelScope.launch {
-                delay(1000)
-                if (uiState.value.comandoDireccionActivado == comandoDireccion) {
-                    _uiState.update { it.copy(comandoDireccionActivado = null) }
-                }
-            }
-        }
-
-        if (comandoMovimiento == Direction.CENTER) {
-            registrarComando(Direction.CENTER)
-
-            viewModelScope.launch {
-                delay(1000)
-                if (uiState.value.comandoMovimientoActivado == Direction.CENTER) {
-                    _uiState.update { it.copy(comandoMovimientoActivado = null) }
-                }
-            }
-        }
-
-        // Si estamos en modo juego, procesamos su lógica
+        // Si estamos en modo juego, procesamos su lógica con los comandos finales decididos
         if (uiState.value.estadoJuego != null) {
-            procesarLogicaJuego(comandoMovimiento, comandoDireccion)
+            procesarLogicaJuego(uiState.value.comandoMovimientoActivado, uiState.value.comandoDireccionActivado)
+        }
+    }
+
+// --- FUNCIONES DE AYUDA PARA UNA LÓGICA MÁS LIMPIA ---
+
+    private fun decidirComandoFreno(datos: EEGData, ahora: Long): Direction? {
+        val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
+        val esDobleParpadeoFuerte = datos.blinkStrength > UMBRAL_PARPADEO_FUERTE &&
+                tiempoDesdeUltimoParpadeo in INTERVALO_MIN_DOBLE_PARPADEO..INTERVALO_MAX_DOBLE_PARPADEO
+
+        return if (esDobleParpadeoFuerte) {
+            ultimoTiempoParpadeoNormal = 0L // Consumir el parpadeo
+            Direction.CENTER
+        } else {
+            null
+        }
+    }
+
+    private fun decidirComandoDireccion(datos: EEGData, ahora: Long): Direction? {
+        if (datos.blinkStrength in UMBRAL_PARPADEO_NORMAL until UMBRAL_PARPADEO_FUERTE) {
+            val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
+
+            // Condición para DOBLE PARPADEO (LEFT)
+            if (tiempoDesdeUltimoParpadeo in INTERVALO_MIN_DOBLE_PARPADEO..INTERVALO_MAX_DOBLE_PARPADEO) {
+                ultimoTiempoParpadeoNormal = 0L // Consumir el parpadeo
+                return Direction.LEFT
+            }
+            // Condición para PARPADEO ÚNICO (RIGHT)
+            else if (tiempoDesdeUltimoParpadeo > INTERVALO_MAX_DOBLE_PARPADEO) {
+                ultimoTiempoParpadeoNormal = ahora // Registrar para un posible segundo parpadeo
+                return Direction.RIGHT
+            }
+        }
+        return null
+    }
+
+    private fun decidirComandoMovimientoSostenido(datos: EEGData, umbralAtencion: Int, umbralMeditacion: Int): Direction? {
+        val atencionActiva = datos.attention > umbralAtencion
+        val meditacionActiva = datos.meditation > umbralMeditacion
+
+        val candidatos = mutableListOf<Direction>()
+        if (atencionActiva) candidatos.add(Direction.UP)
+        if (meditacionActiva) candidatos.add(Direction.DOWN)
+
+        val nuevoComando = if (ultimoComandoMovimiento in candidatos) {
+            ultimoComandoMovimiento // Inercia
+        } else {
+            when {
+                atencionActiva -> Direction.UP // Prioridad a la atención
+                meditacionActiva -> Direction.DOWN
+                else -> null
+            }
+        }
+
+        // --> SOLUCIÓN A LA INCONSISTENCIA 1: La memoria de inercia solo se actualiza con UP o DOWN
+        ultimoComandoMovimiento = nuevoComando
+        return nuevoComando
+    }
+
+    private fun actualizarComandos(movimiento: Direction?, direccion: Direction?) {
+        // Actualizamos el estado de movimiento sostenido
+        _uiState.update { it.copy(comandoMovimientoActivado = movimiento) }
+
+        // Si se detectó un comando de dirección (pulso), lo activamos y lanzamos su reseteo
+        if (direccion != null) {
+            _uiState.update { it.copy(comandoDireccionActivado = direccion) }
+            actualizarComandoDePulso(direccion, 300)
+        }
+
+        // Registrar los comandos si son válidos
+        movimiento?.let { registrarComando(it) }
+        direccion?.let { registrarComando(it) }
+    }
+
+    // --> SOLUCIÓN A LA INCONSISTENCIA 2: Función de ayuda centralizada para los pulsos
+    private fun actualizarComandoDePulso(comando: Direction, delayMs: Long) {
+        // Activamos el comando correspondiente
+        when (comando) {
+            Direction.CENTER -> _uiState.update { it.copy(comandoMovimientoActivado = comando) }
+            Direction.LEFT, Direction.RIGHT -> _uiState.update { it.copy(comandoDireccionActivado = comando) }
+            else -> {} // No debería pasar
+        }
+        registrarComando(comando)
+
+        // Lanzamos un reseteo visual que comprueba si el comando sigue siendo el mismo
+        viewModelScope.launch {
+            delay(delayMs)
+            val currentState = uiState.value
+            when (comando) {
+                Direction.CENTER -> {
+                    if (currentState.comandoMovimientoActivado == comando) {
+                        _uiState.update { it.copy(comandoMovimientoActivado = null) }
+                    }
+                }
+                Direction.LEFT, Direction.RIGHT -> {
+                    if (currentState.comandoDireccionActivado == comando) {
+                        _uiState.update { it.copy(comandoDireccionActivado = null) }
+                    }
+                }
+                else -> {}
+            }
         }
     }
 
