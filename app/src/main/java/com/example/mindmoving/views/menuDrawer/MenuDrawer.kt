@@ -175,15 +175,6 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                         navController.navigate("calibracion_menu")
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = { Text("Cerrar sesión") },
-                                    onClick = {
-                                        expanded = false
-                                        navController.navigate("login") {
-                                            popUpTo(0)
-                                        }
-                                    }
-                                )
                             }
                         }
                     },
