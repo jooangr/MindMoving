@@ -26,13 +26,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.platform.LocalContext
+import com.example.mindmoving.utils.SessionManager
 
 
+/**
+ * Es una función que es un layout principal reutilizable que proporciona una estructura con barra superior (TopAppBar)
+ * y un menú lateral de navegación (ModalNavigationDrawer). Permite navegar entre secciones clave de la app
+ * como el menú principal, historial, ajustes, ayuda y cerrar sesión.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainLayout(navController: NavHostController, content: @Composable (PaddingValues) -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -62,13 +71,12 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     }
                 )
 
-
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Ajustes") },
                     label = { Text("Ajustes") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ajustes") //ruta por crear
+                        navController.navigate("ajustes_screen")
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -78,7 +86,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Ayuda") },
                     selected = false,
                     onClick = {
-                        navController.navigate("ayuda") // puedes hacer una pantalla básica
+                        navController.navigate("ayuda_screen")
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -88,14 +96,38 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     label = { Text("Cerrar sesión") },
                     selected = false,
                     onClick = {
-                        navController.navigate("login") {
-                            popUpTo(0) // limpia navegación
-                        }
-                        scope.launch { drawerState.close() }
+                        mostrarDialogoCerrarSesion = true
                     }
                 )
             }
 
+            // Diálogo de confirmación para cerrar sesión
+            if (mostrarDialogoCerrarSesion) {
+                AlertDialog(
+                    onDismissRequest = { mostrarDialogoCerrarSesion = false },
+                    title = { Text("Cerrar sesión") },
+                    text = { Text("¿Estás seguro de que quieres cerrar sesión?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            SessionManager.logout(context)
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                            scope.launch { drawerState.close() }
+                            mostrarDialogoCerrarSesion = false
+                        }) {
+                            Text("Sí")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            mostrarDialogoCerrarSesion = false
+                        }) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
         }
     ) {
         Scaffold(
@@ -110,7 +142,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menú")
+                            Icon(Icons.Default.Menu, contentDescription = "Menú", tint = MaterialTheme.colorScheme.onSurface)
                         }
                     },
                     actions = {
@@ -121,7 +153,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Menú usuario",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
 
@@ -133,14 +165,14 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                     text = { Text("Ver perfil") },
                                     onClick = {
                                         expanded = false
-                                        navController.navigate("perfil_usuario")
+                                        navController.navigate("editar_perfil")
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Cambiar calibración") },
+                                    text = { Text("Opciones de calibración") },
                                     onClick = {
                                         expanded = false
-                                        navController.navigate("calibracion") // o el nombre de tu ruta
+                                        navController.navigate("calibracion_menu")
                                     }
                                 )
                                 DropdownMenuItem(
@@ -148,7 +180,7 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                                     onClick = {
                                         expanded = false
                                         navController.navigate("login") {
-                                            popUpTo(0) // limpia el backstack
+                                            popUpTo(0)
                                         }
                                     }
                                 )
@@ -156,12 +188,12 @@ fun MainLayout(navController: NavHostController, content: @Composable (PaddingVa
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color(0xFFF5F5F5),
-                        titleContentColor = Color.Black,
-                        navigationIconContentColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
-
             }
         ) { padding ->
             content(padding)
