@@ -45,7 +45,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
 
     // --- EVENTOS DESDE LA UI ---
 
-    // --> NUEVA FUNCIÓN PÚBLICA: La UI llamará a esto para iniciar la conexión.
+    // La UI llamará a esto para iniciar la conexión.
     fun onConectarDiademaClick() {
         // Evitamos múltiples intentos de conexión si ya se está conectando.
         if (uiState.value.estadoConexion == ConnectionStatus.CONECTANDO) return
@@ -69,23 +69,22 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
 
     //La UI la llamará cuando el usuario confirme que quiere guardar.
     fun onConfirmarGuardarSesion() {
-        // Ocultamos el diálogo primero
         _uiState.update { it.copy(mostrarDialogoGuardar = false) }
         // Y luego llamamos a la lógica de guardado que ya teníamos
         guardarResultadosDeSesion()
     }
 
     fun onCancelarGuardarSesion() {
-        // Simplemente ocultamos el diálogo. No se hace nada más.
+        //Simplemente ocultamos el diálogo. No hace nada más.
         _uiState.update { it.copy(mostrarDialogoGuardar = false) }
     }
 
-    // --> AÑADIDO: Función para que la UI pueda manejar el aviso
+    //Función para que la UI pueda manejar el aviso
     fun onIgnorarAvisoCalibracion() {
         _uiState.update { it.copy(necesitaCalibracion = false) }
     }
 
-    // Opcional: para manejar clics manuales en el D-pad si fuera necesario
+    //para manejar clics manuales en el D-pad si fuera necesario
     fun onDpadClick(direction: Direction) {
         println("El usuario ha presionado manualmente: $direction")
     }
@@ -98,22 +97,22 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
 
 
             // --- CÁLCULO DE UMBRALES PARA LA UI ---
-            // Obtenemos el perfil o el de por defecto, igual que en procesarEEG
+            //Obtenemos el perfil o el de por defecto, igual que en procesarEEG
             val perfil = PerfilCalibracion.values().find { it.nombre == usuarioConPerfil?.perfilCalibracion }
                 ?: PerfilCalibracion.EQUILIBRADO
 
-            // Calculamos los umbrales numéricos
+            //Calculamos los umbrales numéricos
             val umbralAtencionUI = (perfil.valoresAtencion.media * 1.10).toInt()
             val umbralMeditacionUI = (perfil.valoresMeditacion.media * 1.10).toInt()
 
-            // Creamos el objeto para el State
+            //Creamos el objeto para el State
             val nuevosUmbrales = UmbralesUI(
                 atencion = umbralAtencionUI,
                 meditacion = umbralMeditacionUI
-                // Los de parpadeo se quedan con su texto por defecto
+                //Los de parpadeo se quedan con su texto por defecto
             )
 
-            // Actualizamos el estado con el usuario Y los umbrales calculados
+            //Actualizamos el estado con el usuario Y los umbrales calculados
             _uiState.update {
                 it.copy(
                     usuario = usuarioConPerfil,
@@ -130,6 +129,9 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
     }
 
 
+    /**
+    * Método que obtiene los eventos de la diadema (conexion, datos)
+    */
     private fun escucharEventosDeLaDiadema() {
 
         neuroSkyManager.connectionState
@@ -156,12 +158,14 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             .launchIn(viewModelScope)
     }
 
-
+    /**
+    * Método para comenzar la sesión libre
+    */
     private fun iniciarSesion() {
         if (sesionJob?.isActive == true) return
         sesionJob?.cancel()
 
-        // --> AÑADIDO: Limpieza de datos de la sesión anterior
+        //Limpieza de datos de la sesión anterior
         atencionRecogida.clear()
         meditacionRecogida.clear()
         parpadeosRecogidos.clear()
@@ -189,17 +193,16 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         sesionJob?.cancel()
         sesionJob = null
 
-        // En lugar de guardar directamente, ahora actualizamos el estado
-        // para que la UI muestre el diálogo de confirmación.
+        //actualiza el estado para que la UI muestre el diálogo de confirmación y poder guardar la sesión
         _uiState.update {
             it.copy(
                 sesionActiva = false,
-                mostrarDialogoGuardar = true // <-- ¡LA CLAVE DEL CAMBIO!
+                mostrarDialogoGuardar = true!
             )
         }
     }
 
-    // --> AÑADIDO: Nuevas propiedades para la lógica de control
+    //propiedades para la lógica de control
     private var ultimoComandoMovimiento: Direction? = null
     private var ultimoTiempoParpadeo: Long = 0L
     private val INTERVALO_DOBLE_PARPADEO = 1500 // 1.5 segundos
@@ -213,10 +216,10 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
     private var ultimoTiempoParpadeoNormal: Long = 0L
 
 
-    /*
+
     /**
      * FUNCIÓN PARA PROCESAR LOS DATOS EEG RECIBIDOS
-     * Contiene toda la lógica del proceso de datos para activar los botones según los principios establecidos.
+     * Contiene toda la lógica del procesado de datos para activar los botones según los principios establecidos.
      */
     private fun procesarEEG(datos: EEGData) {
         if (!uiState.value.sesionActiva) return
@@ -224,153 +227,19 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         // Recopilación de datos
         atencionRecogida.add(datos.attention)
         meditacionRecogida.add(datos.meditation)
-        if (datos.blinkStrength > 0) {
-            parpadeosRecogidos.add(datos.blinkStrength)
-        }
-
-        // --- Definición de Umbrales ---
-        val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
-            ?: PerfilCalibracion.EQUILIBRADO
-        val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
-        val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
-
-
-        var comandoGenerado: Direction? = null
-
-        // --- Inicialización de variables para este tick ---
-        var comandoMovimiento: Direction? = null
-        var comandoDireccion: Direction? = null
-        val ahora = System.currentTimeMillis()
-
-
-        // --- LÓGICA DE PRIORIDADES Y GRUPOS ---
-
-        // ** PRIORIDAD MÁXIMA: Freno de Mano (CENTER) **
-        // Condición: Dos parpadeos fuertes en el intervalo de tiempo correcto.
-        val esDobleParpadeoFuerte = datos.blinkStrength > UMBRAL_PARPADEO_FUERTE &&
-                (ahora - ultimoTiempoParpadeoNormal > INTERVALO_MIN_DOBLE_PARPADEO) &&
-                (ahora - ultimoTiempoParpadeoNormal < INTERVALO_MAX_DOBLE_PARPADEO)
-
-        if (esDobleParpadeoFuerte) {
-            comandoMovimiento = Direction.CENTER
-            // Reseteamos el tiempo para que esta acción sea un pulso único
-            ultimoTiempoParpadeoNormal = 0L
-
-        } else {
-            // ** Si no estamos frenando, evaluamos los otros comandos **
-
-            // ** GRUPO A: Dirección (Izquierda/Derecha) - Lógica de Pulsos **
-            if (datos.blinkStrength in UMBRAL_PARPADEO_NORMAL until UMBRAL_PARPADEO_FUERTE) {
-                val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
-
-                // Condición para DOBLE PARPADEO (LEFT)
-                if (tiempoDesdeUltimoParpadeo in (INTERVALO_MIN_DOBLE_PARPADEO + 1) until INTERVALO_MAX_DOBLE_PARPADEO) {
-                    comandoDireccion = Direction.LEFT
-                    ultimoTiempoParpadeoNormal = 0L // Reseteamos para que no se active en cadena
-                }
-                // Condición para PARPADEO ÚNICO (RIGHT) - con debounce
-                else if (tiempoDesdeUltimoParpadeo > INTERVALO_MAX_DOBLE_PARPADEO) {
-                    comandoDireccion = Direction.RIGHT
-                    ultimoTiempoParpadeoNormal = ahora // Guardamos el tiempo para un posible segundo parpadeo
-                }
-            }
-
-            // ** GRUPO B: Movimiento (Arriba/Abajo) - Lógica Sostenida **
-            when {
-                datos.attention > umbralAtencion -> comandoMovimiento = Direction.UP
-                datos.meditation > umbralMeditacion -> comandoMovimiento = Direction.DOWN
-                else -> comandoMovimiento = null // Se desactiva si no se cumple ninguna condición
-            }
-        }
-
-
-
-        //Añadimos LOGS para ver los valores en tiempo real
-        Log.d(
-            "EEG_Debug",
-            "Datos -> Atención: ${datos.attention} (Umbral: $umbralAtencion) | Meditación: ${datos.meditation} (Umbral: $umbralMeditacion) | Parpadeo: ${datos.blinkStrength}"
-        )
-
-        // Actualizamos la memoria del último comando de movimiento
-        //ultimoComandoMovimiento = comandoMovimientoActual
-
-        // --- ACTUALIZACIÓN DEL ESTADO DE LA UI ---
-
-        // Modelo de activación mixto:
-        // Los comandos de parpadeo (dirección/centro) son pulsos.
-        // Los comandos de estado mental (movimiento) son sostenidos.
-
-        // 1. Actualizar estado de movimiento sostenido
-        if (comandoMovimiento != uiState.value.comandoMovimientoActivado) {
-            _uiState.update { it.copy(comandoMovimientoActivado = comandoMovimiento) }
-            comandoMovimiento?.let { registrarComando(it) }
-        }
-
-        // 2. Actualizar estado de dirección con un pulso
-        if (comandoDireccion != null) {
-            _uiState.update { it.copy(comandoDireccionActivado = comandoDireccion) }
-            registrarComando(comandoDireccion)
-
-            // Lanzamos un reseteo visual solo para el comando de dirección
-            viewModelScope.launch {
-                delay(300) // Un pulso visual corto para los giros
-                if (uiState.value.comandoDireccionActivado == comandoDireccion) {
-                    _uiState.update { it.copy(comandoDireccionActivado = null) }
-                }
-            }
-        }
-
-        // El Freno de Mano (CENTER) también es un pulso
-        if (comandoMovimiento == Direction.CENTER) {
-            viewModelScope.launch {
-                delay(500) // Un pulso visual un poco más largo para el freno
-                if (uiState.value.comandoMovimientoActivado == Direction.CENTER) {
-                    _uiState.update { it.copy(comandoMovimientoActivado = null) }
-                }
-            }
-
-        }
-
-        // Si estamos en modo juego, procesamos su lógica
-        if (uiState.value.estadoJuego != null) {
-            procesarLogicaJuego(comandoMovimiento, comandoDireccion)
-        }
-
-        // Reseteo visual después de un tiempo (para que no se quede el botón "presionado")
-        viewModelScope.launch {
-            delay(500)
-            _uiState.update {
-                it.copy(
-                    comandoMovimientoActivado = null,
-                    comandoDireccionActivado = null
-                )
-            }
-        }
-
-    }
-
-     */
-
-
-    private fun procesarEEG(datos: EEGData) {
-        if (!uiState.value.sesionActiva) return
-
-        // Recopilación de datos (sin cambios)
-        atencionRecogida.add(datos.attention)
-        meditacionRecogida.add(datos.meditation)
         if (datos.blinkStrength > 0) parpadeosRecogidos.add(datos.blinkStrength)
 
-        // --- Definición de Umbrales (sin cambios) ---
+        // Definición de Umbrales
         val perfilUsuario = PerfilCalibracion.values().find { it.nombre == uiState.value.usuario?.perfilCalibracion }
             ?: PerfilCalibracion.EQUILIBRADO
         val umbralAtencion = (perfilUsuario.valoresAtencion.media * 1.10).toInt()
         val umbralMeditacion = (perfilUsuario.valoresMeditacion.media * 1.10).toInt()
 
-        // --- Decisión de Comandos (Lógica Refactorizada) ---
+        // Decisión de Comandos
         val ahora = System.currentTimeMillis()
         val comandoFreno = decidirComandoFreno(datos, ahora)
 
-        // Si se activa el freno, tiene prioridad absoluta.
+        // Si se activa el freno, tiene prioridad absoluta
         if (comandoFreno != null) {
             actualizarComandoDePulso(comandoFreno, 500)
         } else {
@@ -388,8 +257,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-// --- FUNCIONES DE AYUDA PARA UNA LÓGICA MÁS LIMPIA ---
-
+    // --- FUNCIONES DE AYUDA PARA UNA LÓGICA MÁS LIMPIA EN ProcesarDatosEEG ---
     private fun decidirComandoFreno(datos: EEGData, ahora: Long): Direction? {
         val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
         val esDobleParpadeoFuerte = datos.blinkStrength > UMBRAL_PARPADEO_FUERTE &&
@@ -407,12 +275,12 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         if (datos.blinkStrength in UMBRAL_PARPADEO_NORMAL until UMBRAL_PARPADEO_FUERTE) {
             val tiempoDesdeUltimoParpadeo = ahora - ultimoTiempoParpadeoNormal
 
-            // Condición para DOBLE PARPADEO (LEFT)
+            //Condición para DOBLE PARPADEO (LEFT)
             if (tiempoDesdeUltimoParpadeo in INTERVALO_MIN_DOBLE_PARPADEO..INTERVALO_MAX_DOBLE_PARPADEO) {
                 ultimoTiempoParpadeoNormal = 0L // Consumir el parpadeo
                 return Direction.LEFT
             }
-            // Condición para PARPADEO ÚNICO (RIGHT)
+            //Condición para PARPADEO ÚNICO (RIGHT)
             else if (tiempoDesdeUltimoParpadeo > INTERVALO_MAX_DOBLE_PARPADEO) {
                 ultimoTiempoParpadeoNormal = ahora // Registrar para un posible segundo parpadeo
                 return Direction.RIGHT
@@ -421,6 +289,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         return null
     }
 
+    
     private fun decidirComandoMovimientoSostenido(datos: EEGData, umbralAtencion: Int, umbralMeditacion: Int): Direction? {
         val atencionActiva = datos.attention > umbralAtencion
         val meditacionActiva = datos.meditation > umbralMeditacion
@@ -439,13 +308,13 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
             }
         }
 
-        // --> SOLUCIÓN A LA INCONSISTENCIA 1: La memoria de inercia solo se actualiza con UP o DOWN
+        //La memoria de inercia solo se actualiza con UP o DOWN
         ultimoComandoMovimiento = nuevoComando
         return nuevoComando
     }
 
     private fun actualizarComandos(movimiento: Direction?, direccion: Direction?) {
-        // Actualizamos el estado de movimiento sostenido
+        // Actualiza el estado de movimiento sostenido
         _uiState.update { it.copy(comandoMovimientoActivado = movimiento) }
 
         // Si se detectó un comando de dirección (pulso), lo activamos y lanzamos su reseteo
@@ -459,7 +328,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         direccion?.let { registrarComando(it) }
     }
 
-    // --> SOLUCIÓN A LA INCONSISTENCIA 2: Función de ayuda centralizada para los pulsos
+    //Función de ayuda centralizada para los pulsos (activan el botón cada vez que se recibe el comando específico)
     private fun actualizarComandoDePulso(comando: Direction, delayMs: Long) {
         // Activamos el comando correspondiente
         when (comando) {
@@ -489,7 +358,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    // --> COMPLETADO: Función final para guardar los datos
+    //Función final para guardar los datos
     private fun guardarResultadosDeSesion() {
         val usuario = uiState.value.usuario
         if (usuario == null || atencionRecogida.isEmpty()) {
@@ -520,7 +389,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    //Lógica de registro de comandos, estrído del método principal para limpiar código.
+    //Lógica de registro de comandos, estrído del método principal
     private fun registrarComando(direccion: Direction) {
         if (comandosEjecutadosStr.isNotEmpty()) {
             comandosEjecutadosStr += ","
@@ -536,7 +405,7 @@ class ComandosDiademaViewModel(application: Application) : AndroidViewModel(appl
     }
 
 
-    //****************** Lógica sobre sesión de juego ****************
+    //****************** Lógica sobre SESIÓN DE JUEGO ****************
 
     // Define los tipos de órdenes que existen
     enum class TipoComando {
