@@ -229,9 +229,8 @@ fun ComandosDiademaScreen(
             Column(
                 modifier = Modifier
                     .weight(1f) // Ocupa todo el espacio disponible, empujando los controles hacia abajo
-                    .verticalScroll(rememberScrollState()) // Hacemos que esta área sea deslizable
+                    .verticalScroll(rememberScrollState())
             ) {
-                // Ponemos el contenido de las cards dentro de otra Column con padding
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp) // Espacio uniforme
@@ -284,7 +283,7 @@ fun ComandosDiademaScreen(
                     )
                 }
 
-                // --> CAMBIO DE DISEÑO: Botones con un estilo más limpio y consistente
+                // Botones para comenzar una sesión. Hay 2, uno para cada tipo de sesión. Cambian según el estado de la conexión y el de la sesión. 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -352,7 +351,7 @@ fun ComandosDiademaScreen(
                     onDirectionClick = { direction ->
                         viewModel.onDpadClick(direction)
                     },
-                    // --> AÑADIDO: Pasamos el comando activo desde el state
+                    // Pasamos el comando activo desde el state
                     comandoMovimientoActivado = uiState.comandoMovimientoActivado,
                     comandoDireccionActivado = uiState.comandoDireccionActivado
                 )
@@ -361,6 +360,9 @@ fun ComandosDiademaScreen(
     }
 }
 
+/**
+* Card que muestra los datos del usuario (nombre y perfil_calibracion)
+*/
 @Composable
 fun CardDatosUsuario(nombreUsuario: String,
                      perfilCalibracion: String,
@@ -369,7 +371,7 @@ fun CardDatosUsuario(nombreUsuario: String,
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface // Fondo limpio
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
@@ -388,7 +390,6 @@ fun CardDatosUsuario(nombreUsuario: String,
             }
             Spacer(modifier = Modifier.height(6.dp))
             Text("Nombre: $nombreUsuario")
-            //TODO Si no tiene perfil de calibración mostrar un mensaje, que no se quede en blanco
             if(perfilCalibracion.isNotEmpty()){
                 Text("Perfil: $perfilCalibracion")
             }else Text("Perfil: Sin perfil asignado. Usando perfil predeterminado." )
@@ -396,6 +397,9 @@ fun CardDatosUsuario(nombreUsuario: String,
     }
 }
 
+/**
+ * Card con la que se muestra la información de la conexion con la diadema y los datos EEG leídos en tiempo real.
+ */
 @Composable
 fun CardEstadoReal(
     estadoConexion: String,
@@ -447,6 +451,10 @@ fun CardEstadoReal(
 
 }
 
+
+/**
+ * Card con la que se muestra la configuracion de los controles (botones Dpad)
+ */
 @Composable
 fun CardInstrucciones(umbrales: UmbralesUI) {
     ElevatedCard(
@@ -459,7 +467,7 @@ fun CardInstrucciones(umbrales: UmbralesUI) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Título de la Card
+            // Título de la Card con icono
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.SportsEsports, // Un icono de "reglas" o "joystick"
@@ -469,8 +477,6 @@ fun CardInstrucciones(umbrales: UmbralesUI) {
                 Spacer(modifier = Modifier.size(8.dp))
                 Text("Controles EEG", style = MaterialTheme.typography.titleLarge)
             }
-
-            // Usamos InfoRow para una visualización limpia
             InfoRow(label = "Arriba (Acelerar)", value = "Atención > ${umbrales.atencion}")
             InfoRow(label = "Abajo (Reversa)", value = "Meditación > ${umbrales.meditacion}")
             InfoRow(label = "Izquierda (Giro)", value = umbrales.parpadeoDoble)
@@ -480,10 +486,11 @@ fun CardInstrucciones(umbrales: UmbralesUI) {
     }
 }
 
+/**
+ * Card del modo "Juego". Muestra la orden y una barra de progreso con la puntuación.
+ */
 @Composable
 fun CardModoJuego(estadoJuego: ComandosDiademaViewModel.EstadoJuegoUI) {
-    // --> CORRECCIÓN: Llamamos a ElevatedCard con los parámetros correctos.
-    // Como no es clickable, no necesita el parámetro 'onClick'.
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -500,9 +507,9 @@ fun CardModoJuego(estadoJuego: ComandosDiademaViewModel.EstadoJuegoUI) {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Barra de Progreso
+            // Barra de Progreso de la sesión de juego
             LinearProgressIndicator(
-                // --> CORRECCIÓN IMPORTANTE: El progreso debe pasarse como una lambda `{}`
+                //El progreso debe pasarse como una lambda `{}`
                 progress = {
                     (estadoJuego.puntuacionActual.toFloat() / estadoJuego.puntuacionObjetivo.toFloat())
                         .coerceIn(0f, 1f) // coerceIn asegura que el valor esté entre 0 y 1
@@ -546,7 +553,7 @@ private fun InfoRow(label: String, value: String, valueColor: Color = Color.Unsp
     }
 }
 
-// Función helper que puedes poner en el mismo archivo o en uno de utilidades
+// Función helper para obtener info sobre calidad de señal
 private fun getSignalQualityDescription(signal: Int): String {
     return when {
         signal == 0 -> "Excelente"
@@ -618,7 +625,6 @@ fun ModernDpad(
         )
 
         // --- Botón Central ---
-        // --> AÑADIDO: Haremos que el botón central también reaccione
         val isCenterActivated = comandoMovimientoActivado == Direction.CENTER
         val centerScale by animateFloatAsState(if (isCenterActivated) 1.1f else 1.0f, label = "center_scale")
         val centerColor by animateColorAsState(
@@ -663,10 +669,10 @@ fun DirectionalButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    // La variable que combina ambos estados. Esta es nuestra única fuente de verdad.
+    // La variable que combina ambos estados
     val isActivated = isPressed || isActivatedByEEG
 
-    // --> CORRECCIÓN: Todas las animaciones ahora dependen de 'isActivated'.
+    //Todas las animaciones ahora dependen de 'isActivated'.
     val elevation by animateDpAsState(if (isActivated) 2.dp else 8.dp, label = "elevation")
     val scale by animateFloatAsState(if (isActivated) 0.95f else 1f, label = "scale")
 
@@ -681,18 +687,17 @@ fun DirectionalButton(
         label = "iconColor"
     )
 
-    // El resto del Box y el Icon no necesitan cambios.
     Box(
         modifier = modifier
             .size(buttonSize)
             .scale(scale) // La escala se aplica aquí
             .shadow(
-                elevation = elevation, // La elevación se aplica aquí
+                elevation = elevation,
                 shape = ArcShape(90f),
                 clip = false
             )
             .clip(ArcShape(90f))
-            .background(containerColor) // El color se aplica aquí
+            .background(containerColor)
             .clickable(interactionSource = interactionSource, indication = null) {
                 onClick()
             }
@@ -700,7 +705,7 @@ fun DirectionalButton(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = iconColor, // El color del icono se aplica aquí
+            tint = iconColor,
             modifier = Modifier
                 .align(Alignment.Center)
                 .size(iconSize)
